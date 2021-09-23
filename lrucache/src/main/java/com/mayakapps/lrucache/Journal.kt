@@ -18,7 +18,7 @@ class JournalWriter(journalFile: File) : Closeable {
 
     fun writeDirty(key: String) = writeOperation(JournalOp.Dirty(key))
 
-    fun writeClean(key: String, length: Int) = writeOperation(JournalOp.Clean(key, length))
+    fun writeClean(key: String, length: Long) = writeOperation(JournalOp.Clean(key, length))
 
     fun writeRemove(key: String) = writeOperation(JournalOp.Remove(key))
 
@@ -32,7 +32,7 @@ class JournalWriter(journalFile: File) : Closeable {
             is JournalOp.Clean -> outputStream.run {
                 writeByte(OPCODE_CLEAN.toInt())
                 writeLengthString(operation.key)
-                writeInt(operation.length)
+                writeLong(operation.length)
             }
 
             is JournalOp.Remove -> outputStream.run {
@@ -50,16 +50,25 @@ class JournalWriter(journalFile: File) : Closeable {
 }
 
 
-class JournalReader private constructor(journalFile: File) : Closeable {
+class JournalReader(journalFile: File) : Closeable {
     private val inputStream = DataInputStream(journalFile.inputStream())
+
+    var isInvalid = false
+        private set
 
     fun readFully(): List<JournalOp> {
         val result = mutableListOf<JournalOp>()
 
-        validateHeader()
+        try {
+            validateHeader()
+        } catch (ex: IllegalStateException) {
+            isInvalid = true
+            return emptyList()
+        }
+
         while (inputStream.available() > 0) {
             val operation = readOperation()
-            if (operation != null) result += operation
+            if (operation != null) result += operation else break
         }
 
         return result
@@ -79,11 +88,15 @@ class JournalReader private constructor(journalFile: File) : Closeable {
             val key = inputStream.readString()
             when (opcode) {
                 OPCODE_DIRTY -> JournalOp.Dirty(key)
-                OPCODE_CLEAN -> JournalOp.Clean(key, inputStream.readInt())
+                OPCODE_CLEAN -> JournalOp.Clean(key, inputStream.readLong())
                 OPCODE_REMOVE -> JournalOp.Remove(key)
-                else -> null
+                else -> {
+                    isInvalid = true
+                    null
+                }
             }
         } catch (ex: IOException) {
+            isInvalid = true
             null
         }
     }
@@ -102,7 +115,7 @@ sealed interface JournalOp {
         override val opcode = OPCODE_DIRTY
     }
 
-    data class Clean(override val key: String, val length: Int) : JournalOp {
+    data class Clean(override val key: String, val length: Long) : JournalOp {
         override val opcode = OPCODE_CLEAN
     }
 
