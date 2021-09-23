@@ -5,7 +5,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 
-typealias SizeCalculator<K, V> = (key: K, value: V) -> Int
+typealias SizeCalculator<K, V> = (key: K, value: V) -> Long
 
 typealias EntryRemovedListener<K, V> = (evicted: Boolean, key: K, oldValue: V, newValue: V?) -> Unit
 
@@ -23,7 +23,7 @@ typealias EntryRemovedListener<K, V> = (evicted: Boolean, key: K, oldValue: V, n
  *     this is the maximum sum of the sizes of the entries in this cache.
  */
 class LruCache<K : Any, V : Any>(
-    maxSize: Int,
+    maxSize: Long,
     private val sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
     private val onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
     private val creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
@@ -42,14 +42,14 @@ class LruCache<K : Any, V : Any>(
         private set
 
     /** Size of this cache in units. Not necessarily the number of elements. */
-    private var size = 0
+    private var size = 0L
 
     /**
      * Sets the size of the cache.
      *
      * @param maxSize The new maximum size.
      */
-    suspend fun resize(maxSize: Int) {
+    suspend fun resize(maxSize: Long) {
         require(maxSize > 0) { "maxSize <= 0" }
         this.maxSize = maxSize
         trimToSize(maxSize)
@@ -180,7 +180,7 @@ class LruCache<K : Any, V : Any>(
      * @param maxSize the maximum size of the cache before returning. May be -1
      *            to evict even 0-sized elements.
      */
-    suspend fun trimToSize(maxSize: Int) {
+    suspend fun trimToSize(maxSize: Long) {
         val removedList = mutableListOf<Pair<K, V>>()
 
         mapMutex.withLock {
@@ -191,7 +191,7 @@ class LruCache<K : Any, V : Any>(
                 removedList += key to value
             }
 
-            check(size >= 0 || (map.isEmpty() && size != 0)) {
+            check(size >= 0 || (map.isEmpty() && size != 0L)) {
                 "sizeCalculator is reporting inconsistent results!"
             }
         }
@@ -201,7 +201,7 @@ class LruCache<K : Any, V : Any>(
         removedList.forEach { (key, value) -> onEntryRemoved(true, key, value, null) }
     }
 
-    private fun nonLockedTrimToSize(maxSize: Int) {
+    private fun nonLockedTrimToSize(maxSize: Long) {
         for ((key, value) in map) {
             if (size <= maxSize) break
             map.remove(key)
@@ -209,7 +209,7 @@ class LruCache<K : Any, V : Any>(
             onEntryRemoved(true, key, value, null)
         }
 
-        check(size >= 0 || (map.isEmpty() && size != 0)) {
+        check(size >= 0 || (map.isEmpty() && size != 0L)) {
             "sizeCalculator is reporting inconsistent results!"
         }
     }
@@ -243,7 +243,7 @@ class LruCache<K : Any, V : Any>(
         trimToSize(maxSize = -1) // -1 will evict 0-sized elements
     }
 
-    private fun safeSizeOf(key: K, value: V): Int {
+    private fun safeSizeOf(key: K, value: V): Long {
         val size = sizeCalculator(key, value)
         check(size >= 0) { "Negative size: $key = $value" }
         return size
