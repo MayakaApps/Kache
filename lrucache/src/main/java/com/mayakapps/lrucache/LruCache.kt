@@ -32,11 +32,11 @@ class LruCache<K : Any, V : Any>(
         require(maxSize > 0) { "maxSize must be positive value" }
     }
 
-    private val creationMap = ConcurrentHashMap<K, Deferred<V?>>(0, 0.75F, 1)
+    internal val creationMap = ConcurrentHashMap<K, Deferred<V?>>(0, 0.75F, 1)
     private val creationMutex = Mutex()
 
-    private val map = LinkedHashMap<K, V>(0, 0.75F, true)
-    private val mapMutex = Mutex()
+    internal val map = LinkedHashMap<K, V>(0, 0.75F, true)
+    internal val mapMutex = Mutex()
 
     var maxSize = maxSize
         private set
