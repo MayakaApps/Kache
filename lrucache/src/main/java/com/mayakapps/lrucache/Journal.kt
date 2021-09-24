@@ -54,7 +54,7 @@ class JournalWriter(journalFile: File, append: Boolean = true) : Closeable {
 class JournalReader(journalFile: File) : Closeable {
     private val inputStream = DataInputStream(journalFile.inputStream())
 
-    var isInvalid = false
+    var isCorrupted = false
         private set
 
     fun readFully(): List<JournalOp> {
@@ -63,7 +63,7 @@ class JournalReader(journalFile: File) : Closeable {
         try {
             validateHeader()
         } catch (ex: IllegalStateException) {
-            isInvalid = true
+            isCorrupted = true
             return emptyList()
         }
 
@@ -92,12 +92,12 @@ class JournalReader(journalFile: File) : Closeable {
                 OPCODE_CLEAN -> JournalOp.Clean(key, inputStream.readLong())
                 OPCODE_REMOVE -> JournalOp.Remove(key)
                 else -> {
-                    isInvalid = true
+                    isCorrupted = true
                     null
                 }
             }
         } catch (ex: IOException) {
-            isInvalid = true
+            isCorrupted = true
             null
         }
     }
