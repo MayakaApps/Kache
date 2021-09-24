@@ -19,7 +19,7 @@ class JournalWriter(journalFile: File, append: Boolean = true) : Closeable {
 
     fun writeDirty(key: String) = writeOperation(JournalOp.Dirty(key))
 
-    fun writeClean(key: String, length: Long) = writeOperation(JournalOp.Clean(key, length))
+    fun writeClean(key: String) = writeOperation(JournalOp.Clean(key))
 
     fun writeRemove(key: String) = writeOperation(JournalOp.Remove(key))
 
@@ -33,7 +33,6 @@ class JournalWriter(journalFile: File, append: Boolean = true) : Closeable {
             is JournalOp.Clean -> outputStream.run {
                 writeByte(OPCODE_CLEAN.toInt())
                 writeLengthString(operation.key)
-                writeLong(operation.length)
             }
 
             is JournalOp.Remove -> outputStream.run {
@@ -89,7 +88,7 @@ class JournalReader(journalFile: File) : Closeable {
             val key = inputStream.readString()
             when (opcode) {
                 OPCODE_DIRTY -> JournalOp.Dirty(key)
-                OPCODE_CLEAN -> JournalOp.Clean(key, inputStream.readLong())
+                OPCODE_CLEAN -> JournalOp.Clean(key)
                 OPCODE_REMOVE -> JournalOp.Remove(key)
                 else -> {
                     isCorrupted = true
@@ -116,7 +115,7 @@ sealed interface JournalOp {
         override val opcode = OPCODE_DIRTY
     }
 
-    data class Clean(override val key: String, val length: Long) : JournalOp {
+    data class Clean(override val key: String) : JournalOp {
         override val opcode = OPCODE_CLEAN
     }
 
