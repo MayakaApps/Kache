@@ -126,13 +126,13 @@ class DiskLruCache private constructor(
     suspend fun getIfAvailable(key: String): File? =
         lruCache.getIfAvailable(key.asKey())?.let { CachedFile(it) }
 
-    suspend fun getOrPut(key: String, writeFunction: (File) -> Boolean) =
+    suspend fun getOrPut(key: String, writeFunction: suspend (File) -> Boolean) =
         lruCache.getOrPut(key.asKey()) { creationFunction(it, writeFunction) }
 
-    suspend fun put(key: String, writeFunction: (File) -> Boolean) =
+    suspend fun put(key: String, writeFunction: suspend (File) -> Boolean) =
         lruCache.put(key.asKey()) { creationFunction(it, writeFunction) }
 
-    suspend fun putAsync(key: String, writeFunction: (File) -> Boolean) =
+    suspend fun putAsync(key: String, writeFunction: suspend (File) -> Boolean) =
         lruCache.putAsync(key.asKey()) { creationFunction(it, writeFunction) }
 
     suspend fun remove(key: String) {
@@ -164,7 +164,7 @@ class DiskLruCache private constructor(
 
     private suspend fun creationFunction(
         key: String,
-        writeFunction: (File) -> Boolean,
+        writeFunction: suspend (File) -> Boolean,
     ): File? {
         val tempFile = File(directory, key + TEMP_EXT)
         val cleanFile = File(directory, key)
