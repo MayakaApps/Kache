@@ -2,8 +2,9 @@ package com.mayakapps.lrucache
 
 import java.io.*
 
-class JournalWriter(journalFile: File) : Closeable {
-    private val outputStream = DataOutputStream(journalFile.outputStream().buffered(BUFFER_SIZE))
+class JournalWriter(journalFile: File, append: Boolean = true) : Closeable {
+    private val outputStream =
+        DataOutputStream(FileOutputStream(journalFile, append).buffered(BUFFER_SIZE))
 
     fun writeFully(operations: List<JournalOp>) {
         writeHeader()
