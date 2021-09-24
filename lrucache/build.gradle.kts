@@ -31,6 +31,10 @@ afterEvaluate {
             maven {
                 name = "GitHubPackages"
                 setUrl("https://maven.pkg.github.com/Mayaka-Apps/Kotlin-LruCache")
+                credentials {
+                    username = project.properties["GITHUB_USER"] as String
+                    password = project.properties["GITHUB_PERSONAL_ACCESS_TOKEN"] as String
+                }
             }
         }
 
