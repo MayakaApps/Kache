@@ -181,32 +181,19 @@ class LruCache<K : Any, V : Any>(
      *            to evict even 0-sized elements.
      */
     suspend fun trimToSize(maxSize: Long) {
-        val removedList = mutableListOf<Pair<K, V>>()
-
         mapMutex.withLock {
-            for ((key, value) in map) {
-                if (size <= maxSize) break
-                map.remove(key)
-                size -= safeSizeOf(key, value)
-                removedList += key to value
-            }
-
-            check(size >= 0 || (map.isEmpty() && size != 0L)) {
-                "sizeCalculator is reporting inconsistent results!"
-            }
+            nonLockedTrimToSize(maxSize)
         }
-
-        // Trigger listener for all removed elements after completing the iteration for performance
-        // reasons. Also, side-effects usually don't need realtime data as the map was just released.
-        removedList.forEach { (key, value) -> onEntryRemoved(true, key, value, null) }
     }
 
     private fun nonLockedTrimToSize(maxSize: Long) {
-        for ((key, value) in map) {
-            if (size <= maxSize) break
-            map.remove(key)
-            size -= safeSizeOf(key, value)
-            onEntryRemoved(true, key, value, null)
+        with(map.iterator()) {
+            forEach { (key, value) ->
+                if (size <= maxSize) return@forEach
+                remove()
+                size -= safeSizeOf(key, value)
+                onEntryRemoved(true, key, value, null)
+            }
         }
 
         check(size >= 0 || (map.isEmpty() && size != 0L)) {
