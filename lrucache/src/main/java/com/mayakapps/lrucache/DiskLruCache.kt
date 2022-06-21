@@ -12,7 +12,7 @@ class DiskLruCache private constructor(
     private val directory: File,
     maxSize: Long,
     private val cachingScope: CoroutineScope,
-    private val hashKeys: Boolean,
+    private val keyTransformer: KeyTransformer?,
 ) {
     private val journalFile = File(directory, JOURNAL_FILE)
     private val tempJournalFile = File(directory, JOURNAL_FILE_TEMP)
@@ -29,9 +29,8 @@ class DiskLruCache private constructor(
     private lateinit var journalWriter: JournalWriter
     private val journalMutex = Mutex()
 
-    private val keyHasher = KeyHasher()
-    private suspend fun String.asKey() =
-        if (hashKeys) keyHasher.hash(this) else this
+    private suspend fun String.transform() =
+        keyTransformer?.transform(this) ?: this
 
     private suspend fun parseJournal() {
         val reader = JournalReader(journalFile)
@@ -121,28 +120,28 @@ class DiskLruCache private constructor(
         }
     }
 
-    suspend fun get(key: String): File? = lruCache.get(key.asKey())?.let { CachedFile(it) }
+    suspend fun get(key: String): File? = lruCache.get(key.transform())?.let { CachedFile(it) }
 
     suspend fun getIfAvailable(key: String): File? =
-        lruCache.getIfAvailable(key.asKey())?.let { CachedFile(it) }
+        lruCache.getIfAvailable(key.transform())?.let { CachedFile(it) }
 
     suspend fun getOrPut(key: String, writeFunction: suspend (File) -> Boolean) =
-        lruCache.getOrPut(key.asKey()) { creationFunction(it, writeFunction) }
+        lruCache.getOrPut(key.transform()) { creationFunction(it, writeFunction) }
 
     suspend fun put(key: String, writeFunction: suspend (File) -> Boolean) =
-        lruCache.put(key.asKey()) { creationFunction(it, writeFunction) }
+        lruCache.put(key.transform()) { creationFunction(it, writeFunction) }
 
     suspend fun putAsync(key: String, writeFunction: suspend (File) -> Boolean) =
-        lruCache.putAsync(key.asKey()) { creationFunction(it, writeFunction) }
+        lruCache.putAsync(key.transform()) { creationFunction(it, writeFunction) }
 
     suspend fun remove(key: String) {
         // It's fine to consider the file is dirty now. Even if removal failed it's scheduled for
         journalMutex.withLock {
-            journalWriter.writeDirty(key.asKey())
+            journalWriter.writeDirty(key.transform())
             redundantOpCount++
         }
 
-        lruCache.remove(key.asKey())
+        lruCache.remove(key.transform())
     }
 
     private fun onEntryRemoved(evicted: Boolean, key: String, oldValue: File, newValue: File?) {
@@ -214,7 +213,7 @@ class DiskLruCache private constructor(
             directory: File,
             maxSize: Long,
             cachingScope: CoroutineScope = CoroutineScope(Dispatchers.IO),
-            hashKeys: Boolean = true,
+            keyTransformer: KeyTransformer? = SHA256KeyHasher,
         ): DiskLruCache {
             require(maxSize > 0) { "maxSize must be positive value" }
 
@@ -237,7 +236,7 @@ class DiskLruCache private constructor(
 
             // Prefer to pick up where we left off.
             if (File(directory, JOURNAL_FILE).exists()) {
-                val cache = DiskLruCache(directory, maxSize, cachingScope, hashKeys)
+                val cache = DiskLruCache(directory, maxSize, cachingScope, keyTransformer)
                 try {
                     cache.parseJournal()
                     return cache
@@ -255,7 +254,7 @@ class DiskLruCache private constructor(
 
             // Create a new empty cache.
             directory.mkdirs()
-            val cache = DiskLruCache(directory, maxSize, cachingScope, hashKeys)
+            val cache = DiskLruCache(directory, maxSize, cachingScope, keyTransformer)
             cache.rebuildJournal()
             return cache
         }
