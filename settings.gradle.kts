@@ -1,11 +1,14 @@
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-
+pluginManagement {
     repositories {
-        google()
-        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    plugins {
+        kotlin("jvm").version(extra["kotlin.version"] as String)
+
+        id("com.vanniktech.maven.publish").version("0.20.0")
     }
 }
 
-rootProject.name = "LruCache"
+rootProject.name = "KotlinizedLruCache"
 include(":lrucache")

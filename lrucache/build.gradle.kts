@@ -1,52 +1,19 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
-    id("java-library")
-    id("kotlin")
+    kotlin("jvm")
 
-    id("maven-publish")
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_7
-    targetCompatibility = JavaVersion.VERSION_1_7
+    id("com.vanniktech.maven.publish")
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
 }
 
-val sourcesJar by tasks.creating(Jar::class) {
-    group = JavaBasePlugin.DOCUMENTATION_GROUP
-    description = "Assembles sources JAR"
-    archiveClassifier.set("sources")
-    from(sourceSets.getByName("main").java.srcDirs)
+tasks.test {
+    useJUnitPlatform()
 }
 
-artifacts {
-    archives(sourcesJar)
-}
-
-afterEvaluate {
-    publishing {
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                setUrl("https://maven.pkg.github.com/Mayaka-Apps/Kotlin-LruCache")
-                credentials {
-                    username = project.properties["GITHUB_USER"] as String
-                    password = project.properties["GITHUB_PERSONAL_ACCESS_TOKEN"] as String
-                }
-            }
-        }
-
-        publications {
-            create<MavenPublication>("library") {
-                groupId = "com.mayakapps.lrucache"
-                artifactId = "lrucache"
-                version = "1.0.0"
-
-                from(components["java"])
-                artifact(sourcesJar)
-            }
-        }
-    }
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
 }
