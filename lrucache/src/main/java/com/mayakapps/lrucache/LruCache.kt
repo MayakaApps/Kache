@@ -42,18 +42,8 @@ class LruCache<K : Any, V : Any>(
         private set
 
     /** Size of this cache in units. Not necessarily the number of elements. */
-    private var size = 0L
-
-    /**
-     * Sets the size of the cache.
-     *
-     * @param maxSize The new maximum size.
-     */
-    suspend fun resize(maxSize: Long) {
-        require(maxSize > 0) { "maxSize <= 0" }
-        this.maxSize = maxSize
-        trimToSize(maxSize)
-    }
+    var size = 0L
+        private set
 
     /**
      * Returns the value for {@code key} if it exists in the cache or wait for its
@@ -78,7 +68,7 @@ class LruCache<K : Any, V : Any>(
      * Returns the value for {@code key} if it exists in the cache or {@code defaultValue}
      */
     suspend fun getIfAvailableOrDefault(key: K, defaultValue: V): V =
-        mapMutex.withLock { map[key] } ?: defaultValue
+        getIfAvailable(key) ?: defaultValue
 
     /**
      * Returns the value for {@code key} if it exists in the cache or null
@@ -174,34 +164,6 @@ class LruCache<K : Any, V : Any>(
     }
 
     /**
-     * Remove the eldest entries until the total of remaining entries is at or
-     * below the requested size.
-     *
-     * @param maxSize the maximum size of the cache before returning. May be -1
-     *            to evict even 0-sized elements.
-     */
-    suspend fun trimToSize(maxSize: Long) {
-        mapMutex.withLock {
-            nonLockedTrimToSize(maxSize)
-        }
-    }
-
-    private fun nonLockedTrimToSize(maxSize: Long) {
-        with(map.iterator()) {
-            forEach { (key, value) ->
-                if (size <= maxSize) return@forEach
-                remove()
-                size -= safeSizeOf(key, value)
-                onEntryRemoved(true, key, value, null)
-            }
-        }
-
-        check(size >= 0 || (map.isEmpty() && size != 0L)) {
-            "sizeCalculator is reporting inconsistent results!"
-        }
-    }
-
-    /**
      * Removes the entry for {@code key} if it exists.
      *
      * @return the previous value mapped by {@code key}.
@@ -228,6 +190,45 @@ class LruCache<K : Any, V : Any>(
         }
 
         trimToSize(maxSize = -1) // -1 will evict 0-sized elements
+    }
+
+    /**
+     * Sets the size of the cache.
+     *
+     * @param maxSize The new maximum size.
+     */
+    suspend fun resize(maxSize: Long) {
+        require(maxSize > 0) { "maxSize <= 0" }
+        this.maxSize = maxSize
+        trimToSize(maxSize)
+    }
+
+    /**
+     * Remove the eldest entries until the total of remaining entries is at or
+     * below the requested size.
+     *
+     * @param maxSize the maximum size of the cache before returning. May be -1
+     *            to evict even 0-sized elements.
+     */
+    suspend fun trimToSize(maxSize: Long) {
+        mapMutex.withLock {
+            nonLockedTrimToSize(maxSize)
+        }
+    }
+
+    private fun nonLockedTrimToSize(maxSize: Long) {
+        with(map.iterator()) {
+            forEach { (key, value) ->
+                if (size <= maxSize) return@forEach
+                remove()
+                size -= safeSizeOf(key, value)
+                onEntryRemoved(true, key, value, null)
+            }
+        }
+
+        check(size >= 0 || (map.isEmpty() && size != 0L)) {
+            "sizeCalculator is reporting inconsistent results!"
+        }
     }
 
     private fun safeSizeOf(key: K, value: V): Long {

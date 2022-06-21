@@ -2,43 +2,30 @@ package com.mayakapps.lrucache
 
 import java.io.*
 
-class JournalWriter(journalFile: File, append: Boolean = true) : Closeable {
+// This is more than enough as the buffer is flushing after each operation
+private const val BUFFER_SIZE = 256
+
+private const val JOURNAL_MAGIC = "JOURNAL"
+private const val JOURNAL_VERSION: Byte = 1
+
+internal class JournalWriter(journalFile: File, append: Boolean = true) : Closeable {
     private val outputStream =
         DataOutputStream(FileOutputStream(journalFile, append).buffered(BUFFER_SIZE))
 
-    fun writeFully(operations: List<JournalOp>) {
-        writeHeader()
-        operations.forEach { writeOperation(it) }
-    }
-
-    fun writeHeader() {
+    internal fun writeHeader() {
         outputStream.writeString(JOURNAL_MAGIC)
         outputStream.writeByte(JOURNAL_VERSION.toInt())
         outputStream.flush()
     }
 
-    fun writeDirty(key: String) = writeOperation(JournalOp.Dirty(key))
+    internal fun writeDirty(key: String) = writeOperation(JournalOp.Dirty(key))
+    internal fun writeClean(key: String) = writeOperation(JournalOp.Clean(key))
+    internal fun writeRemove(key: String) = writeOperation(JournalOp.Remove(key))
 
-    fun writeClean(key: String) = writeOperation(JournalOp.Clean(key))
-
-    fun writeRemove(key: String) = writeOperation(JournalOp.Remove(key))
-
-    fun writeOperation(operation: JournalOp) {
-        when (operation) {
-            is JournalOp.Dirty -> outputStream.run {
-                writeByte(OPCODE_DIRTY.toInt())
-                writeLengthString(operation.key)
-            }
-
-            is JournalOp.Clean -> outputStream.run {
-                writeByte(OPCODE_CLEAN.toInt())
-                writeLengthString(operation.key)
-            }
-
-            is JournalOp.Remove -> outputStream.run {
-                writeByte(OPCODE_REMOVE.toInt())
-                writeLengthString(operation.key)
-            }
+    private fun writeOperation(operation: JournalOp) {
+        outputStream.run {
+            writeByte(operation.opcode.toInt())
+            writeLengthString(operation.key)
         }
 
         outputStream.flush()
@@ -50,7 +37,7 @@ class JournalWriter(journalFile: File, append: Boolean = true) : Closeable {
 }
 
 
-class JournalReader(journalFile: File) : Closeable {
+internal class JournalReader(journalFile: File) : Closeable {
     private val inputStream = DataInputStream(journalFile.inputStream())
 
     var isCorrupted = false
@@ -74,7 +61,7 @@ class JournalReader(journalFile: File) : Closeable {
         return result
     }
 
-    fun validateHeader() {
+    private fun validateHeader() {
         val magic = inputStream.readString(JOURNAL_MAGIC.length)
         val version = inputStream.readByte()
 
@@ -82,23 +69,17 @@ class JournalReader(journalFile: File) : Closeable {
         check(version == JOURNAL_VERSION) { "Journal version doesn't match" }
     }
 
-    fun readOperation(): JournalOp? {
-        return try {
-            val opcode = inputStream.readByte()
-            val key = inputStream.readString()
-            when (opcode) {
-                OPCODE_DIRTY -> JournalOp.Dirty(key)
-                OPCODE_CLEAN -> JournalOp.Clean(key)
-                OPCODE_REMOVE -> JournalOp.Remove(key)
-                else -> {
-                    isCorrupted = true
-                    null
-                }
-            }
-        } catch (ex: IOException) {
-            isCorrupted = true
-            null
-        }
+    private fun readOperation(): JournalOp? = try {
+        JournalOp.create(
+            opcode = inputStream.readByte(),
+            key = inputStream.readString(),
+        )
+    } catch (ex: IOException) {
+        isCorrupted = true
+        null
+    } catch (ex: IllegalArgumentException) {
+        isCorrupted = true
+        null
     }
 
     override fun close() {
@@ -106,48 +87,31 @@ class JournalReader(journalFile: File) : Closeable {
     }
 }
 
-sealed interface JournalOp {
-    val opcode: Byte
-
+internal sealed interface JournalOp {
     val key: String
 
-    data class Dirty(override val key: String) : JournalOp {
-        override val opcode = OPCODE_DIRTY
-    }
+    data class Dirty(override val key: String) : JournalOp
+    data class Clean(override val key: String) : JournalOp
+    data class Remove(override val key: String) : JournalOp
 
-    data class Clean(override val key: String) : JournalOp {
-        override val opcode = OPCODE_CLEAN
-    }
+    val opcode: Byte
+        get() = when (this) {
+            is Dirty -> OPCODE_DIRTY
+            is Clean -> OPCODE_CLEAN
+            is Remove -> OPCODE_REMOVE
+        }
 
-    data class Remove(override val key: String) : JournalOp {
-        override val opcode = OPCODE_REMOVE
+    companion object {
+        fun create(opcode: Byte, key: String) =
+            when (opcode) {
+                OPCODE_DIRTY -> Dirty(key)
+                OPCODE_CLEAN -> Clean(key)
+                OPCODE_REMOVE -> Remove(key)
+                else -> throw IllegalArgumentException()
+            }
+
+        private const val OPCODE_DIRTY: Byte = 1
+        private const val OPCODE_CLEAN: Byte = 2
+        private const val OPCODE_REMOVE: Byte = 3
     }
 }
-
-
-private fun DataOutputStream.writeLengthString(string: String) {
-    writeByte(string.length)
-    writeString(string)
-}
-
-private fun DataOutputStream.writeString(string: String) =
-    write(string.encodeToByteArray())
-
-
-private fun DataInputStream.readString() =
-    readString(readByte().toInt())
-
-private fun DataInputStream.readString(length: Int) =
-    readBytes(length).decodeToString()
-
-private fun DataInputStream.readBytes(count: Int) =
-    ByteArray(count).also { read(it) }
-
-private const val BUFFER_SIZE = 256 // Flushing after each operation
-
-private const val JOURNAL_MAGIC = "JOURNAL"
-private const val JOURNAL_VERSION: Byte = 1
-
-private const val OPCODE_DIRTY: Byte = 1
-private const val OPCODE_CLEAN: Byte = 2
-private const val OPCODE_REMOVE: Byte = 3

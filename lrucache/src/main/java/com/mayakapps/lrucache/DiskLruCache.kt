@@ -18,10 +18,10 @@ class DiskLruCache private constructor(
     private val tempJournalFile = File(directory, JOURNAL_FILE_TEMP)
     private val backupJournalFile = File(directory, JOURNAL_FILE_BACKUP)
 
-    private val lruCache = LruCache(
+    private val lruCache = LruCache<String, File>(
         maxSize = maxSize,
         sizeCalculator = { _, file -> file.length() },
-        onEntryRemoved = ::onEntryRemoved,
+        onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) },
         creationScope = cachingScope,
     )
 
@@ -29,8 +29,97 @@ class DiskLruCache private constructor(
     private lateinit var journalWriter: JournalWriter
     private val journalMutex = Mutex()
 
+    suspend fun get(key: String): File? = lruCache.get(key.transform())?.let { CachedFile(it) }
+
+    suspend fun getIfAvailable(key: String): File? =
+        lruCache.getIfAvailable(key.transform())?.let { CachedFile(it) }
+
+    suspend fun getOrPut(key: String, writeFunction: suspend (File) -> Boolean) =
+        lruCache.getOrPut(key.transform()) { creationFunction(it, writeFunction) }
+
+    suspend fun put(key: String, writeFunction: suspend (File) -> Boolean) =
+        lruCache.put(key.transform()) { creationFunction(it, writeFunction) }
+
+    suspend fun putAsync(key: String, writeFunction: suspend (File) -> Boolean) =
+        lruCache.putAsync(key.transform()) { creationFunction(it, writeFunction) }
+
+    suspend fun remove(key: String) {
+        // It's fine to consider the file is dirty now. Even if removal failed it's scheduled for
+        journalMutex.withLock {
+            journalWriter.writeDirty(key.transform())
+            redundantOpCount++
+        }
+
+        lruCache.remove(key.transform())
+    }
+
+    suspend fun delete() {
+        close()
+        if (directory.isDirectory) directory.deleteRecursively()
+        directory.mkdirs()
+    }
+
+    suspend fun close() {
+        lruCache.mapMutex.withLock {
+            if (::journalWriter.isInitialized) {
+                journalMutex.withLock {
+                    journalWriter.close()
+                }
+            }
+
+            for (deferred in lruCache.creationMap.values) deferred.cancel()
+        }
+    }
+
+
     private suspend fun String.transform() =
         keyTransformer?.transform(this) ?: this
+
+
+    private suspend fun creationFunction(
+        key: String,
+        writeFunction: suspend (File) -> Boolean,
+    ): File? {
+        val tempFile = File(directory, key + TEMP_EXT)
+        val cleanFile = File(directory, key)
+
+        journalMutex.withLock { journalWriter.writeDirty(key) }
+        if (writeFunction(tempFile) && tempFile.exists()) {
+            tempFile.renameToOrThrow(cleanFile, true)
+            tempFile.deleteOrThrow()
+            journalMutex.withLock {
+                journalWriter.writeClean(key)
+                redundantOpCount++
+            }
+            rebuildJournalIfRequired()
+            return CachedFile(cleanFile)
+        } else {
+            tempFile.deleteOrThrow()
+            journalMutex.withLock {
+                journalWriter.writeRemove(key)
+                redundantOpCount += 2
+            }
+            rebuildJournalIfRequired()
+            return null
+        }
+    }
+
+    private fun onEntryRemoved(key: String, oldValue: File) {
+        cachingScope.launch {
+            File(oldValue.path).deleteOrThrow()
+            File(oldValue.path + TEMP_EXT).deleteOrThrow()
+
+            if (::journalWriter.isInitialized) {
+                journalMutex.withLock {
+                    redundantOpCount += 2
+                    journalWriter.writeRemove(key)
+                }
+
+                rebuildJournalIfRequired()
+            }
+        }
+    }
+
 
     private suspend fun parseJournal() {
         val reader = JournalReader(journalFile)
@@ -120,95 +209,7 @@ class DiskLruCache private constructor(
         }
     }
 
-    suspend fun get(key: String): File? = lruCache.get(key.transform())?.let { CachedFile(it) }
-
-    suspend fun getIfAvailable(key: String): File? =
-        lruCache.getIfAvailable(key.transform())?.let { CachedFile(it) }
-
-    suspend fun getOrPut(key: String, writeFunction: suspend (File) -> Boolean) =
-        lruCache.getOrPut(key.transform()) { creationFunction(it, writeFunction) }
-
-    suspend fun put(key: String, writeFunction: suspend (File) -> Boolean) =
-        lruCache.put(key.transform()) { creationFunction(it, writeFunction) }
-
-    suspend fun putAsync(key: String, writeFunction: suspend (File) -> Boolean) =
-        lruCache.putAsync(key.transform()) { creationFunction(it, writeFunction) }
-
-    suspend fun remove(key: String) {
-        // It's fine to consider the file is dirty now. Even if removal failed it's scheduled for
-        journalMutex.withLock {
-            journalWriter.writeDirty(key.transform())
-            redundantOpCount++
-        }
-
-        lruCache.remove(key.transform())
-    }
-
-    private fun onEntryRemoved(evicted: Boolean, key: String, oldValue: File, newValue: File?) {
-        cachingScope.launch {
-            File(oldValue.path).deleteOrThrow()
-            File(oldValue.path + TEMP_EXT).deleteOrThrow()
-
-            if (::journalWriter.isInitialized) {
-                journalMutex.withLock {
-                    redundantOpCount += 2
-                    journalWriter.writeRemove(key)
-                }
-
-                rebuildJournalIfRequired()
-            }
-        }
-    }
-
-
-    private suspend fun creationFunction(
-        key: String,
-        writeFunction: suspend (File) -> Boolean,
-    ): File? {
-        val tempFile = File(directory, key + TEMP_EXT)
-        val cleanFile = File(directory, key)
-
-        journalMutex.withLock { journalWriter.writeDirty(key) }
-        if (writeFunction(tempFile) && tempFile.exists()) {
-            tempFile.renameToOrThrow(cleanFile, true)
-            tempFile.deleteOrThrow()
-            journalMutex.withLock {
-                journalWriter.writeClean(key)
-                redundantOpCount++
-            }
-            rebuildJournalIfRequired()
-            return CachedFile(cleanFile)
-        } else {
-            tempFile.deleteOrThrow()
-            journalMutex.withLock {
-                journalWriter.writeRemove(key)
-                redundantOpCount += 2
-            }
-            rebuildJournalIfRequired()
-            return null
-        }
-    }
-
-    suspend fun delete() {
-        close()
-        if (directory.isDirectory) directory.deleteRecursively()
-        directory.mkdirs()
-    }
-
-    suspend fun close() {
-        lruCache.mapMutex.withLock {
-            if (::journalWriter.isInitialized) {
-                journalMutex.withLock {
-                    journalWriter.close()
-                }
-            }
-
-            for (deferred in lruCache.creationMap.values) deferred.cancel()
-        }
-    }
-
     companion object {
-
         suspend fun open(
             directory: File,
             maxSize: Long,
@@ -258,29 +259,10 @@ class DiskLruCache private constructor(
             cache.rebuildJournal()
             return cache
         }
+
+        private const val TEMP_EXT = ".tmp"
+        private const val JOURNAL_FILE = "journal"
+        private const val JOURNAL_FILE_TEMP = JOURNAL_FILE + TEMP_EXT
+        private const val JOURNAL_FILE_BACKUP = "${JOURNAL_FILE}.bkp"
     }
 }
-
-private class CachedFile(file: File) : File(file.path) {
-
-    override fun delete(): Boolean = throwError()
-    override fun deleteOnExit() = throwError()
-    override fun renameTo(dest: File?): Boolean = throwError()
-
-    private fun throwError(): Nothing =
-        throw IOException("Cached files cannot be manually moved/deleted")
-}
-
-private fun File.renameToOrThrow(dest: File, deleteDest: Boolean) {
-    if (deleteDest) dest.deleteOrThrow()
-    if (!renameTo(dest)) throw IOException()
-}
-
-private fun File.deleteOrThrow() {
-    if (exists() && !delete()) throw IOException()
-}
-
-private const val TEMP_EXT = ".tmp"
-private const val JOURNAL_FILE = "journal"
-private const val JOURNAL_FILE_TEMP = "journal$TEMP_EXT"
-private const val JOURNAL_FILE_BACKUP = "journal.bkp"
