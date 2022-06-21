@@ -10,7 +10,7 @@ class KeyHasher {
         return hashedCache.getOrPut(key) {
             messageDigest.reset()
             messageDigest.update(key.encodeToByteArray())
-            Utils.sha256BytesToHex(messageDigest.digest())
+            messageDigest.digest().toHexString()
         }!! // Since our creation function never returns null. We can add !!
     }
 }
