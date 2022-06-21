@@ -1,9 +1,10 @@
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-
+pluginManagement {
     repositories {
-        google()
-        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    plugins {
+        kotlin("jvm").version(extra["kotlin.version"] as String)
     }
 }
 
