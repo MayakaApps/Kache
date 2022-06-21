@@ -1,15 +1,26 @@
-*.iml
+# User-specific stuff
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/shelf
+
+# Generated files
+.idea/**/contentModel.xml
+
+# Gradle
 .gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-/.idea/jarRepositories.xml
-.DS_Store
+.idea/**/gradle.xml
+.idea/**/libraries
+
+# Auto-import.
+.idea/artifacts
+.idea/compiler.xml
+.idea/jarRepositories.xml
+.idea/modules.xml
+.idea/*.iml
+.idea/modules
+*.iml
+*.ipr
+
+# Build
 build/
-/captures
-.externalNativeBuild
-.cxx
