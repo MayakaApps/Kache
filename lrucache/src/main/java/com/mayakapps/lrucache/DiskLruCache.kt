@@ -208,7 +208,6 @@ class DiskLruCache private constructor(
     }
 
     companion object {
-
         suspend fun open(
             directory: File,
             maxSize: Long,
@@ -258,29 +257,10 @@ class DiskLruCache private constructor(
             cache.rebuildJournal()
             return cache
         }
+
+        private const val TEMP_EXT = ".tmp"
+        private const val JOURNAL_FILE = "journal"
+        private const val JOURNAL_FILE_TEMP = JOURNAL_FILE + TEMP_EXT
+        private const val JOURNAL_FILE_BACKUP = "${JOURNAL_FILE}.bkp"
     }
 }
-
-private class CachedFile(file: File) : File(file.path) {
-
-    override fun delete(): Boolean = throwError()
-    override fun deleteOnExit() = throwError()
-    override fun renameTo(dest: File?): Boolean = throwError()
-
-    private fun throwError(): Nothing =
-        throw IOException("Cached files cannot be manually moved/deleted")
-}
-
-private fun File.renameToOrThrow(dest: File, deleteDest: Boolean) {
-    if (deleteDest) dest.deleteOrThrow()
-    if (!renameTo(dest)) throw IOException()
-}
-
-private fun File.deleteOrThrow() {
-    if (exists() && !delete()) throw IOException()
-}
-
-private const val TEMP_EXT = ".tmp"
-private const val JOURNAL_FILE = "journal"
-private const val JOURNAL_FILE_TEMP = "journal$TEMP_EXT"
-private const val JOURNAL_FILE_BACKUP = "journal.bkp"
