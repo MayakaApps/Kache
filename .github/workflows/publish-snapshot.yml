@@ -1,0 +1,38 @@
+name: Publish Snapshot
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+
+    runs-on: ubuntu-latest
+    if: github.repository == 'MayakaApps/KotlinizedLruCache'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
+
+      - name: Retrieve version
+        run: |
+          echo "VERSION_NAME=$(cat gradle.properties | grep -w "VERSION_NAME" | cut -d'=' -f2)" >> $GITHUB_ENV
+
+      - name: Publish snapshot
+        if: endsWith(env.VERSION_NAME, '-SNAPSHOT')
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: publishAllPublicationsToMavenCentralRepository --no-daemon --no-parallel
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
