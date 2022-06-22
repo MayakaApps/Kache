@@ -57,7 +57,31 @@ Don't forget to replace `<version>` with the latest/desired version found on the
 
 You can create your cache using `LruCache` constructor or `DiskLruCache.open`, then you can use the usual operators of get, put, and remove and their different implementations.
 
-Sample Code:
+Sample Code (`LruCache`):
+
+```kotlin
+val lruCache = LruCache<String, ByteArray>(
+  maxSize = 5 * 1024 * 1024, // 5 MB
+)
+
+// ...
+
+val newValue = lruCache.put(uniqueKey) {
+    try {
+        // Some CPU-intensive process - Returning a not null value means success
+    } catch (ex: Throwable) {
+        // Handle exception
+        null // Caching failed
+    }
+}
+
+// ...
+
+val cachedValue = lruCache.get(uniqueKey)
+
+```
+
+Sample Code (`DiskLruCache`):
 
 ```kotlin
 val lruCache = DiskLruCache.open(
@@ -67,7 +91,15 @@ val lruCache = DiskLruCache.open(
 
 // ...
 
-lruCache.getOrPut(imageFilename) { /* Download from network */ }
+lruCache.getOrPut(imageFilename) { cacheFile ->
+    try {
+        // downloadFromInternet(imageUrl)
+        true // Caching succeeded - Save the file
+    } catch (ex: IOException) {
+        // Handle exception
+        false // Caching failed - Delete the file
+    }
+}
 ```
 
 ## Documentation
@@ -76,9 +108,9 @@ See documentation [here](https://mayakaapps.github.io/KotlinizedLruCache/lrucach
 
 ## Benefits over acknowledged projects
 
-* New implementation which is coroutine-safe - not thread-blocking
-* Much simpler and modern API that is helps you do almost whatever you want using a single call.
-* (DiskLruCache) Binary journal instead of text-based journal which provides minor storage space.
+* Coroutine-friendly. Get rid of Java's blocking implementation.
+* Much simpler and modern API that helps you do almost whatever you want using a single call.
+* (DiskLruCache) Binary journal instead of text-based journal which consumes less storage.
 
 ## License
 
