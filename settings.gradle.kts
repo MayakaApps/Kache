@@ -4,9 +4,10 @@ pluginManagement {
     }
 
     plugins {
-        kotlin("jvm").version(extra["kotlin.version"] as String)
+        kotlin("jvm") version (extra["kotlin.version"] as String)
 
-        id("com.vanniktech.maven.publish").version("0.20.0")
+        id("org.jetbrains.dokka") version "1.7.0"
+        id("com.vanniktech.maven.publish") version "0.20.0"
     }
 }
 

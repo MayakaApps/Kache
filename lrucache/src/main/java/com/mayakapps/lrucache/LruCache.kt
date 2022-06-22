@@ -5,28 +5,47 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * A typealias that represents a function for calculating the size of a cache entry represented by the provided `key`
+ * and `value`.
+ *
+ * For example, for [File][java.io.File], you can use:
+ * ```
+ * { _, file -> file.length() }
+ * ```
+ *
+ * If the entries has the same size or their size can't be determined, you can just return 1.
+ */
 typealias SizeCalculator<K, V> = (key: K, value: V) -> Long
 
+/**
+ * A typealias that represents a listener that is triggered when a cache entry is removed.
+ *
+ *
+ * This is triggered when the entry represented by the `key` and `oldValue` is removed for any reason. If the removal
+ * was a result of reaching the max size of the cache, `evicted` is true, otherwise its value is false. If the entry
+ * was removed as a result of replacing it by one of the put operations, the new value is passed as `newValue`,
+ * otherwise, `newValue` is null.
+ */
 typealias EntryRemovedListener<K, V> = (evicted: Boolean, key: K, oldValue: V, newValue: V?) -> Unit
 
 /**
- * @param maxSize for caches that do not override {@link #sizeOf}, this is
- *     the maximum number of entries in the cache. For all other caches,
- *     this is the maximum sum of the sizes of the entries in this cache.
- * @param sizeCalculator function used for calculating the size of the elements.
- *     (Default: Always returns 1 to depend on items count)
- * @param maxSize for caches that do not override {@link #sizeOf}, this is
- *     the maximum number of entries in the cache. For all other caches,
- *     this is the maximum sum of the sizes of the entries in this cache.
- * @param maxSize for caches that do not override {@link #sizeOf}, this is
- *     the maximum number of entries in the cache. For all other caches,
- *     this is the maximum sum of the sizes of the entries in this cache.
+ * An in-memory Least Recently Used (LRU) cache.
+ *
+ * An LRU cache is a cache that holds strong references to a limited number of values. Each time a value is accessed,
+ * it is moved to the head of a queue. When a value is added to a full cache, the value at the end of that queue is
+ * evicted and may become eligible for garbage collection.
+ *
+ * @param maxSize The max size of this cache. For more information. See [LruCache.maxSize].
+ * @param sizeCalculator function used for calculating the size of the elements. See [SizeCalculator]
+ * @param onEntryRemoved listener called when an entry is removed for any reason. See [EntryRemovedListener]
+ * @param creationScope The coroutine scope used for executing `creationFunction` of put requests.
  */
 class LruCache<K : Any, V : Any>(
     maxSize: Long,
+    private val creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
     private val sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
     private val onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
-    private val creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
 ) {
     init {
         require(maxSize > 0) { "maxSize must be positive value" }
@@ -38,50 +57,58 @@ class LruCache<K : Any, V : Any>(
     internal val map = LinkedHashMap<K, V>(0, 0.75F, true)
     internal val mapMutex = Mutex()
 
+    /**
+     * The max size of this cache in units calculated by [sizeCalculator]. This represents the max number of entries
+     * if [sizeCalculator] used the default implementation (returning 1 for each entry),
+     */
     var maxSize = maxSize
         private set
 
-    /** Size of this cache in units. Not necessarily the number of elements. */
+    /**
+     * The current size of this cache in units calculated by [sizeCalculator]. This represents the current number of
+     * entries if [sizeCalculator] used the default implementation (returning 1 for each entry),
+     */
     var size = 0L
         private set
 
     /**
-     * Returns the value for {@code key} if it exists in the cache or wait for its
-     * creation if it is currently in progress. This returns null if a value is not
-     * cached and cannot be created. It may even throw exception for unhandled exceptions
-     * in creation block
+     * Returns the value for [key] if it exists in the cache or wait for its creation if it is currently in progress.
+     * This returns [defaultValue] if a value is not cached and wasn't in creation or cannot be created.
+     *
+     * It may even throw exceptions for unhandled exceptions in the currently in-progress creation block.
      */
     suspend fun getOrDefault(key: K, defaultValue: V): V =
         getFromCreation(key) ?: getIfAvailableOrDefault(key, defaultValue)
 
     /**
-     * Returns the value for {@code key} if it exists in the cache or wait for its
-     * creation if it is currently in progress. This returns null if a value is not
-     * cached and cannot be created. It may even throw exception for unhandled exceptions
-     * in creation block
+     * Returns the value for [key] if it exists in the cache or wait for its creation if it is currently in progress.
+     * This returns `null` if a value is not cached and wasn't in creation or cannot be created.
+     *
+     * It may even throw exceptions for unhandled exceptions in the currently in-progress creation block.
      */
     suspend fun get(key: K): V? =
         getFromCreation(key) ?: getIfAvailable(key)
 
-
     /**
-     * Returns the value for {@code key} if it exists in the cache or {@code defaultValue}
+     * Returns the value for [key] if it already exists in the cache or [defaultValue] if it doesn't exist or creation
+     * is still in progress.
      */
     suspend fun getIfAvailableOrDefault(key: K, defaultValue: V): V =
         getIfAvailable(key) ?: defaultValue
 
     /**
-     * Returns the value for {@code key} if it exists in the cache or null
+     * Returns the value for [key] if it already exists in the cache or `null` if it doesn't exist or creation is still
+     * in progress.
      */
     suspend fun getIfAvailable(key: K): V? =
         mapMutex.withLock { map[key] }
 
 
     /**
-     * Returns the value for {@code key} if it exists in the cache or can be
-     * created by {@code creationFunction}. If a value was returned, it is moved to the
-     * head of the queue. This returns null if a value is not cached and cannot
-     * be created.
+     * Returns the value for [key] if it exists in the cache, its creation is in progress or can be created by
+     * [creationFunction]. If a value was returned, it is moved to the head of the queue. This returns `null` if a
+     * value is not cached and cannot be created. You can imply that the creation has failed by returning `null`.
+     * Any unhandled exceptions inside [creationFunction] won't be handled.
      */
     suspend fun getOrPut(key: K, creationFunction: suspend (key: K) -> V?) =
         creationMutex.withLock {
@@ -89,19 +116,18 @@ class LruCache<K : Any, V : Any>(
         }
 
     /**
-     * Caches the result of {@code creationFunction} for {@code key}. The value is moved to the
-     * head of the queue.
-     *
-     * @return the result for the creation block or null if creation failed
+     * Creates a new entry for [key] using [creationFunction] and returns the new value. Any existing value or
+     * in-progress creation of [key] would be replaced by the new function. If a value was created, it is moved to the
+     * head of the queue. This returns `null` if the value cannot be created. You can imply that the creation has
+     * failed by returning `null`. Any unhandled exceptions inside [creationFunction] won't be handled.
      */
     suspend fun put(key: K, creationFunction: suspend (key: K) -> V?): V? =
         getFromCreation(key, putAsync(key, creationFunction))
 
     /**
-     * Caches the result of {@code creationFunction} for {@code key}. The value is moved to the
-     * head of the queue.
-     *
-     * @return the deferred for the creation block
+     * Creates a new entry for [key] using [creationFunction] and returns a [Deferred]. Any existing value or
+     * in-progress creation of [key] would be replaced by the new function. If a value was created, it is moved to the
+     * head of the queue. You can imply that the creation has failed by returning `null`.
      */
     suspend fun putAsync(key: K, creationFunction: suspend (key: K) -> V?): Deferred<V?> =
         creationMutex.withLock { internalPutAsync(key, creationFunction) }
@@ -143,9 +169,9 @@ class LruCache<K : Any, V : Any>(
     }
 
     /**
-     * Caches {@code value} for {@code key}. The value is moved to the head of the queue.
-     *
-     * @return the previous value mapped by {@code key}.
+     * Caches [value] for [key]. The value is moved to the head of the queue. If there is a previous value or
+     * in-progress creation, it will be removed/cancelled. It returns the previous value if it already exists,
+     * or `null`
      */
     suspend fun put(key: K, value: V): V? {
         val oldValue = mapMutex.withLock {
@@ -164,9 +190,7 @@ class LruCache<K : Any, V : Any>(
     }
 
     /**
-     * Removes the entry for {@code key} if it exists.
-     *
-     * @return the previous value mapped by {@code key}.
+     * Removes the entry and in-progress creation for [key] if it exists. It returns the previous value for [key].
      */
     suspend fun remove(key: K): V? {
         removeCreation(key)
@@ -182,20 +206,19 @@ class LruCache<K : Any, V : Any>(
     }
 
     /**
-     * Clear the cache, calling {@link #entryRemoved} on each removed entry.
+     * Clears the cache, calling [onEntryRemoved] on each removed entry.
      */
-    suspend fun evictAll() {
+    suspend fun clear() {
         for ((key, _) in creationMap) {
             removeCreation(key)
         }
 
-        trimToSize(maxSize = -1) // -1 will evict 0-sized elements
+        trimToSize(size = -1) // -1 will evict 0-sized elements
     }
 
     /**
-     * Sets the size of the cache.
-     *
-     * @param maxSize The new maximum size.
+     * Sets the max size of the cache to [maxSize]. If the new maxSize is smaller than the previous value, the cache
+     * would be trimmed.
      */
     suspend fun resize(maxSize: Long) {
         require(maxSize > 0) { "maxSize <= 0" }
@@ -204,29 +227,26 @@ class LruCache<K : Any, V : Any>(
     }
 
     /**
-     * Remove the eldest entries until the total of remaining entries is at or
-     * below the requested size.
-     *
-     * @param maxSize the maximum size of the cache before returning. May be -1
-     *            to evict even 0-sized elements.
+     * Remove the eldest entries until the total of remaining entries is/at/or below [size]. It won't affect the max
+     * size of the cache, allowing it to grow again.
      */
-    suspend fun trimToSize(maxSize: Long) {
+    suspend fun trimToSize(size: Long) {
         mapMutex.withLock {
-            nonLockedTrimToSize(maxSize)
+            nonLockedTrimToSize(size)
         }
     }
 
-    private fun nonLockedTrimToSize(maxSize: Long) {
+    private fun nonLockedTrimToSize(size: Long) {
         with(map.iterator()) {
             forEach { (key, value) ->
-                if (size <= maxSize) return@forEach
+                if (this@LruCache.size <= size) return@forEach
                 remove()
-                size -= safeSizeOf(key, value)
+                this@LruCache.size -= safeSizeOf(key, value)
                 onEntryRemoved(true, key, value, null)
             }
         }
 
-        check(size >= 0 || (map.isEmpty() && size != 0L)) {
+        check(this.size >= 0 || (map.isEmpty() && this.size != 0L)) {
             "sizeCalculator is reporting inconsistent results!"
         }
     }
