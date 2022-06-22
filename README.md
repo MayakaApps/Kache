@@ -74,6 +74,12 @@ lruCache.getOrPut(imageFilename) { /* Download from network */ }
 
 See documentation [here](https://mayakaapps.github.io/KotlinizedLruCache/lrucache/com.mayakapps.lrucache/index.html)
 
+## Benefits over acknowledged projects
+
+* New implementation which is coroutine-safe - not thread-blocking
+* Much simpler and modern API that is helps you do almost whatever you want using a single call.
+* (DiskLruCache) Binary journal instead of text-based journal which provides minor storage space.
+
 ## License
 
 This library is distributed under the MIT license.
@@ -86,6 +92,8 @@ planning to fix. This allows better discussion and coordination of efforts. You 
 bugs/features that needs to be fixed/implemented.
 
 ## Acknowledgements
+
+These amazing projects have all credit for establishing the algorithms and base implementation for this project.
 
 * Android's [LruCache](https://developer.android.com/reference/android/util/LruCache)
 * [Jake Wharton](https://github.com/JakeWharton)'s [DiskLruCache](https://github.com/JakeWharton/DiskLruCache)
