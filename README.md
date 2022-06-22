@@ -106,7 +106,7 @@ lruCache.getOrPut(imageFilename) { cacheFile ->
 
 See documentation [here](https://mayakaapps.github.io/KotlinizedLruCache/lrucache/com.mayakapps.lrucache/index.html)
 
-## Benefits over acknowledged projects
+## Why use Kotlinized LRU Cache?
 
 * Coroutine-friendly. Get rid of Java's blocking implementation.
 * Much simpler and modern API that helps you do almost whatever you want using a single call.
