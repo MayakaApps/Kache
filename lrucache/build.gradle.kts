@@ -16,7 +16,7 @@ kotlin {
 
     @Suppress("UNUSED_VARIABLE")
     sourceSets {
-        val jvmMain by getting {
+        val commonMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
             }
