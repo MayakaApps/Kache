@@ -50,6 +50,10 @@ kotlin {
 
         val appleMain by creating {
             dependsOn(commonMain)
+
+            dependencies {
+                implementation("co.touchlab:stately-iso-collections:1.2.0")
+            }
         }
 
         val appleTest by creating {
