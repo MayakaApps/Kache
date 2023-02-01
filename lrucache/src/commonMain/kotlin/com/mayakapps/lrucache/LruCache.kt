@@ -3,18 +3,17 @@ package com.mayakapps.lrucache
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A typealias that represents a function for calculating the size of a cache entry represented by the provided `key`
  * and `value`.
  *
- * For example, for [File][java.io.File], you can use:
+ * For example, for [String][String], you can use:
  * ```
- * { _, file -> file.length() }
+ * { _, text -> text.length }
  * ```
  *
- * If the entries has the same size or their size can't be determined, you can just return 1.
+ * If the entries have the same size or their size can't be determined, you can just return 1.
  */
 typealias SizeCalculator<K, V> = (key: K, value: V) -> Long
 
@@ -51,10 +50,10 @@ class LruCache<K : Any, V : Any>(
         require(maxSize > 0) { "maxSize must be positive value" }
     }
 
-    internal val creationMap = ConcurrentHashMap<K, Deferred<V?>>(0, 0.75F, 1)
+    internal val creationMap = ConcurrentMutableMap<K, Deferred<V?>>()
     private val creationMutex = Mutex()
 
-    internal val map = LinkedHashMap<K, V>(0, 0.75F, true)
+    internal val map = LinkedHashMap<K, V>(0, 0.75F)
     internal val mapMutex = Mutex()
 
     /**
@@ -278,7 +277,7 @@ class LruCache<K : Any, V : Any>(
     private fun removeCreation(key: K, replacedWith: Int? = null) {
         val deferred = creationMap.remove(key)
         deferred?.cancel(
-            message = "The cached element was removed before creation",
+            message = CANCELLATION_MESSAGE,
             cause = replacedWith?.let { DeferredReplacedException(it) },
         )
     }
@@ -287,4 +286,6 @@ class LruCache<K : Any, V : Any>(
 private const val CODE_CREATION = 1
 private const val CODE_VALUE = 2
 
-private class DeferredReplacedException(val replacedWith: Int) : CancellationException()
+private class DeferredReplacedException(val replacedWith: Int) : CancellationException(CANCELLATION_MESSAGE)
+
+private const val CANCELLATION_MESSAGE = "The cached element was removed before creation"

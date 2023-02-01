@@ -7,7 +7,7 @@ plugins {
     id("com.vanniktech.maven.publish") apply false
 }
 
-subprojects {
+allprojects {
     repositories {
         mavenCentral()
     }
