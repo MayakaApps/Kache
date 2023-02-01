@@ -238,7 +238,7 @@ class DiskLruCache private constructor(
                     tempWriter.writeClean(key)
                 }
 
-                lruCache.creationMap.forEach { (key, _) -> tempWriter.writeDirty(key) }
+                lruCache.creationMap.forEachKey(1) { key -> tempWriter.writeDirty(key) }
             }
 
             if (journalFile.exists()) journalFile.renameToOrThrow(backupJournalFile, true)

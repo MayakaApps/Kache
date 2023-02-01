@@ -209,7 +209,7 @@ class LruCache<K : Any, V : Any>(
      * Clears the cache, calling [onEntryRemoved] on each removed entry.
      */
     suspend fun clear() {
-        for ((key, _) in creationMap) {
+        for (key in creationMap.keys) {
             removeCreation(key)
         }
 
