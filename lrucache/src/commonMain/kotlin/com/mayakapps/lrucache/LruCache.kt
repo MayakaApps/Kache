@@ -163,6 +163,7 @@ class LruCache<K : Any, V : Any>(
             creationMap.remove(key)
         }
 
+        removeCreation(key, CODE_CREATION)
         creationMap[key] = deferred
         return deferred
     }
