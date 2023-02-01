@@ -213,7 +213,14 @@ class LruCache<K : Any, V : Any>(
             removeCreation(key)
         }
 
-        trimToSize(size = -1) // -1 will evict 0-sized elements
+        mapMutex.withLock {
+            with(map.iterator()) {
+                forEach { (key, value) ->
+                    remove()
+                    onEntryRemoved(false, key, value, null)
+                }
+            }
+        }
     }
 
     /**
