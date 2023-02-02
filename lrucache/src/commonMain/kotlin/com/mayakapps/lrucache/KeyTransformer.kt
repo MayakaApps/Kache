@@ -1,7 +1,5 @@
 package com.mayakapps.lrucache
 
-import java.security.MessageDigest
-
 /**
  * Base interface that can be used to implement custom key transformers for [DiskLruCache].
  *
@@ -15,6 +13,8 @@ fun interface KeyTransformer {
      * To be safe, just limit yourself to characters, numbers, and underscores when possible. For more information,
      * see [this Wikipedia page](https://en.wikipedia.org/wiki/Filename#Comparison_of_filename_limitations).
      */
+    // Suppress false-positive: https://youtrack.jetbrains.com/issue/KTIJ-7642
+    @Suppress("FUN_INTERFACE_WITH_SUSPEND_FUNCTION")
     suspend fun transform(oldKey: String): String
 }
 
@@ -23,18 +23,10 @@ fun interface KeyTransformer {
  *
  * The last 1000 hashed values are cached in memory. This is used as the default [KeyTransformer] for [DiskLruCache].
  */
-object SHA256KeyHasher : KeyTransformer {
-    private val hashedCache = LruCache<String, String>(maxSize = 1000)
-    private val messageDigest = MessageDigest.getInstance("SHA-256")
+expect object SHA256KeyHasher : KeyTransformer {
 
     /**
      * Returns an SHA-256 hash of [oldKey] which may be newly generated or previously cached.
      */
-    override suspend fun transform(oldKey: String): String = hashedCache.getOrPut(oldKey) {
-        messageDigest.run {
-            reset()
-            update(oldKey.encodeToByteArray())
-            digest().toHexString()
-        }
-    }!! // Since our creation function never returns null, we can use not-null assertion
+    override suspend fun transform(oldKey: String): String
 }
