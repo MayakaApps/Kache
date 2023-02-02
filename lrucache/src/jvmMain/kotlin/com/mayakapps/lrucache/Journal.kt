@@ -1,13 +1,12 @@
 package com.mayakapps.lrucache
 
+import com.mayakapps.lrucache.journal.JOURNAL_MAGIC
+import com.mayakapps.lrucache.journal.JOURNAL_VERSION
 import com.mayakapps.lrucache.journal.JournalOp
 import java.io.*
 
 // This is more than enough as the buffer is flushing after each operation
 private const val BUFFER_SIZE = 256
-
-private const val JOURNAL_MAGIC = "JOURNAL"
-private const val JOURNAL_VERSION: Byte = 1
 
 internal class JournalWriter(journalFile: File, append: Boolean = true) : Closeable {
     private val outputStream =
