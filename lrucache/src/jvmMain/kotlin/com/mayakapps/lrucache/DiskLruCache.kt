@@ -1,5 +1,6 @@
 package com.mayakapps.lrucache
 
+import com.mayakapps.lrucache.journal.JournalOp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
