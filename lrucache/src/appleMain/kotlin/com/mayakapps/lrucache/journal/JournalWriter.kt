@@ -1,6 +1,6 @@
 package com.mayakapps.lrucache.journal
 
-import com.mayakapps.lrucache.Closeable
+import com.mayakapps.lrucache.io.Closeable
 
 internal actual class JournalWriter actual constructor(path: String, append: Boolean) : Closeable {
 

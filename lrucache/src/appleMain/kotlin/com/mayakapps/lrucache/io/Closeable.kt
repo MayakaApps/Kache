@@ -1,4 +1,4 @@
-package com.mayakapps.lrucache
+package com.mayakapps.lrucache.io
 
 internal actual interface Closeable {
     actual fun close()

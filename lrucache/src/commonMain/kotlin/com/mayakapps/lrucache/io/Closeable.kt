@@ -1,4 +1,4 @@
-package com.mayakapps.lrucache
+package com.mayakapps.lrucache.io
 
 internal expect interface Closeable {
     fun close()

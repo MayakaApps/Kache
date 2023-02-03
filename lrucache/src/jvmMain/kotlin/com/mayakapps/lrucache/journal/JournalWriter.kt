@@ -1,6 +1,6 @@
 package com.mayakapps.lrucache.journal
 
-import com.mayakapps.lrucache.Closeable
+import com.mayakapps.lrucache.io.Closeable
 import com.mayakapps.lrucache.writeLengthString
 import com.mayakapps.lrucache.writeString
 import java.io.DataOutputStream
