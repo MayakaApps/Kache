@@ -168,7 +168,7 @@ class DiskLruCache private constructor(
 
 
     private suspend fun parseJournal() {
-        val reader = JournalReader(journalFile)
+        val reader = JournalReader(journalFile.path)
         val allOps = reader.use { it.readFully() }
         val opsByKey = allOps.groupBy { it.key }
 
@@ -204,7 +204,7 @@ class DiskLruCache private constructor(
             rebuildJournal()
         } else {
             // Initialize writer first to record REMOVE operations when trimming
-            journalWriter = JournalWriter(journalFile)
+            journalWriter = JournalWriter(journalFile.path)
             readEntries.forEach { (key, file) -> lruCache.put(key, file) }
         }
     }
@@ -233,7 +233,7 @@ class DiskLruCache private constructor(
             if (::journalWriter.isInitialized) journalWriter.close()
 
             tempJournalFile.deleteOrThrow()
-            JournalWriter(tempJournalFile).use { tempWriter ->
+            JournalWriter(tempJournalFile.path).use { tempWriter ->
                 tempWriter.writeHeader()
 
                 lruCache.map.forEach { (key, _) ->
@@ -247,7 +247,7 @@ class DiskLruCache private constructor(
             tempJournalFile.renameToOrThrow(journalFile, false)
             backupJournalFile.delete()
 
-            journalWriter = JournalWriter(journalFile)
+            journalWriter = JournalWriter(journalFile.path)
             redundantOpCount = 0
         }
     }
