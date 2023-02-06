@@ -4,10 +4,7 @@ import com.mayakapps.lrucache.io.*
 import com.mayakapps.lrucache.journal.JournalOp
 import com.mayakapps.lrucache.journal.JournalReader
 import com.mayakapps.lrucache.journal.JournalWriter
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -19,18 +16,18 @@ import kotlinx.coroutines.sync.withLock
  * evicted and may become eligible for garbage collection.
  */
 class DiskLruCache private constructor(
-    private val directoryPath: String,
+    private val directory: File,
     maxSize: Long,
     private val creationScope: CoroutineScope,
     private val keyTransformer: KeyTransformer?,
 ) {
-    private val journalFile = Files.appendPath(directoryPath, JOURNAL_FILE)
-    private val tempJournalFile = Files.appendPath(directoryPath, JOURNAL_FILE_TEMP)
-    private val backupJournalFile = Files.appendPath(directoryPath, JOURNAL_FILE_BACKUP)
+    private val journalFile = getFile(directory, JOURNAL_FILE)
+    private val tempJournalFile = getFile(directory, JOURNAL_FILE_TEMP)
+    private val backupJournalFile = getFile(directory, JOURNAL_FILE_BACKUP)
 
-    private val lruCache = LruCache<String, String>(
+    private val lruCache = LruCache<String, File>(
         maxSize = maxSize,
-        sizeCalculator = { _, file -> Files.size(file) },
+        sizeCalculator = { _, file -> FileManager.size(file) },
         onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) },
         creationScope = creationScope,
     )
@@ -45,14 +42,14 @@ class DiskLruCache private constructor(
      *
      * It may even throw exceptions for unhandled exceptions in the currently in-progress creation block.
      */
-    suspend fun get(key: String): String? = lruCache.get(key.transform())
+    suspend fun get(key: String): String? = lruCache.get(key.transform())?.filePath
 
     /**
      * Returns the file for [key] if it already exists in the cache or `null` if it doesn't exist or creation is still
      * in progress.
      */
     suspend fun getIfAvailable(key: String): String? =
-        lruCache.getIfAvailable(key.transform())
+        lruCache.getIfAvailable(key.transform())?.filePath
 
     /**
      * Returns the file for [key] if it exists in the cache, its creation is in progress or can be created by
@@ -61,7 +58,7 @@ class DiskLruCache private constructor(
      * Any unhandled exceptions inside [creationFunction] won't be handled.
      */
     suspend fun getOrPut(key: String, writeFunction: suspend (String) -> Boolean) =
-        lruCache.getOrPut(key.transform()) { creationFunction(it, writeFunction) }
+        lruCache.getOrPut(key.transform()) { creationFunction(it, writeFunction) }?.filePath
 
     /**
      * Creates a new file for [key] using [creationFunction] and returns the new value. Any existing file or
@@ -70,7 +67,7 @@ class DiskLruCache private constructor(
      * failed by returning `false`. Any unhandled exceptions inside [creationFunction] won't be handled.
      */
     suspend fun put(key: String, writeFunction: suspend (String) -> Boolean) =
-        lruCache.put(key.transform()) { creationFunction(it, writeFunction) }
+        lruCache.put(key.transform()) { creationFunction(it, writeFunction) }?.filePath
 
     /**
      * Creates a new file for [key] using [creationFunction] and returns a [Deferred]. Any existing file or
@@ -78,7 +75,9 @@ class DiskLruCache private constructor(
      * head of the queue. You can imply that the creation has failed by returning `null`.
      */
     suspend fun putAsync(key: String, writeFunction: suspend (String) -> Boolean) =
-        lruCache.putAsync(key.transform()) { creationFunction(it, writeFunction) }
+        creationScope.async {
+            lruCache.putAsync(key.transform()) { creationFunction(it, writeFunction) }.await()?.filePath
+        }
 
     /**
      * Removes the entry and in-progress creation for [key] if it exists. It returns the previous value for [key].
@@ -98,8 +97,8 @@ class DiskLruCache private constructor(
      */
     suspend fun clear() {
         close()
-        if (Files.isDirectory(directoryPath)) Files.deleteRecursively(directoryPath)
-        Files.mkdirs(directoryPath)
+        if (FileManager.isDirectory(directory)) FileManager.deleteRecursively(directory)
+        FileManager.mkdirs(directory)
     }
 
     /**
@@ -125,14 +124,14 @@ class DiskLruCache private constructor(
     private suspend fun creationFunction(
         key: String,
         writeFunction: suspend (String) -> Boolean,
-    ): String? {
-        val tempFile = Files.appendPath(directoryPath, key + TEMP_EXT)
-        val cleanFile = Files.appendPath(directoryPath, key)
+    ): File? {
+        val tempFile = getFile(directory, key + TEMP_EXT)
+        val cleanFile = getFile(directory, key)
 
         journalMutex.withLock { journalWriter.writeDirty(key) }
-        if (writeFunction(tempFile) && Files.exists(tempFile)) {
-            Files.renameToOrThrow(tempFile, cleanFile, true)
-            Files.deleteOrThrow(tempFile)
+        if (writeFunction(tempFile.filePath) && FileManager.exists(tempFile)) {
+            FileManager.renameToOrThrow(tempFile, cleanFile, true)
+            FileManager.deleteOrThrow(tempFile)
             journalMutex.withLock {
                 journalWriter.writeClean(key)
                 redundantOpCount++
@@ -140,7 +139,7 @@ class DiskLruCache private constructor(
             rebuildJournalIfRequired()
             return cleanFile
         } else {
-            Files.deleteOrThrow(tempFile)
+            FileManager.deleteOrThrow(tempFile)
             journalMutex.withLock {
                 journalWriter.writeRemove(key)
                 redundantOpCount += 2
@@ -150,10 +149,10 @@ class DiskLruCache private constructor(
         }
     }
 
-    private fun onEntryRemoved(key: String, oldValue: String) {
+    private fun onEntryRemoved(key: String, oldValue: File) {
         creationScope.launch {
-            Files.deleteOrThrow(oldValue)
-            Files.deleteOrThrow(oldValue + TEMP_EXT)
+            FileManager.deleteOrThrow(oldValue)
+            FileManager.deleteOrThrow(oldValue.appendExt(TEMP_EXT))
 
             if (::journalWriter.isInitialized) {
                 journalMutex.withLock {
@@ -168,26 +167,26 @@ class DiskLruCache private constructor(
 
 
     private suspend fun parseJournal() {
-        val reader = JournalReader(journalFile)
+        val reader = JournalReader(journalFile.filePath)
         val allOps = reader.use { it.readFully() }
         val opsByKey = allOps.groupBy { it.key }
 
-        val readEntries = mutableListOf<Pair<String, String>>()
+        val readEntries = mutableListOf<Pair<String, File>>()
         for ((key, ops) in opsByKey) {
             val operation = ops.last()
-            val file = Files.appendPath(directoryPath, key)
-            val tempFile = Files.appendPath(directoryPath, key + TEMP_EXT)
+            val file = getFile(directory, key)
+            val tempFile = getFile(directory, key + TEMP_EXT)
 
             when (operation) {
                 is JournalOp.Clean -> {
-                    if (Files.exists(file)) {
+                    if (FileManager.exists(file)) {
                         readEntries.add(key to file)
                     }
                 }
 
                 is JournalOp.Dirty -> {
-                    Files.deleteOrThrow(file)
-                    Files.deleteOrThrow(tempFile)
+                    FileManager.deleteOrThrow(file)
+                    FileManager.deleteOrThrow(tempFile)
                 }
 
                 is JournalOp.Remove -> {
@@ -204,15 +203,15 @@ class DiskLruCache private constructor(
             rebuildJournal()
         } else {
             // Initialize writer first to record REMOVE operations when trimming
-            journalWriter = JournalWriter(journalFile)
+            journalWriter = JournalWriter(journalFile.filePath)
             readEntries.forEach { (key, file) -> lruCache.put(key, file) }
         }
     }
 
     private suspend fun clearDirectory() = lruCache.mapMutex.withLock {
         val files = lruCache.map.values
-        for (file in Files.listContent(directoryPath) ?: emptyList()) {
-            if (file !in files) Files.deleteOrThrow(file)
+        for (file in FileManager.listContent(directory) ?: emptyList()) {
+            if (file !in files) FileManager.deleteOrThrow(file)
         }
     }
 
@@ -232,8 +231,8 @@ class DiskLruCache private constructor(
         journalMutex.withLock {
             if (::journalWriter.isInitialized) journalWriter.close()
 
-            Files.deleteOrThrow(tempJournalFile)
-            JournalWriter(tempJournalFile).use { tempWriter ->
+            FileManager.deleteOrThrow(tempJournalFile)
+            JournalWriter(tempJournalFile.filePath).use { tempWriter ->
                 tempWriter.writeHeader()
 
                 lruCache.map.forEach { (key, _) ->
@@ -243,11 +242,11 @@ class DiskLruCache private constructor(
                 lruCache.creationMap.keys.forEach { key -> tempWriter.writeDirty(key) }
             }
 
-            if (Files.exists(journalFile)) Files.renameToOrThrow(journalFile, backupJournalFile, true)
-            Files.renameToOrThrow(tempJournalFile, journalFile, false)
-            Files.delete(backupJournalFile)
+            if (FileManager.exists(journalFile)) FileManager.renameToOrThrow(journalFile, backupJournalFile, true)
+            FileManager.renameToOrThrow(tempJournalFile, journalFile, false)
+            FileManager.delete(backupJournalFile)
 
-            journalWriter = JournalWriter(journalFile)
+            journalWriter = JournalWriter(journalFile.filePath)
             redundantOpCount = 0
         }
     }
@@ -271,35 +270,36 @@ class DiskLruCache private constructor(
         ): DiskLruCache {
             require(maxSize > 0) { "maxSize must be positive value" }
 
+            val directory = getFile(directoryPath)
             val creationScope = CoroutineScope(creationDispatcher)
 
-            val journalFile = Files.appendPath(directoryPath, JOURNAL_FILE)
-            val tempJournalFile = Files.appendPath(directoryPath, JOURNAL_FILE_TEMP)
-            val backupJournalFile = Files.appendPath(directoryPath, JOURNAL_FILE_BACKUP)
+            val journalFile = getFile(directory, JOURNAL_FILE)
+            val tempJournalFile = getFile(directory, JOURNAL_FILE_TEMP)
+            val backupJournalFile = getFile(directory, JOURNAL_FILE_BACKUP)
 
             // If a backup file exists, use it instead.
-            if (Files.exists(backupJournalFile)) {
+            if (FileManager.exists(backupJournalFile)) {
                 // If journal file also exists just delete backup file.
-                if (Files.exists(journalFile)) {
-                    Files.delete(backupJournalFile)
+                if (FileManager.exists(journalFile)) {
+                    FileManager.delete(backupJournalFile)
                 } else {
-                    Files.renameToOrThrow(backupJournalFile, journalFile, false)
+                    FileManager.renameToOrThrow(backupJournalFile, journalFile, false)
                 }
             }
 
             // If a temp file exists, delete it
-            Files.deleteOrThrow(tempJournalFile)
+            FileManager.deleteOrThrow(tempJournalFile)
 
             // Prefer to pick up where we left off.
-            if (Files.exists(Files.appendPath(directoryPath, JOURNAL_FILE))) {
-                val cache = DiskLruCache(directoryPath, maxSize, creationScope, keyTransformer)
+            if (FileManager.exists(getFile(directory, JOURNAL_FILE))) {
+                val cache = DiskLruCache(directory, maxSize, creationScope, keyTransformer)
                 try {
                     cache.parseJournal()
                     return cache
                 } catch (journalIsCorrupt: IOException) {
                     println(
                         "DiskLruCache "
-                                + directoryPath
+                                + directory
                                 + " is corrupt: "
                                 + journalIsCorrupt.message
                                 + ", removing"
@@ -309,8 +309,8 @@ class DiskLruCache private constructor(
             }
 
             // Create a new empty cache.
-            Files.mkdirs(directoryPath)
-            val cache = DiskLruCache(directoryPath, maxSize, creationScope, keyTransformer)
+            FileManager.mkdirs(directory)
+            val cache = DiskLruCache(directory, maxSize, creationScope, keyTransformer)
             cache.rebuildJournal()
             return cache
         }
