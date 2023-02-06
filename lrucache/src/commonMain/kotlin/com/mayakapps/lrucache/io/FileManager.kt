@@ -1,6 +1,6 @@
 package com.mayakapps.lrucache.io
 
-internal expect object FileManager {
+internal interface FileManager {
 
     fun exists(file: File): Boolean
 
@@ -18,6 +18,8 @@ internal expect object FileManager {
 
     fun mkdirs(file: File): Boolean
 }
+
+internal expect object DefaultFileManager: FileManager
 
 internal fun FileManager.renameToOrThrow(oldFile: File, newFile: File, deleteDest: Boolean) {
     if (deleteDest) deleteOrThrow(newFile)

@@ -16,6 +16,7 @@ import kotlinx.coroutines.sync.withLock
  * evicted and may become eligible for garbage collection.
  */
 class DiskLruCache private constructor(
+    private val fileManager: FileManager,
     private val directory: File,
     maxSize: Long,
     private val creationScope: CoroutineScope,
@@ -27,7 +28,7 @@ class DiskLruCache private constructor(
 
     private val lruCache = LruCache<String, File>(
         maxSize = maxSize,
-        sizeCalculator = { _, file -> FileManager.size(file) },
+        sizeCalculator = { _, file -> fileManager.size(file) },
         onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) },
         creationScope = creationScope,
     )
@@ -97,8 +98,8 @@ class DiskLruCache private constructor(
      */
     suspend fun clear() {
         close()
-        if (FileManager.isDirectory(directory)) FileManager.deleteRecursively(directory)
-        FileManager.mkdirs(directory)
+        if (fileManager.isDirectory(directory)) fileManager.deleteRecursively(directory)
+        fileManager.mkdirs(directory)
     }
 
     /**
@@ -129,9 +130,9 @@ class DiskLruCache private constructor(
         val cleanFile = getFile(directory, key)
 
         journalMutex.withLock { journalWriter.writeDirty(key) }
-        if (writeFunction(tempFile.filePath) && FileManager.exists(tempFile)) {
-            FileManager.renameToOrThrow(tempFile, cleanFile, true)
-            FileManager.deleteOrThrow(tempFile)
+        if (writeFunction(tempFile.filePath) && fileManager.exists(tempFile)) {
+            fileManager.renameToOrThrow(tempFile, cleanFile, true)
+            fileManager.deleteOrThrow(tempFile)
             journalMutex.withLock {
                 journalWriter.writeClean(key)
                 redundantOpCount++
@@ -139,7 +140,7 @@ class DiskLruCache private constructor(
             rebuildJournalIfRequired()
             return cleanFile
         } else {
-            FileManager.deleteOrThrow(tempFile)
+            fileManager.deleteOrThrow(tempFile)
             journalMutex.withLock {
                 journalWriter.writeRemove(key)
                 redundantOpCount += 2
@@ -151,8 +152,8 @@ class DiskLruCache private constructor(
 
     private fun onEntryRemoved(key: String, oldValue: File) {
         creationScope.launch {
-            FileManager.deleteOrThrow(oldValue)
-            FileManager.deleteOrThrow(oldValue.appendExt(TEMP_EXT))
+            fileManager.deleteOrThrow(oldValue)
+            fileManager.deleteOrThrow(oldValue.appendExt(TEMP_EXT))
 
             if (::journalWriter.isInitialized) {
                 journalMutex.withLock {
@@ -179,14 +180,14 @@ class DiskLruCache private constructor(
 
             when (operation) {
                 is JournalOp.Clean -> {
-                    if (FileManager.exists(file)) {
+                    if (fileManager.exists(file)) {
                         readEntries.add(key to file)
                     }
                 }
 
                 is JournalOp.Dirty -> {
-                    FileManager.deleteOrThrow(file)
-                    FileManager.deleteOrThrow(tempFile)
+                    fileManager.deleteOrThrow(file)
+                    fileManager.deleteOrThrow(tempFile)
                 }
 
                 is JournalOp.Remove -> {
@@ -210,8 +211,8 @@ class DiskLruCache private constructor(
 
     private suspend fun clearDirectory() = lruCache.mapMutex.withLock {
         val files = lruCache.map.values
-        for (file in FileManager.listContent(directory) ?: emptyList()) {
-            if (file !in files) FileManager.deleteOrThrow(file)
+        for (file in fileManager.listContent(directory) ?: emptyList()) {
+            if (file !in files) fileManager.deleteOrThrow(file)
         }
     }
 
@@ -231,7 +232,7 @@ class DiskLruCache private constructor(
         journalMutex.withLock {
             if (::journalWriter.isInitialized) journalWriter.close()
 
-            FileManager.deleteOrThrow(tempJournalFile)
+            fileManager.deleteOrThrow(tempJournalFile)
             JournalWriter(tempJournalFile.filePath).use { tempWriter ->
                 tempWriter.writeHeader()
 
@@ -242,9 +243,9 @@ class DiskLruCache private constructor(
                 lruCache.creationMap.keys.forEach { key -> tempWriter.writeDirty(key) }
             }
 
-            if (FileManager.exists(journalFile)) FileManager.renameToOrThrow(journalFile, backupJournalFile, true)
-            FileManager.renameToOrThrow(tempJournalFile, journalFile, false)
-            FileManager.delete(backupJournalFile)
+            if (fileManager.exists(journalFile)) fileManager.renameToOrThrow(journalFile, backupJournalFile, true)
+            fileManager.renameToOrThrow(tempJournalFile, journalFile, false)
+            fileManager.delete(backupJournalFile)
 
             journalWriter = JournalWriter(journalFile.filePath)
             redundantOpCount = 0
@@ -267,6 +268,14 @@ class DiskLruCache private constructor(
             maxSize: Long,
             creationDispatcher: CoroutineDispatcher,
             keyTransformer: KeyTransformer? = SHA256KeyHasher,
+        ) = Companion.open(DefaultFileManager, directoryPath, maxSize, creationDispatcher, keyTransformer)
+
+        internal suspend fun open(
+            fileManager: FileManager,
+            directoryPath: String,
+            maxSize: Long,
+            creationDispatcher: CoroutineDispatcher,
+            keyTransformer: KeyTransformer? = SHA256KeyHasher,
         ): DiskLruCache {
             require(maxSize > 0) { "maxSize must be positive value" }
 
@@ -278,21 +287,21 @@ class DiskLruCache private constructor(
             val backupJournalFile = getFile(directory, JOURNAL_FILE_BACKUP)
 
             // If a backup file exists, use it instead.
-            if (FileManager.exists(backupJournalFile)) {
+            if (fileManager.exists(backupJournalFile)) {
                 // If journal file also exists just delete backup file.
-                if (FileManager.exists(journalFile)) {
-                    FileManager.delete(backupJournalFile)
+                if (fileManager.exists(journalFile)) {
+                    fileManager.delete(backupJournalFile)
                 } else {
-                    FileManager.renameToOrThrow(backupJournalFile, journalFile, false)
+                    fileManager.renameToOrThrow(backupJournalFile, journalFile, false)
                 }
             }
 
             // If a temp file exists, delete it
-            FileManager.deleteOrThrow(tempJournalFile)
+            fileManager.deleteOrThrow(tempJournalFile)
 
             // Prefer to pick up where we left off.
-            if (FileManager.exists(getFile(directory, JOURNAL_FILE))) {
-                val cache = DiskLruCache(directory, maxSize, creationScope, keyTransformer)
+            if (fileManager.exists(getFile(directory, JOURNAL_FILE))) {
+                val cache = DiskLruCache(fileManager, directory, maxSize, creationScope, keyTransformer)
                 try {
                     cache.parseJournal()
                     return cache
@@ -309,8 +318,8 @@ class DiskLruCache private constructor(
             }
 
             // Create a new empty cache.
-            FileManager.mkdirs(directory)
-            val cache = DiskLruCache(directory, maxSize, creationScope, keyTransformer)
+            fileManager.mkdirs(directory)
+            val cache = DiskLruCache(fileManager, directory, maxSize, creationScope, keyTransformer)
             cache.rebuildJournal()
             return cache
         }
