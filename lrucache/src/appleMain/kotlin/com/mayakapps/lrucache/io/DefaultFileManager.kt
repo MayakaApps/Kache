@@ -3,6 +3,8 @@ package com.mayakapps.lrucache.io
 import kotlinx.cinterop.*
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSFileSize
+import platform.Foundation.NSString
+import platform.Foundation.pathWithComponents
 
 internal actual object DefaultFileManager : FileManager {
 
@@ -23,7 +25,7 @@ internal actual object DefaultFileManager : FileManager {
 
     @Suppress("UNCHECKED_CAST")
     override fun listContent(file: File): List<String>? =
-        fileManager.contentsOfDirectoryAtPath(file, null) as List<File>?
+        fileManager.contentsOfDirectoryAtPath(file, null)?.map { NSString.pathWithComponents(listOf(file, it)) }
 
     override fun delete(file: File): Boolean = fileManager.removeItemAtPath(file, null)
 
