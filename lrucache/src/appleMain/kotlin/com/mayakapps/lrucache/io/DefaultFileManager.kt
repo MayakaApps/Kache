@@ -2,6 +2,7 @@ package com.mayakapps.lrucache.io
 
 import kotlinx.cinterop.*
 import platform.Foundation.NSFileManager
+import platform.Foundation.NSFileSize
 
 internal actual object DefaultFileManager : FileManager {
 
@@ -18,7 +19,7 @@ internal actual object DefaultFileManager : FileManager {
     }
 
     override fun size(file: File): Long =
-        (fileManager.attributesOfItemAtPath(file, null)?.get("size") as Long?) ?: 0
+        (fileManager.attributesOfItemAtPath(file, null)?.get(NSFileSize) as Long?) ?: 0
 
     @Suppress("UNCHECKED_CAST")
     override fun listContent(file: File): List<String>? =
