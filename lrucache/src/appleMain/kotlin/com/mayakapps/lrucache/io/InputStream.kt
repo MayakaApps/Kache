@@ -15,7 +15,7 @@ internal actual abstract class InputStream(private val base: NSInputStream? = nu
 
         @OptIn(UnsafeNumber::class)
         return buffer.usePinned { pinnedBuffer ->
-            safeBase.read(pinnedBuffer.addressOf(offset).reinterpret(), length.convert())
+            safeBase.read(pinnedBuffer.addressOf(offset).reinterpret(), length.convert()).convert()
         }
     }
 
