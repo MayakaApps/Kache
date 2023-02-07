@@ -18,5 +18,5 @@ internal actual object DefaultFileManager : FileManager {
 
     override fun renameTo(oldFile: File, newFile: File): Boolean = oldFile.renameTo(newFile)
 
-    override fun mkdirs(file: File): Boolean = file.mkdirs()
+    override fun createDirectories(file: File): Boolean = file.mkdirs() || file.isDirectory
 }

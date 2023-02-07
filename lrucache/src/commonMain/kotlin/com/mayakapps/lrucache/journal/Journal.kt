@@ -124,7 +124,7 @@ internal class Journal private constructor(
             } else JournalReader.Result(false, emptyList(), 0)
 
             // Make sure that journal directory exists
-            fileManager.mkdirs(directory)
+            fileManager.createDirectories(directory)
 
             return Journal(
                 directory = directory,

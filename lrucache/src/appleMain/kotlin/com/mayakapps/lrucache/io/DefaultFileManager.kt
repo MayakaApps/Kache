@@ -34,6 +34,6 @@ internal actual object DefaultFileManager : FileManager {
     override fun renameTo(oldFile: File, newFile: File): Boolean =
         fileManager.moveItemAtPath(oldFile, newFile, null)
 
-    override fun mkdirs(file: File): Boolean =
+    override fun createDirectories(file: File): Boolean =
         fileManager.createDirectoryAtPath(file, withIntermediateDirectories = true, null, null)
 }
