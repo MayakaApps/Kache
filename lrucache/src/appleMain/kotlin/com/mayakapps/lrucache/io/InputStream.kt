@@ -15,7 +15,16 @@ internal actual abstract class InputStream(private val base: NSInputStream? = nu
 
         @OptIn(UnsafeNumber::class)
         return buffer.usePinned { pinnedBuffer ->
-            safeBase.read(pinnedBuffer.addressOf(offset).reinterpret(), length.convert()).convert()
+            val read: Int = safeBase.read(pinnedBuffer.addressOf(offset).reinterpret(), length.convert()).convert()
+            when {
+                read > 0 -> read
+                read == 0 -> -1
+                else -> {
+                    val baseError = safeBase.streamError
+                    if (baseError == null) throw IOException()
+                    else throw IOException(baseError.localizedDescription)
+                }
+            }
         }
     }
 
@@ -26,7 +35,10 @@ internal actual abstract class InputStream(private val base: NSInputStream? = nu
     private val safeBase get() = base ?: throw IllegalStateException("SimpleInputStream has no base")
 
     companion object {
-        fun defaultRead(inputStream: InputStream) =
-            ByteArray(1).also { inputStream.read(it) }[0].toInt()
+        fun defaultRead(inputStream: InputStream): Int {
+            val buffer = ByteArray(1)
+            return if (inputStream.read(buffer) <= 0) -1
+            else buffer[0].toInt()
+        }
     }
 }
