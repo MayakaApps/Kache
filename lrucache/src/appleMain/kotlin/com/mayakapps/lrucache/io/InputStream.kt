@@ -10,7 +10,7 @@ internal actual abstract class InputStream(private val base: NSInputStream? = nu
     actual open fun read(buffer: ByteArray): Int = read(buffer, 0, buffer.size)
 
     actual open fun read(buffer: ByteArray, offset: Int, length: Int): Int {
-        check(offset > 0 && offset + length <= buffer.size)
+        require(offset >= 0 && offset + length <= buffer.size)
         if (buffer.isEmpty()) return 0
 
         @OptIn(UnsafeNumber::class)

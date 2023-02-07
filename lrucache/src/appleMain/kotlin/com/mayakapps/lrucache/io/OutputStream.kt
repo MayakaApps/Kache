@@ -10,7 +10,7 @@ internal actual abstract class OutputStream(private val base: NSOutputStream? = 
     actual open fun write(buffer: ByteArray) = write(buffer, 0, buffer.size)
 
     actual open fun write(buffer: ByteArray, offset: Int, length: Int) {
-        check(offset > 0 && offset + length <= buffer.size)
+        require(offset >= 0 && offset + length <= buffer.size)
         if (buffer.isEmpty()) return
 
         @OptIn(UnsafeNumber::class)
