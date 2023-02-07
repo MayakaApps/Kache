@@ -1,11 +1,8 @@
 package com.mayakapps.lrucache
 
 import com.mayakapps.lrucache.io.*
-import com.mayakapps.lrucache.journal.JournalOp
-import com.mayakapps.lrucache.journal.JournalReader
-import com.mayakapps.lrucache.journal.JournalWriter
+import com.mayakapps.lrucache.journal.Journal
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
@@ -18,24 +15,17 @@ import kotlinx.coroutines.sync.withLock
 class DiskLruCache private constructor(
     private val fileManager: FileManager,
     private val directory: File,
+    private val journal: Journal,
     maxSize: Long,
     private val creationScope: CoroutineScope,
     private val keyTransformer: KeyTransformer?,
 ) {
-    private val journalFile = getFile(directory, JOURNAL_FILE)
-    private val tempJournalFile = getFile(directory, JOURNAL_FILE_TEMP)
-    private val backupJournalFile = getFile(directory, JOURNAL_FILE_BACKUP)
-
     private val lruCache = LruCache<String, File>(
         maxSize = maxSize,
         sizeCalculator = { _, file -> fileManager.size(file) },
         onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) },
         creationScope = creationScope,
     )
-
-    private var redundantOpCount = 0
-    private lateinit var journalWriter: JournalWriter
-    private val journalMutex = Mutex()
 
     /**
      * Returns the file for [key] if it exists in the cache or wait for its creation if it is currently in progress.
@@ -85,12 +75,9 @@ class DiskLruCache private constructor(
      */
     suspend fun remove(key: String) {
         // It's fine to consider the file is dirty now. Even if removal failed it's scheduled for
-        journalMutex.withLock {
-            journalWriter.writeDirty(key.transform())
-            redundantOpCount++
-        }
-
-        lruCache.remove(key.transform())
+        val transformedKey = key.transform()
+        journal.writeDirty(transformedKey)
+        lruCache.remove(transformedKey)
     }
 
     /**
@@ -107,11 +94,7 @@ class DiskLruCache private constructor(
      */
     suspend fun close() {
         lruCache.mapMutex.withLock {
-            if (::journalWriter.isInitialized) {
-                journalMutex.withLock {
-                    journalWriter.close()
-                }
-            }
+            journal.close()
 
             for (deferred in lruCache.creationMap.values) deferred.cancel()
         }
@@ -129,24 +112,18 @@ class DiskLruCache private constructor(
         val tempFile = getFile(directory, key + TEMP_EXT)
         val cleanFile = getFile(directory, key)
 
-        journalMutex.withLock { journalWriter.writeDirty(key) }
-        if (writeFunction(tempFile.filePath) && fileManager.exists(tempFile)) {
+        journal.writeDirty(key)
+        return if (writeFunction(tempFile.filePath) && fileManager.exists(tempFile)) {
             fileManager.renameToOrThrow(tempFile, cleanFile, true)
             fileManager.deleteOrThrow(tempFile)
-            journalMutex.withLock {
-                journalWriter.writeClean(key)
-                redundantOpCount++
-            }
+            journal.writeClean(key)
             rebuildJournalIfRequired()
-            return cleanFile
+            cleanFile
         } else {
             fileManager.deleteOrThrow(tempFile)
-            journalMutex.withLock {
-                journalWriter.writeRemove(key)
-                redundantOpCount += 2
-            }
+            journal.writeRemove(key)
             rebuildJournalIfRequired()
-            return null
+            null
         }
     }
 
@@ -155,57 +132,8 @@ class DiskLruCache private constructor(
             fileManager.deleteOrThrow(oldValue)
             fileManager.deleteOrThrow(oldValue.appendExt(TEMP_EXT))
 
-            if (::journalWriter.isInitialized) {
-                journalMutex.withLock {
-                    redundantOpCount += 2
-                    journalWriter.writeRemove(key)
-                }
-
-                rebuildJournalIfRequired()
-            }
-        }
-    }
-
-
-    private suspend fun parseJournal() {
-        val reader = JournalReader(journalFile.filePath)
-        val allOps = reader.use { it.readFully() }
-        val opsByKey = allOps.groupBy { it.key }
-
-        val readEntries = mutableListOf<Pair<String, File>>()
-        for ((key, ops) in opsByKey) {
-            val operation = ops.last()
-            val file = getFile(directory, key)
-            val tempFile = getFile(directory, key + TEMP_EXT)
-
-            when (operation) {
-                is JournalOp.Clean -> {
-                    if (fileManager.exists(file)) {
-                        readEntries.add(key to file)
-                    }
-                }
-
-                is JournalOp.Dirty -> {
-                    fileManager.deleteOrThrow(file)
-                    fileManager.deleteOrThrow(tempFile)
-                }
-
-                is JournalOp.Remove -> {
-                    // Do nothing
-                }
-            }
-        }
-
-        redundantOpCount = allOps.size - lruCache.map.size
-
-        if (reader.isCorrupted) {
-            readEntries.forEach { (key, file) -> lruCache.put(key, file) }
-            clearDirectory()
-            rebuildJournal()
-        } else {
-            // Initialize writer first to record REMOVE operations when trimming
-            journalWriter = JournalWriter(journalFile.filePath)
-            readEntries.forEach { (key, file) -> lruCache.put(key, file) }
+            journal.writeRemove(key)
+            rebuildJournalIfRequired()
         }
     }
 
@@ -217,38 +145,10 @@ class DiskLruCache private constructor(
     }
 
     private suspend fun rebuildJournalIfRequired() {
-        if (isJournalRebuildRequired) rebuildJournal()
-    }
-
-    // We only rebuild the journal when it will halve the size of the journal and eliminate at least 2000 ops.
-    private val isJournalRebuildRequired: Boolean
-        get() {
-            val redundantOpCompactThreshold = 2000
-            return (redundantOpCount >= redundantOpCompactThreshold
-                    && redundantOpCount >= lruCache.map.size)
-        }
-
-    private suspend fun rebuildJournal() = lruCache.mapMutex.withLock {
-        journalMutex.withLock {
-            if (::journalWriter.isInitialized) journalWriter.close()
-
-            fileManager.deleteOrThrow(tempJournalFile)
-            JournalWriter(tempJournalFile.filePath).use { tempWriter ->
-                tempWriter.writeHeader()
-
-                lruCache.map.forEach { (key, _) ->
-                    tempWriter.writeClean(key)
-                }
-
-                lruCache.creationMap.keys.forEach { key -> tempWriter.writeDirty(key) }
+        journal.rebuildJournalIfRequired {
+            lruCache.mapMutex.withLock {
+                lruCache.map.keys to lruCache.creationMap.keys
             }
-
-            if (fileManager.exists(journalFile)) fileManager.renameToOrThrow(journalFile, backupJournalFile, true)
-            fileManager.renameToOrThrow(tempJournalFile, journalFile, false)
-            fileManager.delete(backupJournalFile)
-
-            journalWriter = JournalWriter(journalFile.filePath)
-            redundantOpCount = 0
         }
     }
 
@@ -268,65 +168,54 @@ class DiskLruCache private constructor(
             maxSize: Long,
             creationDispatcher: CoroutineDispatcher,
             keyTransformer: KeyTransformer? = SHA256KeyHasher,
-        ) = Companion.open(DefaultFileManager, directoryPath, maxSize, creationDispatcher, keyTransformer)
-
-        internal suspend fun open(
-            fileManager: FileManager,
-            directoryPath: String,
-            maxSize: Long,
-            creationDispatcher: CoroutineDispatcher,
-            keyTransformer: KeyTransformer? = SHA256KeyHasher,
         ): DiskLruCache {
             require(maxSize > 0) { "maxSize must be positive value" }
 
             val directory = getFile(directoryPath)
+
+            val (journal, existingKeys) = Journal.openOrCreate(
+                directory = directory,
+                fileManager = DefaultFileManager,
+                inputStreamFactory = { BufferedInputStream(FileInputStream(it.filePath)) },
+                outputStreamFactory = { BufferedOutputStream(FileOutputStream(it.filePath)) },
+            )
+
+            return open(
+                DefaultFileManager,
+                directory,
+                journal,
+                existingKeys,
+                maxSize,
+                creationDispatcher,
+                keyTransformer,
+            )
+        }
+
+        internal suspend fun open(
+            fileManager: FileManager,
+            directory: File,
+            journal: Journal,
+            existingKeys: Collection<String>,
+            maxSize: Long,
+            creationDispatcher: CoroutineDispatcher,
+            keyTransformer: KeyTransformer? = SHA256KeyHasher,
+        ): DiskLruCache {
             val creationScope = CoroutineScope(creationDispatcher)
 
-            val journalFile = getFile(directory, JOURNAL_FILE)
-            val tempJournalFile = getFile(directory, JOURNAL_FILE_TEMP)
-            val backupJournalFile = getFile(directory, JOURNAL_FILE_BACKUP)
-
-            // If a backup file exists, use it instead.
-            if (fileManager.exists(backupJournalFile)) {
-                // If journal file also exists just delete backup file.
-                if (fileManager.exists(journalFile)) {
-                    fileManager.delete(backupJournalFile)
-                } else {
-                    fileManager.renameToOrThrow(backupJournalFile, journalFile, false)
-                }
+            // Clean directory
+            val directoryPath = directory.filePath
+            val nameStartIndex = directoryPath.length + if (!directoryPath.endsWith("/")) 1 else 0
+            for (file in fileManager.listContent(directory) ?: emptyList()) {
+                if (file.filePath.substring(nameStartIndex) !in existingKeys) fileManager.deleteOrThrow(file)
             }
 
-            // If a temp file exists, delete it
-            fileManager.deleteOrThrow(tempJournalFile)
+            val cache = DiskLruCache(fileManager, directory, journal, maxSize, creationScope, keyTransformer)
 
-            // Prefer to pick up where we left off.
-            if (fileManager.exists(getFile(directory, JOURNAL_FILE))) {
-                val cache = DiskLruCache(fileManager, directory, maxSize, creationScope, keyTransformer)
-                try {
-                    cache.parseJournal()
-                    return cache
-                } catch (journalIsCorrupt: IOException) {
-                    println(
-                        "DiskLruCache "
-                                + directory
-                                + " is corrupt: "
-                                + journalIsCorrupt.message
-                                + ", removing"
-                    )
-                    cache.clear()
-                }
-            }
+            for (key in existingKeys) cache.lruCache.put(key, getFile(directory, key))
 
-            // Create a new empty cache.
-            fileManager.mkdirs(directory)
-            val cache = DiskLruCache(fileManager, directory, maxSize, creationScope, keyTransformer)
-            cache.rebuildJournal()
             return cache
         }
 
         private const val TEMP_EXT = ".tmp"
-        private const val JOURNAL_FILE = "journal"
-        private const val JOURNAL_FILE_TEMP = JOURNAL_FILE + TEMP_EXT
-        private const val JOURNAL_FILE_BACKUP = "$JOURNAL_FILE.bkp"
     }
 }
