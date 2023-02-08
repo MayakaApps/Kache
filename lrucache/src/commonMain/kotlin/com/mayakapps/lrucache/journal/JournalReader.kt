@@ -14,6 +14,9 @@ internal class JournalReader(private val inputStream: InputStream) : Closeable {
         // Validate magic code
         try {
             validateHeader()
+        } catch (ex: IOException) {
+            isCorrupted = true
+            return Result(isCorrupted, keys, 0)
         } catch (ex: IllegalStateException) {
             isCorrupted = true
             return Result(isCorrupted, keys, 0)
