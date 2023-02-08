@@ -39,7 +39,11 @@ internal actual class BufferedOutputStream actual constructor(
     }
 
     override fun close() {
-        safeBase.close()
+        try {
+            flush()
+        } finally {
+            base.close()
+        }
     }
 
     override fun flush() {

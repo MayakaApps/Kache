@@ -10,7 +10,7 @@ internal actual abstract class OutputStream(private val base: NSOutputStream? = 
     actual open fun write(buffer: ByteArray) = write(buffer, 0, buffer.size)
 
     actual open fun write(buffer: ByteArray, offset: Int, length: Int) {
-        check(offset > 0 && offset + length <= buffer.size)
+        require(offset >= 0 && offset + length <= buffer.size)
         if (buffer.isEmpty()) return
 
         @OptIn(UnsafeNumber::class)
@@ -25,7 +25,7 @@ internal actual abstract class OutputStream(private val base: NSOutputStream? = 
 
     actual open fun flush() {}
 
-    protected val safeBase get() = base ?: throw IllegalStateException("SimpleInputStream has no base")
+    protected val safeBase get() = base ?: throw IllegalStateException("InputStream has no base")
 
     companion object {
         fun defaultWrite(outputStream: OutputStream, byte: Int) =

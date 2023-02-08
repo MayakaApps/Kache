@@ -10,12 +10,21 @@ internal actual abstract class InputStream(private val base: NSInputStream? = nu
     actual open fun read(buffer: ByteArray): Int = read(buffer, 0, buffer.size)
 
     actual open fun read(buffer: ByteArray, offset: Int, length: Int): Int {
-        check(offset > 0 && offset + length <= buffer.size)
+        require(offset >= 0 && offset + length <= buffer.size)
         if (buffer.isEmpty()) return 0
 
         @OptIn(UnsafeNumber::class)
         return buffer.usePinned { pinnedBuffer ->
-            safeBase.read(pinnedBuffer.addressOf(offset).reinterpret(), length.convert())
+            val read: Int = safeBase.read(pinnedBuffer.addressOf(offset).reinterpret(), length.convert()).convert()
+            when {
+                read > 0 -> read
+                read == 0 -> -1
+                else -> {
+                    val baseError = safeBase.streamError
+                    if (baseError == null) throw IOException()
+                    else throw IOException(baseError.localizedDescription)
+                }
+            }
         }
     }
 
@@ -23,10 +32,13 @@ internal actual abstract class InputStream(private val base: NSInputStream? = nu
         safeBase.close()
     }
 
-    private val safeBase get() = base ?: throw IllegalStateException("SimpleInputStream has no base")
+    private val safeBase get() = base ?: throw IllegalStateException("InputStream has no base")
 
     companion object {
-        fun defaultRead(inputStream: InputStream) =
-            ByteArray(1).also { inputStream.read(it) }[0].toInt()
+        fun defaultRead(inputStream: InputStream): Int {
+            val buffer = ByteArray(1)
+            return if (inputStream.read(buffer) <= 0) -1
+            else buffer[0].toInt()
+        }
     }
 }

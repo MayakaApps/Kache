@@ -16,7 +16,7 @@ internal interface FileManager {
 
     fun renameTo(oldFile: File, newFile: File): Boolean
 
-    fun mkdirs(file: File): Boolean
+    fun createDirectories(file: File): Boolean
 }
 
 internal expect object DefaultFileManager: FileManager

@@ -86,7 +86,7 @@ class DiskLruCache private constructor(
     suspend fun clear() {
         close()
         if (fileManager.isDirectory(directory)) fileManager.deleteRecursively(directory)
-        fileManager.mkdirs(directory)
+        fileManager.createDirectories(directory)
     }
 
     /**
