@@ -51,6 +51,28 @@ internal inline fun runTestSoftly(
     crossinline testBody: suspend TestScope.() -> Unit,
 ) = runTest(context, dispatchTimeoutMs) { assertSoftly { withTimeout(100L) { testBody() } } }
 
+internal fun combineResults(
+    failureMessage: String,
+    negatedFailureMessage: String,
+    vararg results: MatcherResult,
+) = MatcherResult(
+    results.all { it.passed() },
+    {
+        "$failureMessage - Details:\n" +
+                results.mapNotNull { result ->
+                    if (result.passed()) return@mapNotNull null
+                    result.failureMessage()
+                }.joinToString("\n").prependIndent("    ")
+    },
+    {
+        "$negatedFailureMessage - Details:\n" +
+                results.mapNotNull { result ->
+                    if (!result.passed()) return@mapNotNull null
+                    result.negatedFailureMessage()
+                }.joinToString("\n").prependIndent("    ")
+    },
+)
+
 internal fun <T> T.asOldValue() = named("Old value")
 internal fun <T> T.asPutResult() = named("Put result")
 internal fun <T> T.asValue() = named("Value")
