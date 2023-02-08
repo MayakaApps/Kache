@@ -1,6 +1,6 @@
 package com.mayakapps.lrucache.io
 
-internal expect abstract class OutputStream : Closeable {
+internal expect abstract class OutputStream() : Closeable {
 
     abstract fun write(byte: Int)
 

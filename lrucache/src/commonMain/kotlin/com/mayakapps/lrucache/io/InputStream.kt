@@ -1,6 +1,6 @@
 package com.mayakapps.lrucache.io
 
-internal expect abstract class InputStream : Closeable {
+internal expect abstract class InputStream() : Closeable {
 
     abstract fun read(): Int
 
