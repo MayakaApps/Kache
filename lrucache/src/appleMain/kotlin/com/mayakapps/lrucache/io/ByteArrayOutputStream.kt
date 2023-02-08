@@ -7,7 +7,7 @@ import kotlinx.cinterop.usePinned
 import platform.Foundation.*
 
 internal actual class ByteArrayOutputStream actual constructor() :
-    OutputStream(base = NSOutputStream.outputStreamToMemory()) {
+    OutputStream(base = NSOutputStream.outputStreamToMemory().apply { open() }) {
 
     override fun write(byte: Int): Unit = defaultWrite(this, byte)
 
