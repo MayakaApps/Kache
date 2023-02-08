@@ -32,7 +32,7 @@ internal actual abstract class InputStream(private val base: NSInputStream? = nu
         safeBase.close()
     }
 
-    private val safeBase get() = base ?: throw IllegalStateException("SimpleInputStream has no base")
+    private val safeBase get() = base ?: throw IllegalStateException("InputStream has no base")
 
     companion object {
         fun defaultRead(inputStream: InputStream): Int {

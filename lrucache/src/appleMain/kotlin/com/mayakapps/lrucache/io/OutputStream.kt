@@ -25,7 +25,7 @@ internal actual abstract class OutputStream(private val base: NSOutputStream? = 
 
     actual open fun flush() {}
 
-    protected val safeBase get() = base ?: throw IllegalStateException("SimpleInputStream has no base")
+    protected val safeBase get() = base ?: throw IllegalStateException("InputStream has no base")
 
     companion object {
         fun defaultWrite(outputStream: OutputStream, byte: Int) =
