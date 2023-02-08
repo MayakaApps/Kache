@@ -1,8 +1,9 @@
-package com.mayakapps.lrucache
+package com.mayakapps.lrucache.journal
 
+import com.mayakapps.lrucache.combineResults
 import com.mayakapps.lrucache.io.ByteArrayInputStream
 import com.mayakapps.lrucache.io.use
-import com.mayakapps.lrucache.journal.JournalReader
+import com.mayakapps.lrucache.named
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.should
 import kotlin.test.Test
