@@ -79,6 +79,7 @@ class ByteArrayStreamsTests {
         }
     }
 
+    @ThreadLocal
     companion object {
         private lateinit var testBytes: ByteArray
         private lateinit var testBytesP1: ByteArray

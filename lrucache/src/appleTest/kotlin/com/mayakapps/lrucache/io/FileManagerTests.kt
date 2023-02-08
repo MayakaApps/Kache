@@ -274,6 +274,7 @@ class FileManagerTests {
         fileManager.removeItemAtPath(rootDirectory, null)
     }
 
+    @ThreadLocal
     companion object {
         private lateinit var fileManager: NSFileManager
         private lateinit var rootDirectory: String
