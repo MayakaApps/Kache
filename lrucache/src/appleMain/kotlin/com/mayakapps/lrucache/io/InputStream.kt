@@ -5,6 +5,8 @@ import platform.Foundation.NSInputStream
 
 internal actual abstract class InputStream(private val base: NSInputStream? = null) : Closeable {
 
+    actual constructor() : this(null)
+
     actual abstract fun read(): Int
 
     actual open fun read(buffer: ByteArray): Int = read(buffer, 0, buffer.size)

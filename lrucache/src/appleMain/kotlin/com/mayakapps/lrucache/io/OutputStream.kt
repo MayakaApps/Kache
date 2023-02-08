@@ -5,6 +5,8 @@ import platform.Foundation.NSOutputStream
 
 internal actual abstract class OutputStream(private val base: NSOutputStream? = null) : Closeable {
 
+    actual constructor() : this(null)
+
     actual abstract fun write(byte: Int)
 
     actual open fun write(buffer: ByteArray) = write(buffer, 0, buffer.size)
