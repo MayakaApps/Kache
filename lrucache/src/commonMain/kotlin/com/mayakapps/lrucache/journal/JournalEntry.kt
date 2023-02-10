@@ -9,6 +9,13 @@ internal sealed interface JournalEntry {
 
     data class Remove(override val key: String) : JournalEntry
 
+    val opcode: Int
+        get() = when (this) {
+            is Dirty -> DIRTY
+            is Clean -> CLEAN
+            is Remove -> REMOVE
+        }
+
     companion object {
         operator fun invoke(opcode: Int, key: String) = when (opcode) {
             DIRTY -> Dirty(key)
