@@ -1,15 +1,9 @@
 package com.mayakapps.lrucache.journal
 
-import com.mayakapps.lrucache.io.BufferedOutputStream
 import com.mayakapps.lrucache.io.Closeable
-import com.mayakapps.lrucache.io.FileOutputStream
 import com.mayakapps.lrucache.io.OutputStream
 
 internal class JournalWriter(private val outputStream: OutputStream) : Closeable {
-
-    constructor(journalFilename: String, append: Boolean = true) : this(
-        BufferedOutputStream(FileOutputStream(journalFilename, append))
-    )
 
     internal fun writeHeader() {
         outputStream.writeString(JOURNAL_MAGIC)

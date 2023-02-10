@@ -176,8 +176,6 @@ class DiskLruCache private constructor(
             val (journal, existingKeys) = Journal.openOrCreate(
                 directory = directory,
                 fileManager = DefaultFileManager,
-                inputStreamFactory = { BufferedInputStream(FileInputStream(it.filePath)) },
-                outputStreamFactory = { BufferedOutputStream(FileOutputStream(it.filePath)) },
             )
 
             return open(

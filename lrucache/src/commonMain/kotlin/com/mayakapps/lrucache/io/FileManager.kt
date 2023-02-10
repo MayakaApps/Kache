@@ -34,6 +34,10 @@ internal interface FileManager {
     }
 
     fun createDirectories(file: File): Boolean
+
+    fun inputStream(file: File): InputStream = FileInputStream(file.filePath)
+
+    fun outputStream(file: File, append: Boolean = true): OutputStream = FileOutputStream(file.filePath, append)
 }
 
 internal expect object DefaultFileManager : FileManager

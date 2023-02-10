@@ -7,7 +7,6 @@ import kotlinx.coroutines.sync.withLock
 internal class Journal private constructor(
     directory: File,
     private val fileManager: FileManager,
-    private val outputStreamFactory: (File) -> OutputStream,
     initialOpsCount: Int,
     initialRedundantOpsCount: Int,
 ) {
@@ -17,7 +16,7 @@ internal class Journal private constructor(
     private val backupJournalFile = getFile(directory, JOURNAL_FILE_BACKUP)
 
     private val journalMutex = Mutex()
-    private var journalWriter = JournalWriter(outputStreamFactory(journalFile))
+    private var journalWriter = JournalWriter(BufferedOutputStream(fileManager.outputStream(journalFile)))
 
     private var opsCount = initialOpsCount
     private var redundantOpsCount = initialRedundantOpsCount
@@ -54,7 +53,7 @@ internal class Journal private constructor(
             journalWriter.close()
 
             fileManager.deleteOrThrow(tempJournalFile)
-            JournalWriter(tempJournalFile.filePath).use { writer ->
+            JournalWriter(BufferedOutputStream(fileManager.outputStream(tempJournalFile))).use { writer ->
                 writer.writeHeader()
                 writer.writeAll(cleanKeys, dirtyKeys)
             }
@@ -65,7 +64,7 @@ internal class Journal private constructor(
             fileManager.renameToOrThrow(tempJournalFile, journalFile, false)
             fileManager.delete(backupJournalFile)
 
-            journalWriter = JournalWriter(journalFile.filePath)
+            journalWriter = JournalWriter(BufferedOutputStream(fileManager.outputStream(journalFile)))
             opsCount = cleanKeys.size + dirtyKeys.size
             redundantOpsCount = 0
         }
@@ -75,8 +74,6 @@ internal class Journal private constructor(
         fun openOrCreate(
             directory: File,
             fileManager: FileManager,
-            inputStreamFactory: (File) -> InputStream,
-            outputStreamFactory: (File) -> OutputStream,
         ): Pair<Journal, List<String>> {
             val journalFile = getFile(directory, JOURNAL_FILE)
             val tempJournalFile = getFile(directory, JOURNAL_FILE_TEMP)
@@ -98,7 +95,7 @@ internal class Journal private constructor(
             // Prefer to pick up where we left off
             val journalData = if (fileManager.exists(journalFile)) {
                 val journalData = try {
-                    JournalReader(inputStreamFactory(journalFile)).use { it.readJournal() }
+                    JournalReader(BufferedInputStream(fileManager.inputStream(journalFile))).use { it.readJournal() }
                 } catch (ex: JournalException) {
                     null
                 }
@@ -112,7 +109,7 @@ internal class Journal private constructor(
                     (redundantOpsCount >= REDUNDANT_OPS_THRESHOLD && redundantOpsCount >= journalData.cleanKeys.size)
                 ) {
                     fileManager.deleteOrThrow(tempJournalFile)
-                    JournalWriter(tempJournalFile.filePath).use { writer ->
+                    JournalWriter(BufferedOutputStream(fileManager.outputStream(tempJournalFile))).use { writer ->
                         writer.writeHeader()
                         writer.writeAll(journalData?.cleanKeys ?: emptyList(), emptyList())
                     }
@@ -135,7 +132,6 @@ internal class Journal private constructor(
             return Journal(
                 directory = directory,
                 fileManager = fileManager,
-                outputStreamFactory = outputStreamFactory,
                 initialOpsCount = journalData.opsCount,
                 initialRedundantOpsCount = journalData.opsCount - journalData.cleanKeys.size,
             ) to journalData.cleanKeys
