@@ -139,7 +139,7 @@ class DiskLruCache private constructor(
 
     private suspend fun clearDirectory() = lruCache.mapMutex.withLock {
         val files = lruCache.map.values
-        for (file in fileManager.listContent(directory) ?: emptyList()) {
+        for (file in fileManager.listContents(directory) ?: emptyList()) {
             if (file !in files) fileManager.deleteOrThrow(file)
         }
     }
@@ -205,7 +205,7 @@ class DiskLruCache private constructor(
             // Clean directory
             val directoryPath = directory.filePath
             val nameStartIndex = directoryPath.length + if (!directoryPath.endsWith("/")) 1 else 0
-            for (file in fileManager.listContent(directory) ?: emptyList()) {
+            for (file in fileManager.listContents(directory) ?: emptyList()) {
                 if (file.filePath.substring(nameStartIndex) !in existingKeys) fileManager.deleteOrThrow(file)
             }
 

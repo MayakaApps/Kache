@@ -8,7 +8,7 @@ internal interface FileManager {
 
     fun size(file: File): Long
 
-    fun listContent(file: File): List<File>?
+    fun listContents(file: File): List<File>?
 
     fun delete(file: File): Boolean
 
@@ -19,7 +19,15 @@ internal interface FileManager {
     fun createDirectories(file: File): Boolean
 }
 
-internal expect object DefaultFileManager: FileManager
+internal expect object DefaultFileManager : FileManager
+
+internal fun FileManager.deleteContentsOrThrow(file: File) {
+    val contents = listContents(file) ?: throw IOException("Not a readable directory: ${file.filePath}")
+    for (subFile in contents) {
+        if (isDirectory(subFile)) deleteContentsOrThrow(subFile)
+        if (!delete(file)) throw IOException()
+    }
+}
 
 internal fun FileManager.renameToOrThrow(oldFile: File, newFile: File, deleteDest: Boolean) {
     if (deleteDest) deleteOrThrow(newFile)
