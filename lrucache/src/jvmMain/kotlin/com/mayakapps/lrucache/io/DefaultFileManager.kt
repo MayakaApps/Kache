@@ -10,7 +10,7 @@ internal actual object DefaultFileManager : FileManager {
 
     override fun size(file: File) = file.length()
 
-    override fun listContent(file: File): List<File>? = file.listFiles()?.toList()
+    override fun listContents(file: File): List<File>? = file.listFiles()?.toList()
 
     override fun delete(file: File): Boolean = file.delete()
 
