@@ -5,36 +5,7 @@ import com.mayakapps.lrucache.io.InputStream
 
 internal class JournalReader(private val inputStream: InputStream) : Closeable {
 
-    fun readJournal(): Result {
-        val keys = mutableListOf<String>()
-        var opsCount = 0
-
-        validateHeader()
-
-        // Read operations
-        while (true) {
-            val entry = readEntry() ?: break
-            opsCount++
-
-            when (entry) {
-                is JournalEntry.Dirty -> {
-                    /* Do nothing */
-                }
-
-                is JournalEntry.Clean -> {
-                    keys += entry.key
-                }
-
-                is JournalEntry.Remove -> {
-                    keys.remove(entry.key)
-                }
-            }
-        }
-
-        return Result(keys, opsCount)
-    }
-
-    private fun validateHeader() {
+    internal fun validateHeader() {
         val magic = try {
             inputStream.readString(JOURNAL_MAGIC.length)
         } catch (ex: JournalEOFException) {
@@ -47,7 +18,7 @@ internal class JournalReader(private val inputStream: InputStream) : Closeable {
         if (version != JOURNAL_VERSION) throw JournalInvalidHeaderException("Journal version ($version) doesn't match")
     }
 
-    private fun readEntry(): JournalEntry? {
+    internal fun readEntry(): JournalEntry? {
         val opcodeId = inputStream.read()
         if (opcodeId == -1) return null // Expected EOF
 
@@ -72,11 +43,4 @@ internal class JournalReader(private val inputStream: InputStream) : Closeable {
 
     private fun InputStream.readBytes(count: Int) =
         ByteArray(count).also { if (read(it) != count) throw JournalEOFException() }
-
-    // Result
-
-    data class Result(
-        val cleanKeys: List<String>,
-        val opsCount: Int,
-    )
 }

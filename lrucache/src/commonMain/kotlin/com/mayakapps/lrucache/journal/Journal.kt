@@ -5,36 +5,29 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 internal class Journal private constructor(
-    directory: File,
+    private val directory: File,
     private val fileManager: FileManager,
-    initialOpsCount: Int,
     initialRedundantOpsCount: Int,
 ) {
 
     private val journalFile = getFile(directory, JOURNAL_FILE)
-    private val tempJournalFile = getFile(directory, JOURNAL_FILE_TEMP)
-    private val backupJournalFile = getFile(directory, JOURNAL_FILE_BACKUP)
 
     private val journalMutex = Mutex()
     private var journalWriter = JournalWriter(BufferedOutputStream(fileManager.outputStream(journalFile)))
 
-    private var opsCount = initialOpsCount
     private var redundantOpsCount = initialRedundantOpsCount
 
     suspend fun writeClean(key: String) = journalMutex.withLock {
         journalWriter.writeClean(key)
-        opsCount++
         redundantOpsCount++
     }
 
     suspend fun writeDirty(key: String) = journalMutex.withLock {
         journalWriter.writeDirty(key)
-        opsCount++
     }
 
     suspend fun writeRemove(key: String) = journalMutex.withLock {
         journalWriter.writeRemove(key)
-        opsCount++
         redundantOpsCount += 3
     }
 
@@ -42,30 +35,19 @@ internal class Journal private constructor(
 
     // We only rebuild the journal when it will halve the size of the journal and eliminate at least 2000 ops.
     suspend fun rebuildJournalIfRequired(lazyKeys: suspend () -> Pair<Collection<String>, Collection<String>>) {
-        if (redundantOpsCount < REDUNDANT_OPS_THRESHOLD || redundantOpsCount < opsCount / 2) return
+        if (redundantOpsCount < REDUNDANT_ENTRIES_THRESHOLD) return
 
         journalMutex.withLock {
             // Check again to make sure that there was not an ongoing rebuild request
-            if (redundantOpsCount < REDUNDANT_OPS_THRESHOLD || redundantOpsCount < opsCount / 2) return
+            if (redundantOpsCount < REDUNDANT_ENTRIES_THRESHOLD) return
 
             val (cleanKeys, dirtyKeys) = lazyKeys()
 
             journalWriter.close()
 
-            fileManager.deleteOrThrow(tempJournalFile)
-            JournalWriter(BufferedOutputStream(fileManager.outputStream(tempJournalFile))).use { writer ->
-                writer.writeHeader()
-                writer.writeAll(cleanKeys, dirtyKeys)
-            }
-
-            if (fileManager.exists(journalFile)) {
-                fileManager.renameToOrThrow(journalFile, backupJournalFile, true)
-            }
-            fileManager.renameToOrThrow(tempJournalFile, journalFile, false)
-            fileManager.delete(backupJournalFile)
+            fileManager.writeJournalAtomically(directory, cleanKeys, dirtyKeys)
 
             journalWriter = JournalWriter(BufferedOutputStream(fileManager.outputStream(journalFile)))
-            opsCount = cleanKeys.size + dirtyKeys.size
             redundantOpsCount = 0
         }
     }
@@ -75,74 +57,122 @@ internal class Journal private constructor(
             directory: File,
             fileManager: FileManager,
         ): Pair<Journal, List<String>> {
-            val journalFile = getFile(directory, JOURNAL_FILE)
-            val tempJournalFile = getFile(directory, JOURNAL_FILE_TEMP)
-            val backupJournalFile = getFile(directory, JOURNAL_FILE_BACKUP)
-
-            // If a backup file exists, use it instead.
-            if (fileManager.exists(backupJournalFile)) {
-                // If journal file also exists just delete backup file.
-                if (fileManager.exists(journalFile)) {
-                    fileManager.delete(backupJournalFile)
-                } else {
-                    fileManager.renameToOrThrow(backupJournalFile, journalFile, false)
-                }
+            val journalData = try {
+                fileManager.readJournalIfExists(directory)
+            } catch (ex: JournalException) {
+                // Journal is corrupted - Clear cache
+                fileManager.deleteContentsOrThrow(directory)
+                null
             }
-
-            // If a temp file exists, delete it
-            fileManager.deleteOrThrow(tempJournalFile)
-
-            // Prefer to pick up where we left off
-            val journalData = if (fileManager.exists(journalFile)) {
-                val journalData = try {
-                    JournalReader(BufferedInputStream(fileManager.inputStream(journalFile))).use { it.readJournal() }
-                } catch (ex: JournalException) {
-                    null
-                }
-
-                val redundantOpsCount =
-                    if (journalData != null) journalData.opsCount - journalData.cleanKeys.size else 0
-
-                // Rebuild journal if required
-                if (
-                    journalData == null ||
-                    (redundantOpsCount >= REDUNDANT_OPS_THRESHOLD && redundantOpsCount >= journalData.cleanKeys.size)
-                ) {
-                    fileManager.deleteOrThrow(tempJournalFile)
-                    JournalWriter(BufferedOutputStream(fileManager.outputStream(tempJournalFile))).use { writer ->
-                        writer.writeHeader()
-                        writer.writeAll(journalData?.cleanKeys ?: emptyList(), emptyList())
-                    }
-
-                    if (fileManager.exists(journalFile)) fileManager.renameToOrThrow(
-                        journalFile,
-                        backupJournalFile,
-                        true
-                    )
-                    fileManager.renameToOrThrow(tempJournalFile, journalFile, false)
-                    fileManager.delete(backupJournalFile)
-                }
-
-                journalData ?: JournalReader.Result(emptyList(), 0)
-            } else JournalReader.Result(emptyList(), 0)
 
             // Make sure that journal directory exists
             fileManager.createDirectories(directory)
 
+            // Rebuild journal if required
+            val redundantEntriesCount = if (journalData == null) {
+                fileManager.writeJournalAtomically(directory, emptyList(), emptyList())
+                0
+            } else if (
+                journalData.redundantEntriesCount >= REDUNDANT_ENTRIES_THRESHOLD &&
+                journalData.redundantEntriesCount >= journalData.cleanEntriesKeys.size
+            ) {
+                fileManager
+                    .writeJournalAtomically(directory, journalData.cleanEntriesKeys, journalData.dirtyEntriesKeys)
+                0
+            } else journalData.redundantEntriesCount
+
             return Journal(
                 directory = directory,
                 fileManager = fileManager,
-                initialOpsCount = journalData.opsCount,
-                initialRedundantOpsCount = journalData.opsCount - journalData.cleanKeys.size,
-            ) to journalData.cleanKeys
+                initialRedundantOpsCount = redundantEntriesCount,
+            ) to journalData?.cleanEntriesKeys.orEmpty()
         }
 
         // Constants
 
-        private const val REDUNDANT_OPS_THRESHOLD = 2000
-
-        private const val JOURNAL_FILE = "journal"
-        private const val JOURNAL_FILE_TEMP = "$JOURNAL_FILE.tmp"
-        private const val JOURNAL_FILE_BACKUP = "$JOURNAL_FILE.bkp"
+        private const val REDUNDANT_ENTRIES_THRESHOLD = 2000
     }
+}
+
+internal data class JournalData(
+    val cleanEntriesKeys: List<String>,
+    val dirtyEntriesKeys: List<String>,
+    val redundantEntriesCount: Int,
+)
+
+internal fun FileManager.readJournalIfExists(directory: File): JournalData? {
+    val journalFile = getFile(directory, JOURNAL_FILE)
+    val tempJournalFile = getFile(directory, JOURNAL_FILE_TEMP)
+    val backupJournalFile = getFile(directory, JOURNAL_FILE_BACKUP)
+
+    // If a backup file exists, use it instead.
+    if (exists(backupJournalFile)) {
+        // If journal file also exists just delete backup file.
+        if (exists(journalFile)) {
+            delete(backupJournalFile)
+        } else {
+            renameToOrThrow(backupJournalFile, journalFile, false)
+        }
+    }
+
+    // If a temp file exists, delete it
+    deleteOrThrow(tempJournalFile)
+
+    if (!exists(journalFile)) return null
+
+    var entriesCount = 0
+    val dirtyEntriesKeys = mutableListOf<String>()
+    val cleanEntriesKeys = mutableListOf<String>()
+
+    JournalReader(BufferedInputStream(inputStream(journalFile))).use { reader ->
+        reader.validateHeader()
+
+        while (true) {
+            val entry = reader.readEntry() ?: break
+            entriesCount++
+
+            when (entry) {
+                is JournalEntry.Dirty -> {
+                    dirtyEntriesKeys += entry.key
+                }
+
+                is JournalEntry.Clean -> {
+                    dirtyEntriesKeys.remove(entry.key)
+                    cleanEntriesKeys += entry.key
+                }
+
+                is JournalEntry.Remove -> {
+                    dirtyEntriesKeys.remove(entry.key)
+                    cleanEntriesKeys.remove(entry.key)
+                }
+            }
+        }
+    }
+
+    return JournalData(
+        cleanEntriesKeys = cleanEntriesKeys,
+        dirtyEntriesKeys = dirtyEntriesKeys,
+        redundantEntriesCount = entriesCount - cleanEntriesKeys.size,
+    )
+}
+
+internal fun FileManager.writeJournalAtomically(
+    directory: File,
+    cleanEntriesKeys: Collection<String>,
+    dirtyEntriesKeys: Collection<String>
+) {
+    val journalFile = getFile(directory, JOURNAL_FILE)
+    val tempJournalFile = getFile(directory, JOURNAL_FILE_TEMP)
+    val backupJournalFile = getFile(directory, JOURNAL_FILE_BACKUP)
+
+    deleteOrThrow(tempJournalFile)
+
+    JournalWriter(BufferedOutputStream(outputStream(tempJournalFile))).use { writer ->
+        writer.writeHeader()
+        writer.writeAll(cleanEntriesKeys, dirtyEntriesKeys)
+    }
+
+    if (exists(journalFile)) renameToOrThrow(journalFile, backupJournalFile, deleteDest = true)
+    renameToOrThrow(tempJournalFile, journalFile, deleteDest = false)
+    delete(backupJournalFile)
 }
