@@ -4,106 +4,121 @@ import com.mayakapps.lrucache.combineResults
 import com.mayakapps.lrucache.io.ByteArrayInputStream
 import com.mayakapps.lrucache.io.use
 import com.mayakapps.lrucache.named
+import io.kotest.assertions.throwables.shouldNotThrow
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.Matcher
+import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class JournalReaderTests {
 
     @Test
-    fun testReadEmptyStream() {
+    fun testValidateHeaderEmptyStream() {
         val bytes = ByteArray(0)
-        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readJournal() }
-        readResult shouldMatch JournalReader.Result(isCorrupted = true, cleanKeys = emptyList(), opsCount = 0)
+        shouldThrow<JournalInvalidHeaderException> {
+            JournalReader(ByteArrayInputStream(bytes)).use { it.validateHeader() }
+        }
     }
 
     @Test
-    fun testReadIncorrectFile() {
+    fun testValidateHeaderIncorrectFile() {
         // Text file containing "Text File"
         val bytes = byteArrayOf(0x54, 0x65, 0x78, 0x74, 0x20, 0x46, 0x69, 0x6C, 0x65)
-        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readJournal() }
-        readResult shouldMatch JournalReader.Result(isCorrupted = true, cleanKeys = emptyList(), opsCount = 0)
+        shouldThrow<JournalInvalidHeaderException> {
+            JournalReader(ByteArrayInputStream(bytes)).use { it.validateHeader() }
+        }
     }
 
     @Test
-    fun testReadIncorrectVersion() {
+    fun testValidateHeaderIncorrectVersion() {
         val bytes = byteArrayOf(
             0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x00,
             0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readJournal() }
-        readResult shouldMatch JournalReader.Result(isCorrupted = true, cleanKeys = emptyList(), opsCount = 0)
+        shouldThrow<JournalInvalidHeaderException> {
+            JournalReader(ByteArrayInputStream(bytes)).use { it.validateHeader() }
+        }
     }
 
     @Test
-    fun testReadEmptyJournal() {
+    fun testValidateHeaderValidHeader() {
         val bytes = byteArrayOf(
             0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01,
         )
 
-        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readJournal() }
-        readResult shouldMatch JournalReader.Result(isCorrupted = false, cleanKeys = emptyList(), opsCount = 0)
+        shouldNotThrow<JournalInvalidHeaderException> {
+            JournalReader(ByteArrayInputStream(bytes)).use { it.validateHeader() }
+        }
+    }
+
+    @Test
+    fun testReadEntryEmptyJournal() {
+        val bytes = byteArrayOf(
+            0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01,
+        )
+
+        JournalReader(ByteArrayInputStream(bytes)).use {
+            it.validateHeader()
+            it.readEntry()
+        } shouldBe null
     }
 
     @Test
     fun testReadSingleDirtyOperation() {
         val bytes = byteArrayOf(
-            0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01,
             0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readJournal() }
-        readResult shouldMatch JournalReader.Result(isCorrupted = false, cleanKeys = emptyList(), opsCount = 1)
+        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readEntry() }
+        readResult shouldMatch JournalEntry.Dirty("TestKey")
     }
 
     @Test
     fun testReadSingleCleanOperation() {
         val bytes = byteArrayOf(
-            0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01,
             0x02, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readJournal() }
-        readResult shouldMatch JournalReader.Result(isCorrupted = false, cleanKeys = listOf("TestKey"), opsCount = 1)
+        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readEntry() }
+        readResult shouldMatch JournalEntry.Clean("TestKey")
     }
 
     @Test
-    fun testReadAddedOperation() {
+    fun testReadSingleRemoveOperation() {
         val bytes = byteArrayOf(
-            0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01,
-            0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
-            0x02, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
-        )
-
-        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readJournal() }
-        readResult shouldMatch JournalReader.Result(isCorrupted = false, cleanKeys = listOf("TestKey"), opsCount = 2)
-    }
-
-    @Test
-    fun testReadAddedRemovedOperation() {
-        val bytes = byteArrayOf(
-            0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01,
-            0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
-            0x02, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
-            0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
             0x03, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readJournal() }
-        readResult shouldMatch JournalReader.Result(isCorrupted = false, cleanKeys = emptyList(), opsCount = 4)
+        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readEntry() }
+        readResult shouldMatch JournalEntry.Remove("TestKey")
     }
 
-    private infix fun JournalReader.Result.shouldMatch(reference: JournalReader.Result) =
-        this should matchResult(reference)
+    private infix fun JournalData.shouldMatch(reference: JournalData) =
+        this should matchData(reference)
 
-    private fun matchResult(reference: JournalReader.Result) = Matcher<JournalReader.Result> { value ->
+    private fun matchData(reference: JournalData) = Matcher<JournalData> { value ->
+        combineResults(
+            "Journal data should match reference",
+            "Journal data shouldn't match reference",
+            reference.cleanEntriesKeys.named("cleanEntriesKeys").test(value.cleanEntriesKeys),
+            reference.dirtyEntriesKeys.named("dirtyEntriesKeys").test(value.dirtyEntriesKeys),
+            reference.redundantEntriesCount.named("redundantEntriesCount").test(value.redundantEntriesCount),
+        )
+    }
+
+    private infix fun JournalEntry?.shouldMatch(reference: JournalEntry?) =
+        this should matchEntry(reference)
+
+    private fun matchEntry(reference: JournalEntry?) = Matcher<JournalEntry?> { value ->
         combineResults(
             "Read result should match reference",
             "Read result shouldn't match reference",
-            reference.isCorrupted.named("isCorrupted").test(value.isCorrupted),
-            reference.cleanKeys.named("cleanKeys").test(value.cleanKeys),
-            reference.opsCount.named("opsCount").test(value.opsCount),
+            beNull().invert().test(value),
+            reference!!.opcode.named("opcode").test(value!!.opcode),
+            reference.key.named("key").test(value.key),
         )
     }
 }

@@ -1,15 +1,9 @@
 package com.mayakapps.lrucache.journal
 
-import com.mayakapps.lrucache.io.BufferedOutputStream
 import com.mayakapps.lrucache.io.Closeable
-import com.mayakapps.lrucache.io.FileOutputStream
 import com.mayakapps.lrucache.io.OutputStream
 
 internal class JournalWriter(private val outputStream: OutputStream) : Closeable {
-
-    constructor(journalFilename: String, append: Boolean = true) : this(
-        BufferedOutputStream(FileOutputStream(journalFilename, append))
-    )
 
     internal fun writeHeader() {
         outputStream.writeString(JOURNAL_MAGIC)
@@ -18,23 +12,23 @@ internal class JournalWriter(private val outputStream: OutputStream) : Closeable
     }
 
     internal fun writeAll(cleanKeys: Collection<String>, dirtyKeys: Collection<String>) {
-        for (key in cleanKeys) writeOperation(OPCODE_CLEAN, key)
-        for (key in dirtyKeys) writeOperation(OPCODE_DIRTY, key)
+        for (key in cleanKeys) writeEntry(JournalEntry.CLEAN, key)
+        for (key in dirtyKeys) writeEntry(JournalEntry.DIRTY, key)
         outputStream.flush()
     }
 
-    internal fun writeDirty(key: String) = writeOperationAndFlush(OPCODE_DIRTY, key)
+    internal fun writeDirty(key: String) = writeEntryAndFlush(JournalEntry.DIRTY, key)
 
-    internal fun writeClean(key: String) = writeOperationAndFlush(OPCODE_CLEAN, key)
+    internal fun writeClean(key: String) = writeEntryAndFlush(JournalEntry.CLEAN, key)
 
-    internal fun writeRemove(key: String) = writeOperationAndFlush(OPCODE_REMOVE, key)
+    internal fun writeRemove(key: String) = writeEntryAndFlush(JournalEntry.REMOVE, key)
 
-    private fun writeOperationAndFlush(opcode: Int, key: String) {
-        writeOperation(opcode, key)
+    private fun writeEntryAndFlush(opcode: Int, key: String) {
+        writeEntry(opcode, key)
         outputStream.flush()
     }
 
-    private fun writeOperation(opcode: Int, key: String) {
+    private fun writeEntry(opcode: Int, key: String) {
         outputStream.write(opcode)
         outputStream.writeLengthString(key)
     }

@@ -8,24 +8,37 @@ internal interface FileManager {
 
     fun size(file: File): Long
 
-    fun listContent(file: File): List<File>?
+    fun listContents(file: File): List<File>?
 
     fun delete(file: File): Boolean
 
+    fun deleteOrThrow(file: File) {
+        if (exists(file) && !delete(file)) throw IOException()
+    }
+
     fun deleteRecursively(file: File): Boolean
+
+    fun deleteContentsOrThrow(file: File) {
+        val contents = listContents(file) ?: throw IOException("Not a readable directory: ${file.filePath}")
+        for (subFile in contents) {
+            if (isDirectory(subFile)) deleteContentsOrThrow(subFile)
+            if (!delete(file)) throw IOException()
+        }
+    }
 
     fun renameTo(oldFile: File, newFile: File): Boolean
 
+    fun renameToOrThrow(oldFile: File, newFile: File, deleteDest: Boolean) {
+        if (deleteDest) deleteOrThrow(newFile)
+        if (!renameTo(oldFile, newFile)) throw IOException()
+    }
+
     fun createDirectories(file: File): Boolean
+
+    fun inputStream(file: File): InputStream = FileInputStream(file.filePath)
+
+    fun outputStream(file: File, append: Boolean = true): OutputStream = FileOutputStream(file.filePath, append)
 }
 
-internal expect object DefaultFileManager: FileManager
+internal expect object DefaultFileManager : FileManager
 
-internal fun FileManager.renameToOrThrow(oldFile: File, newFile: File, deleteDest: Boolean) {
-    if (deleteDest) deleteOrThrow(newFile)
-    if (!renameTo(oldFile, newFile)) throw IOException()
-}
-
-internal fun FileManager.deleteOrThrow(file: File) {
-    if (exists(file) && !delete(file)) throw IOException()
-}

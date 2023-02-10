@@ -24,7 +24,7 @@ internal actual object DefaultFileManager : FileManager {
         (fileManager.attributesOfItemAtPath(file, null)?.get(NSFileSize) as Long?) ?: 0
 
     @Suppress("UNCHECKED_CAST")
-    override fun listContent(file: File): List<String>? =
+    override fun listContents(file: File): List<String>? =
         fileManager.contentsOfDirectoryAtPath(file, null)?.map { NSString.pathWithComponents(listOf(file, it)) }
 
     override fun delete(file: File): Boolean = fileManager.removeItemAtPath(file, null)
