@@ -3,6 +3,12 @@ package com.mayakapps.lrucache.journal
 internal const val JOURNAL_MAGIC = "JOURNAL"
 internal const val JOURNAL_VERSION = 1
 
-internal const val OPCODE_DIRTY = 1
-internal const val OPCODE_CLEAN = 2
-internal const val OPCODE_REMOVE = 3
+internal enum class Opcode(val id: Int) {
+    DIRTY(1), CLEAN(2), REMOVE(3);
+
+    companion object {
+        private val opcodes = values()
+
+        fun fromId(id: Int) = opcodes.find { it.id == id } ?: throw IllegalArgumentException()
+    }
+}

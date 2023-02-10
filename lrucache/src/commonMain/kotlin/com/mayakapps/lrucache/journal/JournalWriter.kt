@@ -18,24 +18,24 @@ internal class JournalWriter(private val outputStream: OutputStream) : Closeable
     }
 
     internal fun writeAll(cleanKeys: Collection<String>, dirtyKeys: Collection<String>) {
-        for (key in cleanKeys) writeOperation(OPCODE_CLEAN, key)
-        for (key in dirtyKeys) writeOperation(OPCODE_DIRTY, key)
+        for (key in cleanKeys) writeOperation(Opcode.CLEAN, key)
+        for (key in dirtyKeys) writeOperation(Opcode.DIRTY, key)
         outputStream.flush()
     }
 
-    internal fun writeDirty(key: String) = writeOperationAndFlush(OPCODE_DIRTY, key)
+    internal fun writeDirty(key: String) = writeOperationAndFlush(Opcode.DIRTY, key)
 
-    internal fun writeClean(key: String) = writeOperationAndFlush(OPCODE_CLEAN, key)
+    internal fun writeClean(key: String) = writeOperationAndFlush(Opcode.CLEAN, key)
 
-    internal fun writeRemove(key: String) = writeOperationAndFlush(OPCODE_REMOVE, key)
+    internal fun writeRemove(key: String) = writeOperationAndFlush(Opcode.REMOVE, key)
 
-    private fun writeOperationAndFlush(opcode: Int, key: String) {
+    private fun writeOperationAndFlush(opcode: Opcode, key: String) {
         writeOperation(opcode, key)
         outputStream.flush()
     }
 
-    private fun writeOperation(opcode: Int, key: String) {
-        outputStream.write(opcode)
+    private fun writeOperation(opcode: Opcode, key: String) {
+        outputStream.write(opcode.id)
         outputStream.writeLengthString(key)
     }
 

@@ -97,18 +97,24 @@ internal class Journal private constructor(
 
             // Prefer to pick up where we left off
             val journalData = if (fileManager.exists(journalFile)) {
-                val journalData = JournalReader(inputStreamFactory(journalFile)).use { it.readJournal() }
-                val redundantOpsCount = journalData.opsCount - journalData.cleanKeys.size
+                val journalData = try {
+                    JournalReader(inputStreamFactory(journalFile)).use { it.readJournal() }
+                } catch (ex: JournalException) {
+                    null
+                }
+
+                val redundantOpsCount =
+                    if (journalData != null) journalData.opsCount - journalData.cleanKeys.size else 0
 
                 // Rebuild journal if required
                 if (
-                    journalData.isCorrupted ||
+                    journalData == null ||
                     (redundantOpsCount >= REDUNDANT_OPS_THRESHOLD && redundantOpsCount >= journalData.cleanKeys.size)
                 ) {
                     fileManager.deleteOrThrow(tempJournalFile)
                     JournalWriter(tempJournalFile.filePath).use { writer ->
                         writer.writeHeader()
-                        writer.writeAll(journalData.cleanKeys, emptyList())
+                        writer.writeAll(journalData?.cleanKeys ?: emptyList(), emptyList())
                     }
 
                     if (fileManager.exists(journalFile)) fileManager.renameToOrThrow(
@@ -120,8 +126,8 @@ internal class Journal private constructor(
                     fileManager.delete(backupJournalFile)
                 }
 
-                journalData
-            } else JournalReader.Result(false, emptyList(), 0)
+                journalData ?: JournalReader.Result(emptyList(), 0)
+            } else JournalReader.Result(emptyList(), 0)
 
             // Make sure that journal directory exists
             fileManager.createDirectories(directory)

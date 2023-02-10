@@ -1,65 +1,59 @@
 package com.mayakapps.lrucache.journal
 
 import com.mayakapps.lrucache.io.Closeable
-import com.mayakapps.lrucache.io.IOException
 import com.mayakapps.lrucache.io.InputStream
 
 internal class JournalReader(private val inputStream: InputStream) : Closeable {
 
     fun readJournal(): Result {
-        var isCorrupted = false
         val keys = mutableListOf<String>()
         var opsCount = 0
 
-        // Validate magic code
-        try {
-            validateHeader()
-        } catch (ex: IOException) {
-            isCorrupted = true
-            return Result(isCorrupted, keys, 0)
-        } catch (ex: IllegalStateException) {
-            isCorrupted = true
-            return Result(isCorrupted, keys, 0)
-        }
+        validateHeader()
 
         // Read operations
-        try {
-            while (true) when (inputStream.read()) {
-                -1 -> break // EOF
+        while (true) {
+            val opcodeId = inputStream.read()
+            if (opcodeId == -1) break // Expected EOF
 
-                OPCODE_DIRTY -> {
-                    inputStream.skipString()
+            val opcode = try {
+                Opcode.fromId(opcodeId)
+            } catch (ex: IllegalArgumentException) {
+                throw JournalInvalidOpcodeException()
+            }
+
+            when (opcode) {
+                Opcode.DIRTY -> {
+                    inputStream.readString()
                     opsCount++
                 }
 
-                OPCODE_CLEAN -> {
+                Opcode.CLEAN -> {
                     keys += inputStream.readString()
                     opsCount++
                 }
 
-                OPCODE_REMOVE -> {
+                Opcode.REMOVE -> {
                     keys.remove(inputStream.readString())
                     opsCount++
                 }
-
-                else -> {
-                    isCorrupted = true
-                    break
-                }
             }
-        } catch (ex: IOException) {
-            isCorrupted = true
         }
 
-        return Result(isCorrupted, keys, opsCount)
+        return Result(keys, opsCount)
     }
 
     private fun validateHeader() {
-        val magic = inputStream.readString(JOURNAL_MAGIC.length)
+        val magic = try {
+            inputStream.readString(JOURNAL_MAGIC.length)
+        } catch (ex: JournalEOFException) {
+            throw JournalInvalidHeaderException("File size is less than journal magic code size")
+        }
+
         val version = inputStream.read()
 
-        check(magic == JOURNAL_MAGIC) { "Journal magic string doesn't match" }
-        check(version == JOURNAL_VERSION) { "Journal version doesn't match" }
+        if (magic != JOURNAL_MAGIC) throw JournalInvalidHeaderException("Journal magic ($magic) doesn't match")
+        if (version != JOURNAL_VERSION) throw JournalInvalidHeaderException("Journal version ($version) doesn't match")
     }
 
     override fun close() {
@@ -71,24 +65,17 @@ internal class JournalReader(private val inputStream: InputStream) : Closeable {
     private fun InputStream.readString(): String {
         val length = read()
         return if (length != -1) readString(length)
-        else throw IOException("Corrupted journal")
-    }
-
-    private fun InputStream.skipString() {
-        val length = read()
-        if (length != -1) readBytes(length)
-        else throw IOException("Corrupted journal")
+        else throw JournalEOFException()
     }
 
     private fun InputStream.readString(length: Int) = readBytes(length).decodeToString()
 
     private fun InputStream.readBytes(count: Int) =
-        ByteArray(count).also { if (read(it) != count) throw IOException("Corrupted journal") }
+        ByteArray(count).also { if (read(it) != count) throw JournalEOFException() }
 
     // Result
 
     data class Result(
-        val isCorrupted: Boolean,
         val cleanKeys: List<String>,
         val opsCount: Int,
     )
