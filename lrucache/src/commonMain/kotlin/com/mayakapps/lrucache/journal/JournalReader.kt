@@ -13,29 +13,20 @@ internal class JournalReader(private val inputStream: InputStream) : Closeable {
 
         // Read operations
         while (true) {
-            val opcodeId = inputStream.read()
-            if (opcodeId == -1) break // Expected EOF
+            val entry = readEntry() ?: break
+            opsCount++
 
-            val opcode = try {
-                Opcode.fromId(opcodeId)
-            } catch (ex: IllegalArgumentException) {
-                throw JournalInvalidOpcodeException()
-            }
-
-            when (opcode) {
-                Opcode.DIRTY -> {
-                    inputStream.readString()
-                    opsCount++
+            when (entry) {
+                is JournalEntry.Dirty -> {
+                    /* Do nothing */
                 }
 
-                Opcode.CLEAN -> {
-                    keys += inputStream.readString()
-                    opsCount++
+                is JournalEntry.Clean -> {
+                    keys += entry.key
                 }
 
-                Opcode.REMOVE -> {
-                    keys.remove(inputStream.readString())
-                    opsCount++
+                is JournalEntry.Remove -> {
+                    keys.remove(entry.key)
                 }
             }
         }
@@ -54,6 +45,15 @@ internal class JournalReader(private val inputStream: InputStream) : Closeable {
 
         if (magic != JOURNAL_MAGIC) throw JournalInvalidHeaderException("Journal magic ($magic) doesn't match")
         if (version != JOURNAL_VERSION) throw JournalInvalidHeaderException("Journal version ($version) doesn't match")
+    }
+
+    private fun readEntry(): JournalEntry? {
+        val opcodeId = inputStream.read()
+        if (opcodeId == -1) return null // Expected EOF
+
+        val key = inputStream.readString()
+
+        return JournalEntry(opcodeId, key)
     }
 
     override fun close() {
