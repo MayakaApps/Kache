@@ -70,6 +70,13 @@ class LruCache<K : Any, V : Any>(
     var size = 0L
         private set
 
+    suspend fun getKeys(): Set<K> = mapMutex.withLock { map.keys.toSet() }
+
+    suspend fun getUnderCreationKeys(): Set<K> = mapMutex.withLock { creationMap.keys.toSet() }
+
+    suspend fun getAllKeys(): Keys<K> =
+        mapMutex.withLock { Keys(map.keys.toSet(), creationMap.keys.toSet()) }
+
     /**
      * Returns the value for [key] if it exists in the cache or wait for its creation if it is currently in progress.
      * This returns [defaultValue] if a value is not cached and wasn't in creation or cannot be created.
@@ -297,6 +304,8 @@ class LruCache<K : Any, V : Any>(
             cause = replacedWith?.let { DeferredReplacedException(it) },
         )
     }
+
+    data class Keys<K>(val keys: Set<K>, val underCreationKeys: Set<K>)
 }
 
 private const val CODE_CREATION = 1

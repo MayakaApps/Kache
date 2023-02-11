@@ -9,6 +9,54 @@ import kotlin.test.Test
 class LruCacheGetTests {
 
     /*
+     * getKeys() tests
+     */
+
+    @Test
+    fun testGetKeysEmpty() = runBasicLruCacheTest {
+        getKeys() shouldBe emptySet()
+    }
+
+    @Test
+    fun testGetKeysNonEmpty() = runBasicLruCacheTest {
+        put(KEY, VAL)
+        put(ALT_KEY, ALT_VAL)
+        getKeys() shouldBe setOf(KEY, ALT_KEY)
+    }
+
+    /*
+     * getUnderCreationKeys() tests
+     */
+
+    @Test
+    fun testGetUnderCreationKeysEmpty() = runBasicLruCacheTest {
+        getUnderCreationKeys() shouldBe emptySet()
+    }
+
+    @Test
+    fun testGetUnderCreationKeysNonEmpty() = runBasicLruCacheTest {
+        putAsync(KEY) { VAL }
+        putAsync(ALT_KEY) { ALT_VAL }
+        getUnderCreationKeys() shouldBe setOf(KEY, ALT_KEY)
+    }
+
+    /*
+     * getAllKeys() tests
+     */
+
+    @Test
+    fun testGetAllKeysEmpty() = runBasicLruCacheTest {
+        getAllKeys() shouldBe LruCache.Keys(emptySet(), emptySet())
+    }
+
+    @Test
+    fun testGetAllKeysNonEmpty() = runBasicLruCacheTest {
+        put(KEY, VAL)
+        putAsync(ALT_KEY) { ALT_VAL }
+        getAllKeys() shouldBe LruCache.Keys(setOf(KEY), setOf(ALT_KEY))
+    }
+
+    /*
      * getOrDefault tests
      */
 
