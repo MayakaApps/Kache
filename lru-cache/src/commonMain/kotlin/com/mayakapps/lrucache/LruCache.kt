@@ -223,6 +223,14 @@ class LruCache<K : Any, V : Any>(
         }
     }
 
+    suspend fun removeAllUnderCreation() {
+        mapMutex.withLock {
+            for (key in creationMap.keys) {
+                removeCreation(key)
+            }
+        }
+    }
+
     /**
      * Sets the max size of the cache to [maxSize]. If the new maxSize is smaller than the previous value, the cache
      * would be trimmed.

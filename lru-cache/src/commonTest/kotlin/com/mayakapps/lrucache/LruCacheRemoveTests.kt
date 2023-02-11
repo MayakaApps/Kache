@@ -110,4 +110,28 @@ class LruCacheRemoveTests {
 
         removedEntries shouldHaveSize 0
     }
+
+    /*
+     * removeAllUnderCreation() tests
+     */
+
+    @Test
+    fun testRemoveAllUnderCreation() = runBasicLruCacheTest {
+        put(KEY, VAL)
+        val deferred = putAsync(ALT_KEY) { ALT_VAL }
+        removeAllUnderCreation()
+        shouldThrow<CancellationException> { deferred.await() }
+        get(KEY) shouldBe VAL.asValue()
+        get(ALT_KEY) shouldBe null.asValue()
+    }
+
+    @Test
+    @Suppress("DeferredResultUnused")
+    fun testRemoveAllUnderCreationTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+        putAsync(KEY) { VAL }
+        putAsync(ALT_KEY) { ALT_VAL }
+        removeAllUnderCreation()
+
+        removedEntries shouldHaveSize 0
+    }
 }
