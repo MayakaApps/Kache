@@ -100,11 +100,8 @@ class DiskLruCache private constructor(
      * Closes the journal file and cancels any in-progress creation.
      */
     suspend fun close() {
-        lruCache.mapMutex.withLock {
-            journalMutex.withLock { journalWriter.close() }
-
-            for (deferred in lruCache.creationMap.values) deferred.cancel()
-        }
+        lruCache.removeAllUnderCreation()
+        journalMutex.withLock { journalWriter.close() }
     }
 
     private suspend fun String.transform() =
@@ -165,9 +162,8 @@ class DiskLruCache private constructor(
 
             journalWriter.close()
 
-            lruCache.mapMutex.withLock {
-                fileManager.writeJournalAtomically(directory, lruCache.map.keys, lruCache.creationMap.keys)
-            }
+            val (cleanKeys, dirtyKeys) = lruCache.getAllKeys()
+            fileManager.writeJournalAtomically(directory, cleanKeys, dirtyKeys)
 
             journalWriter = JournalWriter(BufferedOutputStream(fileManager.outputStream(journalFile)))
             redundantJournalEntriesCount = 0
