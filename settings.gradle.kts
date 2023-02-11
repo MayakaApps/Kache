@@ -11,5 +11,5 @@ pluginManagement {
     }
 }
 
-rootProject.name = "KotlinizedLruCache"
+rootProject.name = "KotlinLruCache"
 include(":lru-cache")
