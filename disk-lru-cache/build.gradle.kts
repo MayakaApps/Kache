@@ -41,6 +41,8 @@ kotlin {
                 implementation(project(":lru-cache"))
 
                 implementation(libs.kotlinx.coroutines.core)
+
+                implementation(libs.okio)
             }
         }
 
@@ -50,6 +52,8 @@ kotlin {
                 implementation(libs.kotest.assertions)
 
                 implementation(libs.kotlinx.coroutines.test)
+
+                implementation(libs.okio.fakeFilesystem)
             }
         }
 
