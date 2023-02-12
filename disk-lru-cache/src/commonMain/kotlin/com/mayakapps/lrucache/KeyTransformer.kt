@@ -17,16 +17,3 @@ fun interface KeyTransformer {
     @Suppress("FUN_INTERFACE_WITH_SUSPEND_FUNCTION")
     suspend fun transform(oldKey: String): String
 }
-
-/**
- * An object that implements [KeyTransformer] and transforms keys to an SHA-256 hash of them.
- *
- * The last 1000 hashed values are cached in memory. This is used as the default [KeyTransformer] for [DiskLruCache].
- */
-expect object SHA256KeyHasher : KeyTransformer {
-
-    /**
-     * Returns an SHA-256 hash of [oldKey] which may be newly generated or previously cached.
-     */
-    override suspend fun transform(oldKey: String): String
-}
