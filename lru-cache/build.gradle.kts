@@ -16,6 +16,18 @@ kotlin {
         withJava()
     }
 
+    js(IR) {
+        browser {
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                }
+            }
+        }
+
+        nodejs()
+    }
+
     val appleConfig: KotlinNativeTarget.() -> Unit = {
         binaries {
             framework {
@@ -32,9 +44,29 @@ kotlin {
 
     watchos(appleConfig)
     watchosSimulatorArm64(appleConfig)
+    // Not supported by Coroutines
+    // Issue: https://github.com/Kotlin/kotlinx.coroutines/issues/3601
+    // watchosDeviceArm64(appleConfig)
 
     tvos(appleConfig)
     tvosSimulatorArm64(appleConfig)
+
+    linuxX64()
+    // Not supported by Coroutines
+    // Issue: https://github.com/Kotlin/kotlinx.coroutines/issues/855
+    // linuxArm64()
+
+    mingwX64()
+
+    // Not supported by Coroutines
+    // Issue: https://github.com/Kotlin/kotlinx.coroutines/issues/812
+    // androidNativeArm32()
+    // androidNativeArm64()
+    // androidNativeX86()
+    // androidNativeX64()
+
+    // Still experimental and not supported by dependencies
+    // wasm()
 
     @Suppress("UNUSED_VARIABLE")
     sourceSets {
@@ -53,7 +85,7 @@ kotlin {
             }
         }
 
-        val appleMain by creating {
+        val nonJvmMain by creating {
             dependsOn(commonMain)
 
             dependencies {
@@ -61,9 +93,25 @@ kotlin {
             }
         }
 
-        val appleTest by creating {
+        val nonJvmTest by creating {
             dependsOn(commonTest)
-            dependsOn(appleMain)
+            dependsOn(nonJvmMain)
+        }
+
+        val jsMain by getting {
+            dependsOn(nonJvmMain)
+        }
+
+        val jsTest by getting {
+            dependsOn(nonJvmTest)
+        }
+
+        val appleMain by creating {
+            dependsOn(nonJvmMain)
+        }
+
+        val appleTest by creating {
+            dependsOn(nonJvmTest)
         }
 
         val macosX64Main by getting
@@ -129,6 +177,22 @@ kotlin {
             dependsOn(appleTest)
 
             tvosSimulatorArm64Test.dependsOn(this)
+        }
+
+        val linuxX64Main by getting {
+            dependsOn(nonJvmMain)
+        }
+
+        val linuxX64Test by getting {
+            dependsOn(nonJvmTest)
+        }
+
+        val mingwX64Main by getting {
+            dependsOn(nonJvmMain)
+        }
+
+        val mingwX64Test by getting {
+            dependsOn(nonJvmTest)
         }
     }
 }
