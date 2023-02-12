@@ -31,7 +31,6 @@ kotlin {
     iosSimulatorArm64(appleConfig)
 
     watchos(appleConfig)
-    watchosX86(appleConfig)
     watchosSimulatorArm64(appleConfig)
 
     tvos(appleConfig)
@@ -43,16 +42,16 @@ kotlin {
             dependencies {
                 implementation(project(":lru-cache"))
 
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+                implementation(libs.kotlinx.coroutines.core)
             }
         }
 
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("io.kotest:kotest-assertions-core:5.5.4")
+                implementation(libs.kotest.assertions)
 
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
 

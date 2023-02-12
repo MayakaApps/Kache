@@ -72,16 +72,16 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+                implementation(libs.kotlinx.coroutines.core)
             }
         }
 
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("io.kotest:kotest-assertions-core:5.5.4")
+                implementation(libs.kotest.assertions)
 
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
 
@@ -89,7 +89,7 @@ kotlin {
             dependsOn(commonMain)
 
             dependencies {
-                implementation("co.touchlab:stately-iso-collections:1.2.0")
+                implementation(libs.stately.isoCollections)
             }
         }
 
