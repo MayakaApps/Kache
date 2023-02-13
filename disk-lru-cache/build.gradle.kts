@@ -9,11 +9,9 @@ plugins {
 
 kotlin {
     jvm {
-        compilations.all {
+        compilations.configureEach {
             kotlinOptions.jvmTarget = "1.8"
         }
-
-        withJava()
     }
 
     val appleConfig: KotlinNativeTarget.() -> Unit = {
