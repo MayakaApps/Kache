@@ -24,7 +24,7 @@ jobs:
 
       - name: Retrieve version
         run: |
-          echo "VERSION_NAME=$(cat gradle.properties | grep -w "VERSION_NAME" | cut -d'=' -f2)" >> $GITHUB_ENV
+          echo "VERSION_NAME=$(./gradlew -q getVersion)" >> $GITHUB_ENV
 
       - name: Validate Gradle wrapper
         if: endsWith(env.VERSION_NAME, '-SNAPSHOT')
