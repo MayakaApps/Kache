@@ -37,7 +37,7 @@ jobs:
       - name: Retrieve version (Non-Windows)
         if: matrix.os != 'windows-latest'
         run: |
-          echo "VERSION_NAME=$(./gradlew -q getVersion)" >> $env:GITHUB_ENV
+          echo "VERSION_NAME=$(./gradlew -q getVersion)" >> $GITHUB_ENV
 
       - name: Retrieve version (Windows)
         if: matrix.os == 'windows-latest'
