@@ -12,3 +12,9 @@ allprojects {
         mavenCentral()
     }
 }
+
+tasks.create("getVersion") {
+    doLast {
+        println(findProperty("VERSION_NAME"))
+    }
+}
