@@ -15,31 +15,35 @@ jobs:
       matrix:
         os: [ macOS-latest, windows-latest, ubuntu-latest ]
 
-    runs-on: ubuntu-latest
+    runs-on: ${{matrix.os}}
     if: github.repository == 'MayakaApps/KotlinizedLruCache'
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Retrieve version
+        run: |
+          echo "VERSION_NAME=$(cat gradle.properties | grep -w "VERSION_NAME" | cut -d'=' -f2)" >> $GITHUB_ENV
+
       - name: Validate Gradle wrapper
+        if: endsWith(env.VERSION_NAME, '-SNAPSHOT')
         uses: gradle/wrapper-validation-action@v1
 
       - name: Setup JDK
+        if: endsWith(env.VERSION_NAME, '-SNAPSHOT')
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: 17
 
       - name: Setup gradle
+        if: endsWith(env.VERSION_NAME, '-SNAPSHOT')
         uses: gradle/gradle-build-action@v2
 
       - name: Assemble in parallel
+        if: endsWith(env.VERSION_NAME, '-SNAPSHOT')
         run: ./gradlew assemble --parallel
-
-      - name: Retrieve version
-        run: |
-          echo "VERSION_NAME=$(cat gradle.properties | grep -w "VERSION_NAME" | cut -d'=' -f2)" >> $GITHUB_ENV
 
       - name: Upload Linux-specific and common snapshot artifacts
         if: endsWith(env.VERSION_NAME, '-SNAPSHOT') && matrix.os == 'ubuntu-latest'
