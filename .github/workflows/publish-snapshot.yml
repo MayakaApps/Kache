@@ -34,9 +34,15 @@ jobs:
       - name: Setup gradle
         uses: gradle/gradle-build-action@v2
 
-      - name: Retrieve version
+      - name: Retrieve version (Non-Windows)
+        if: matrix.os != 'windows-latest'
         run: |
-          echo "VERSION_NAME=$(./gradlew -q getVersion)" >> $GITHUB_ENV
+          echo "VERSION_NAME=$(./gradlew -q getVersion)" >> $env:GITHUB_ENV
+
+      - name: Retrieve version (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo "VERSION_NAME=$(./gradlew -q getVersion)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Assemble in parallel
         if: endsWith(env.VERSION_NAME, '-SNAPSHOT')
