@@ -5,8 +5,15 @@ on:
     branches:
       - main
 
+concurrency:
+  group: "release"
+  cancel-in-progress: false
+
 jobs:
   publish:
+    strategy:
+      matrix:
+        os: [ macOS-latest, windows-latest, ubuntu-latest ]
 
     runs-on: ubuntu-latest
     if: github.repository == 'MayakaApps/KotlinizedLruCache'
@@ -22,17 +29,35 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
+
+      - name: Setup gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Assemble in parallel
+        run: ./gradlew assemble --parallel
 
       - name: Retrieve version
         run: |
           echo "VERSION_NAME=$(cat gradle.properties | grep -w "VERSION_NAME" | cut -d'=' -f2)" >> $GITHUB_ENV
 
-      - name: Publish snapshot
-        if: endsWith(env.VERSION_NAME, '-SNAPSHOT')
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: publishAllPublicationsToMavenCentralRepository --no-daemon --no-parallel
+      - name: Upload Linux-specific and common snapshot artifacts
+        if: endsWith(env.VERSION_NAME, '-SNAPSHOT') && matrix.os == 'ubuntu-latest'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -DisMainHost=true --no-parallel
+
+      - name: Upload macOS-specific snapshot artifacts
+        if: endsWith(env.VERSION_NAME, '-SNAPSHOT') && matrix.os == 'macOS-latest'
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository --no-parallel
+
+      - name: Upload Windows-specific snapshot artifacts
+        if: endsWith(env.VERSION_NAME, '-SNAPSHOT') && matrix.os == 'windows-latest'
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository --no-parallel

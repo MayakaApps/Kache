@@ -2,12 +2,19 @@ name: Publish Release
 
 on:
   release:
-    types: [created]
+    types: [ created ]
+
+concurrency:
+  group: "release"
+  cancel-in-progress: false
 
 jobs:
   publish:
+    strategy:
+      matrix:
+        os: [macOS-latest, windows-latest, ubuntu-latest]
 
-    runs-on: ubuntu-latest
+    runs-on: ${{matrix.os}}
     if: github.repository == 'MayakaApps/KotlinizedLruCache'
 
     steps:
@@ -21,23 +28,47 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
-      - name: Upload release
+      - name: Setup gradle
         uses: gradle/gradle-build-action@v2
-        with:
-          arguments: publishAllPublicationsToMavenCentralRepository --no-daemon --no-parallel
+
+      - name: Assemble in parallel
+        run: ./gradlew assemble --parallel
+
+      - name: Upload Linux-specific and common artifacts
+        if: matrix.os == 'ubuntu-latest'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_KEY_PASSWORD }}
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -DisMainHost=true --no-parallel
 
-      - name: Publish release
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: closeAndReleaseRepository --no-daemon --no-parallel
+      - name: Upload macOS-specific artifacts
+        if: matrix.os == 'macOS-latest'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_KEY_PASSWORD }}
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository --no-parallel
+
+      - name: Upload Windows-specific artifacts
+        if: matrix.os == 'windows-latest'
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_KEY_PASSWORD }}
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository --no-parallel
+
+      - name: Publish release
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+        run: ./gradlew closeAndReleaseRepository --no-daemon --no-parallel
