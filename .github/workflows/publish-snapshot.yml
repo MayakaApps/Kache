@@ -15,7 +15,7 @@ jobs:
       matrix:
         os: [ macOS-latest, windows-latest, ubuntu-latest ]
 
-    runs-on: ubuntu-latest
+    runs-on: ${{matrix.os}}
     if: github.repository == 'MayakaApps/KotlinizedLruCache'
 
     steps:
