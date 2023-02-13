@@ -129,4 +129,17 @@ kotlin {
             tvosSimulatorArm64Test.dependsOn(this)
         }
     }
+
+    val publicationsFromMainHost =
+        listOf(jvm()).map { it.name } + "kotlinMultiplatform"
+    publishing {
+        publications {
+            matching { it.name in publicationsFromMainHost }.all {
+                val targetPublication = this@all
+                tasks.withType<AbstractPublishToMaven>()
+                    .matching { it.publication == targetPublication }
+                    .configureEach { onlyIf { findProperty("isMainHost") == "true" } }
+            }
+        }
+    }
 }
