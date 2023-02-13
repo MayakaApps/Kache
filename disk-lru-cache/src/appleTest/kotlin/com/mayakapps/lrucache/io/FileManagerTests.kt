@@ -85,24 +85,24 @@ class FileManagerTests {
         val subFile2 = NSString.pathWithComponents(listOf(subDir, "file2"))
         NSFileManager.defaultManager.createFileAtPath(subFile2, null, null)
 
-        DefaultFileManager.listContent(tempDirectory)!! shouldContainAll listOf(subFile1, subDir)
+        DefaultFileManager.listContents(tempDirectory)!! shouldContainAll listOf(subFile1, subDir)
     }
 
     @Test
     fun testListContentEmptyDirectory() {
         NSFileManager.defaultManager.createDirectoryAtPath(tempDirectory, true, null, null)
-        DefaultFileManager.listContent(tempDirectory)!! shouldHaveSize 0
+        DefaultFileManager.listContents(tempDirectory)!! shouldHaveSize 0
     }
 
     @Test
     fun testListContentExistentFile() {
         NSFileManager.defaultManager.createFileAtPath(tempFile, null, null)
-        DefaultFileManager.listContent(tempFile) shouldBe null
+        DefaultFileManager.listContents(tempFile) shouldBe null
     }
 
     @Test
     fun testListContentNonExistent() {
-        DefaultFileManager.listContent(tempFile) shouldBe null
+        DefaultFileManager.listContents(tempFile) shouldBe null
     }
 
     // 'DefaultFileManager.delete()' Tests
