@@ -3,7 +3,7 @@ package com.mayakapps.lrucache.io
 
 internal actual class BufferedInputStream actual constructor(
     base: InputStream,
-    size: Int = 8192,
+    size: Int,
 ) : InputStream() {
 
     init {
