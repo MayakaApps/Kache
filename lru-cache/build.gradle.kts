@@ -105,11 +105,15 @@ kotlin {
         }
 
         val appleMain by creating {
+            dependsOn(commonMain)
             dependsOn(nonJvmMain)
         }
 
         val appleTest by creating {
+            dependsOn(commonTest)
             dependsOn(nonJvmTest)
+
+            dependsOn(appleMain)
         }
 
         val macosX64Main by getting
