@@ -3,6 +3,8 @@ package com.mayakapps.lrucache
 import okio.FileSystem
 import okio.Path
 
+expect val SystemFileSystem : FileSystem
+
 fun FileSystem.deleteContents(dir: Path) {
     list(dir).forEach { deleteRecursively(it) }
 }
