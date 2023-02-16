@@ -3,7 +3,7 @@ package com.mayakapps.lrucache.io
 
 internal actual class BufferedOutputStream actual constructor(
     private val base: OutputStream,
-    size: Int = 8192,
+    size: Int,
 ) : OutputStream() {
 
     private val buffer = ByteArray(size)
