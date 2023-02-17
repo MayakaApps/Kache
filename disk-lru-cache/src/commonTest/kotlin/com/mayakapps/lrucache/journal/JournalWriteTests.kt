@@ -4,7 +4,7 @@ import io.kotest.matchers.shouldBe
 import okio.*
 import kotlin.test.Test
 
-class JournalWriterTests {
+class JournalWriteTests {
 
     @Test
     fun testWriteHeader() {

@@ -15,7 +15,7 @@ import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import kotlin.test.Test
 
-class JournalReaderTests {
+class JournalReadTests {
 
     @Test
     fun testValidateHeaderEmptyStream() {
