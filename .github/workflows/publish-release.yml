@@ -33,9 +33,6 @@ jobs:
       - name: Setup gradle
         uses: gradle/gradle-build-action@v2
 
-      - name: Assemble in parallel
-        run: ./gradlew assemble --parallel
-
       - name: Upload Linux-specific and common artifacts
         if: matrix.os == 'ubuntu-latest'
         env:
@@ -44,7 +41,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_KEY_PASSWORD }}
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PisMainHost=true --no-parallel
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PisMainHost=true
 
       - name: Upload macOS-specific artifacts
         if: matrix.os == 'macOS-latest'
@@ -54,7 +51,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_KEY_PASSWORD }}
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository --no-parallel
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository
 
       - name: Upload Windows-specific artifacts
         if: matrix.os == 'windows-latest'
@@ -64,11 +61,11 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_KEY_PASSWORD }}
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository --no-parallel
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository
 
       - name: Publish release
         if: matrix.os == 'ubuntu-latest'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
-        run: ./gradlew closeAndReleaseRepository --no-daemon --no-parallel
+        run: ./gradlew closeAndReleaseRepository

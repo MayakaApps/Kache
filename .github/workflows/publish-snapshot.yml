@@ -44,27 +44,23 @@ jobs:
         run: |
           echo "VERSION_NAME=$(./gradlew -q getVersion)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Assemble in parallel
-        if: endsWith(env.VERSION_NAME, '-SNAPSHOT')
-        run: ./gradlew assemble --parallel
-
       - name: Upload Linux-specific and common snapshot artifacts
         if: endsWith(env.VERSION_NAME, '-SNAPSHOT') && matrix.os == 'ubuntu-latest'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PisMainHost=true --no-parallel
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PisMainHost=true
 
       - name: Upload macOS-specific snapshot artifacts
         if: endsWith(env.VERSION_NAME, '-SNAPSHOT') && matrix.os == 'macOS-latest'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository --no-parallel
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository
 
       - name: Upload Windows-specific snapshot artifacts
         if: endsWith(env.VERSION_NAME, '-SNAPSHOT') && matrix.os == 'windows-latest'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository --no-parallel
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository
