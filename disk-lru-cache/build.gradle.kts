@@ -14,6 +14,13 @@ kotlin {
         }
     }
 
+    js(IR) {
+        // Has no FileSystem implementation in Okio
+        // browser()
+
+        nodejs()
+    }
+
     val appleConfig: KotlinNativeTarget.() -> Unit = {
         binaries {
             framework {
@@ -30,9 +37,29 @@ kotlin {
 
     watchos(appleConfig)
     watchosSimulatorArm64(appleConfig)
+    // Not supported by Coroutines
+    // Issue: https://github.com/Kotlin/kotlinx.coroutines/issues/3601
+    // watchosDeviceArm64(appleConfig)
 
     tvos(appleConfig)
     tvosSimulatorArm64(appleConfig)
+
+    linuxX64()
+    // Not supported by Coroutines
+    // Issue: https://github.com/Kotlin/kotlinx.coroutines/issues/855
+    // linuxArm64()
+
+    mingwX64()
+
+    // Not supported by Coroutines
+    // Issue: https://github.com/Kotlin/kotlinx.coroutines/issues/812
+    // androidNativeArm32()
+    // androidNativeArm64()
+    // androidNativeX86()
+    // androidNativeX64()
+
+    // Still experimental and not supported by dependencies
+    // wasm()
 
     @Suppress("UNUSED_VARIABLE")
     sourceSets {
@@ -57,12 +84,29 @@ kotlin {
             }
         }
 
-        val appleMain by creating {
+        val jsMain by getting {
+            dependencies {
+                implementation(libs.okio.nodeFilesystem)
+            }
+        }
+
+        val nativeMain by creating {
             dependsOn(commonMain)
         }
 
-        val appleTest by creating {
+        val nativeTest by creating {
             dependsOn(commonTest)
+
+            dependsOn(nativeMain)
+        }
+
+        val appleMain by creating {
+            dependsOn(nativeMain)
+        }
+
+        val appleTest by creating {
+            dependsOn(nativeTest)
+
             dependsOn(appleMain)
         }
 
@@ -129,6 +173,22 @@ kotlin {
             dependsOn(appleTest)
 
             tvosSimulatorArm64Test.dependsOn(this)
+        }
+
+        val linuxX64Main by getting {
+            dependsOn(nativeMain)
+        }
+
+        val linuxX64Test by getting {
+            dependsOn(nativeTest)
+        }
+
+        val mingwX64Main by getting {
+            dependsOn(nativeMain)
+        }
+
+        val mingwX64Test by getting {
+            dependsOn(nativeTest)
         }
     }
 

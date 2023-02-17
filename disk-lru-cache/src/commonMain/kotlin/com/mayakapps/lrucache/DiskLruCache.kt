@@ -192,7 +192,7 @@ class DiskLruCache private constructor(
             creationDispatcher: CoroutineDispatcher,
             keyTransformer: KeyTransformer? = SHA256KeyHasher,
         ) = open(
-            fileSystem = SystemFileSystem,
+            fileSystem = getSystemFileSystem(),
             directory = directoryPath.toPath(),
             maxSize = maxSize,
             creationDispatcher = creationDispatcher,

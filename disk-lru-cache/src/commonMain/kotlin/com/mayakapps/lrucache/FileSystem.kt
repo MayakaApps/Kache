@@ -5,7 +5,7 @@ import okio.FileSystem
 import okio.Path
 import okio.use
 
-expect val SystemFileSystem: FileSystem
+internal expect fun getSystemFileSystem(): FileSystem
 
 fun FileSystem.deleteContents(dir: Path) {
     list(dir).forEach { deleteRecursively(it) }
