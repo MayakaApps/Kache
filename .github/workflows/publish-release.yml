@@ -15,7 +15,7 @@ jobs:
         os: [macOS-latest, ubuntu-latest]
 
     runs-on: ${{matrix.os}}
-    if: github.repository == 'MayakaApps/KotlinizedLruCache'
+    if: github.repository == 'MayakaApps/LruKache'
 
     steps:
       - name: Checkout
