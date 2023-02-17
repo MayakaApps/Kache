@@ -13,7 +13,7 @@ jobs:
   publish:
     strategy:
       matrix:
-        os: [ macOS-latest, windows-latest, ubuntu-latest ]
+        os: [ macOS-latest, ubuntu-latest ]
 
     runs-on: ${{matrix.os}}
     if: github.repository == 'MayakaApps/KotlinizedLruCache'
@@ -34,15 +34,9 @@ jobs:
       - name: Setup gradle
         uses: gradle/gradle-build-action@v2
 
-      - name: Retrieve version (Non-Windows)
-        if: matrix.os != 'windows-latest'
+      - name: Retrieve version
         run: |
           echo "VERSION_NAME=$(./gradlew -q getVersion)" >> $GITHUB_ENV
-
-      - name: Retrieve version (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          echo "VERSION_NAME=$(./gradlew -q getVersion)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Upload Linux-specific and common snapshot artifacts
         if: endsWith(env.VERSION_NAME, '-SNAPSHOT') && matrix.os == 'ubuntu-latest'
@@ -53,13 +47,6 @@ jobs:
 
       - name: Upload macOS-specific snapshot artifacts
         if: endsWith(env.VERSION_NAME, '-SNAPSHOT') && matrix.os == 'macOS-latest'
-        env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository
-
-      - name: Upload Windows-specific snapshot artifacts
-        if: endsWith(env.VERSION_NAME, '-SNAPSHOT') && matrix.os == 'windows-latest'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
