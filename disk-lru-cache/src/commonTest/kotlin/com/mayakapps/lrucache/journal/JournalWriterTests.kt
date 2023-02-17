@@ -1,18 +1,20 @@
 package com.mayakapps.lrucache.journal
 
-import com.mayakapps.lrucache.io.ByteArrayOutputStream
-import com.mayakapps.lrucache.io.OutputStream
 import com.mayakapps.lrucache.io.use
 import io.kotest.matchers.shouldBe
+import okio.Buffer
+import okio.Sink
+import okio.Timeout
+import okio.buffer
 import kotlin.test.Test
 
 class JournalWriterTests {
 
     @Test
     fun testWriteHeader() {
-        val outputStream = ByteArrayOutputStream()
-        JournalWriter(outputStream).use { it.writeHeader() }
-        outputStream.toByteArray() shouldBe headerBytes
+        val buffer = Buffer()
+        JournalWriter(buffer).use { it.writeHeader() }
+        buffer.readByteArray() shouldBe headerBytes
     }
 
     @Test
@@ -21,9 +23,9 @@ class JournalWriterTests {
             0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        val outputStream = ByteArrayOutputStream()
-        JournalWriter(outputStream).use { it.writeDirty(KEY) }
-        outputStream.toByteArray() shouldBe bytes
+        val buffer = Buffer()
+        JournalWriter(buffer).use { it.writeDirty(KEY) }
+        buffer.readByteArray() shouldBe bytes
     }
 
     @Test
@@ -32,9 +34,9 @@ class JournalWriterTests {
             0x02, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        val outputStream = ByteArrayOutputStream()
-        JournalWriter(outputStream).use { it.writeClean(KEY) }
-        outputStream.toByteArray() shouldBe bytes
+        val buffer = Buffer()
+        JournalWriter(buffer).use { it.writeClean(KEY) }
+        buffer.readByteArray() shouldBe bytes
     }
 
     @Test
@@ -43,9 +45,9 @@ class JournalWriterTests {
             0x03, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        val outputStream = ByteArrayOutputStream()
-        JournalWriter(outputStream).use { it.writeRemove(KEY) }
-        outputStream.toByteArray() shouldBe bytes
+        val buffer = Buffer()
+        JournalWriter(buffer).use { it.writeRemove(KEY) }
+        buffer.readByteArray() shouldBe bytes
     }
 
     @Test
@@ -55,30 +57,32 @@ class JournalWriterTests {
             0x01, 0x0A, 0x41, 0x6C, 0x74, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        val outputStream = ByteArrayOutputStream()
-        JournalWriter(outputStream).use { it.writeAll(listOf(KEY), listOf(ALT_KEY)) }
-        outputStream.toByteArray() shouldBe bytes
+        val buffer = Buffer()
+        JournalWriter(buffer).use { it.writeAll(listOf(KEY), listOf(ALT_KEY)) }
+        buffer.readByteArray() shouldBe bytes
     }
 
     @Test
     fun testClose() {
-        val outputStream = object : OutputStream() {
+        val sink = object : Sink {
             var wasClosed = false
 
             override fun close() {
                 wasClosed = true
             }
 
-            override fun write(byte: Int) {}
+            override fun write(source: Buffer, byteCount: Long) {}
+            override fun timeout(): Timeout = Timeout.NONE
+            override fun flush() {}
         }
 
-        JournalWriter(outputStream).close()
-        outputStream.wasClosed shouldBe true
+        JournalWriter(sink.buffer()).close()
+        sink.wasClosed shouldBe true
     }
 
     companion object {
         private const val KEY = "TestKey"
         private const val ALT_KEY = "AltTestKey"
-        private val headerBytes = JOURNAL_MAGIC.encodeToByteArray() + JOURNAL_VERSION.toByte()
+        private val headerBytes = JOURNAL_MAGIC.encodeToByteArray() + JOURNAL_VERSION
     }
 }

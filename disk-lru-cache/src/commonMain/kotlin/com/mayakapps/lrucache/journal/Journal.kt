@@ -1,6 +1,10 @@
 package com.mayakapps.lrucache.journal
 
-import com.mayakapps.lrucache.io.*
+import com.mayakapps.lrucache.atomicMove
+import com.mayakapps.lrucache.io.use
+import okio.FileSystem
+import okio.Path
+import okio.buffer
 
 internal data class JournalData(
     val cleanEntriesKeys: List<String>,
@@ -8,10 +12,10 @@ internal data class JournalData(
     val redundantEntriesCount: Int,
 )
 
-internal fun FileManager.readJournalIfExists(directory: File): JournalData? {
-    val journalFile = getFile(directory, JOURNAL_FILE)
-    val tempJournalFile = getFile(directory, JOURNAL_FILE_TEMP)
-    val backupJournalFile = getFile(directory, JOURNAL_FILE_BACKUP)
+internal fun FileSystem.readJournalIfExists(directory: Path): JournalData? {
+    val journalFile = directory.resolve(JOURNAL_FILE)
+    val tempJournalFile = directory.resolve(JOURNAL_FILE_TEMP)
+    val backupJournalFile = directory.resolve(JOURNAL_FILE_BACKUP)
 
     // If a backup file exists, use it instead.
     if (exists(backupJournalFile)) {
@@ -19,12 +23,12 @@ internal fun FileManager.readJournalIfExists(directory: File): JournalData? {
         if (exists(journalFile)) {
             delete(backupJournalFile)
         } else {
-            renameToOrThrow(backupJournalFile, journalFile, false)
+            atomicMove(backupJournalFile, journalFile)
         }
     }
 
     // If a temp file exists, delete it
-    deleteOrThrow(tempJournalFile)
+    delete(tempJournalFile)
 
     if (!exists(journalFile)) return null
 
@@ -32,7 +36,7 @@ internal fun FileManager.readJournalIfExists(directory: File): JournalData? {
     val dirtyEntriesKeys = mutableListOf<String>()
     val cleanEntriesKeys = mutableListOf<String>()
 
-    JournalReader(BufferedInputStream(inputStream(journalFile))).use { reader ->
+    JournalReader(source(journalFile).buffer()).use { reader ->
         reader.validateHeader()
 
         while (true) {
@@ -64,23 +68,23 @@ internal fun FileManager.readJournalIfExists(directory: File): JournalData? {
     )
 }
 
-internal fun FileManager.writeJournalAtomically(
-    directory: File,
+internal fun FileSystem.writeJournalAtomically(
+    directory: Path,
     cleanEntriesKeys: Collection<String>,
     dirtyEntriesKeys: Collection<String>
 ) {
-    val journalFile = getFile(directory, JOURNAL_FILE)
-    val tempJournalFile = getFile(directory, JOURNAL_FILE_TEMP)
-    val backupJournalFile = getFile(directory, JOURNAL_FILE_BACKUP)
+    val journalFile = directory.resolve(JOURNAL_FILE)
+    val tempJournalFile = directory.resolve(JOURNAL_FILE_TEMP)
+    val backupJournalFile = directory.resolve(JOURNAL_FILE_BACKUP)
 
-    deleteOrThrow(tempJournalFile)
+    delete(tempJournalFile)
 
-    JournalWriter(BufferedOutputStream(outputStream(tempJournalFile))).use { writer ->
+    JournalWriter(sink(tempJournalFile, mustCreate = true).buffer()).use { writer ->
         writer.writeHeader()
         writer.writeAll(cleanEntriesKeys, dirtyEntriesKeys)
     }
 
-    if (exists(journalFile)) renameToOrThrow(journalFile, backupJournalFile, deleteDest = true)
-    renameToOrThrow(tempJournalFile, journalFile, deleteDest = false)
+    if (exists(journalFile)) atomicMove(journalFile, backupJournalFile, deleteTarget = true)
+    atomicMove(tempJournalFile, journalFile)
     delete(backupJournalFile)
 }

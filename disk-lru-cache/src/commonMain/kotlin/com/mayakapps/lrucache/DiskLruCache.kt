@@ -5,6 +5,8 @@ import com.mayakapps.lrucache.journal.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okio.Path.Companion.toPath
+import okio.buffer
 
 /**
  * A persisted Least Recently Used (LRU) cache. It can be opened/created by [DiskLruCache.open]
@@ -30,7 +32,8 @@ class DiskLruCache private constructor(
 
     private val journalMutex = Mutex()
     private val journalFile = getFile(directory, JOURNAL_FILE)
-    private var journalWriter = JournalWriter(BufferedOutputStream(fileManager.outputStream(journalFile)))
+    private var journalWriter =
+        JournalWriter(SystemFileSystem.appendingSink(journalFile.filePath.toPath(), mustExist = true).buffer())
 
     private var redundantJournalEntriesCount = initialRedundantJournalEntriesCount
 
@@ -163,9 +166,10 @@ class DiskLruCache private constructor(
             journalWriter.close()
 
             val (cleanKeys, dirtyKeys) = lruCache.getAllKeys()
-            fileManager.writeJournalAtomically(directory, cleanKeys, dirtyKeys)
+            SystemFileSystem.writeJournalAtomically(directory.filePath.toPath(), cleanKeys, dirtyKeys)
 
-            journalWriter = JournalWriter(BufferedOutputStream(fileManager.outputStream(journalFile)))
+            journalWriter =
+                JournalWriter(SystemFileSystem.appendingSink(journalFile.filePath.toPath(), mustExist = true).buffer())
             redundantJournalEntriesCount = 0
         }
     }
@@ -207,7 +211,7 @@ class DiskLruCache private constructor(
             fileManager.createDirectories(directory)
 
             val journalData = try {
-                fileManager.readJournalIfExists(directory)
+                SystemFileSystem.readJournalIfExists(directory.filePath.toPath())
             } catch (ex: JournalException) {
                 // Journal is corrupted - Clear cache
                 fileManager.deleteContentsOrThrow(directory)
@@ -225,13 +229,13 @@ class DiskLruCache private constructor(
             var redundantJournalEntriesCount = journalData?.redundantEntriesCount ?: 0
 
             if (journalData == null) {
-                fileManager.writeJournalAtomically(directory, emptyList(), emptyList())
+                SystemFileSystem.writeJournalAtomically(directory.filePath.toPath(), emptyList(), emptyList())
             } else if (
                 journalData.redundantEntriesCount >= REDUNDANT_ENTRIES_THRESHOLD &&
                 journalData.redundantEntriesCount >= journalData.cleanEntriesKeys.size
             ) {
-                fileManager
-                    .writeJournalAtomically(directory, journalData.cleanEntriesKeys, emptyList())
+                SystemFileSystem
+                    .writeJournalAtomically(directory.filePath.toPath(), journalData.cleanEntriesKeys, emptyList())
                 redundantJournalEntriesCount = 0
             }
 

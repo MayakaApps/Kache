@@ -9,7 +9,7 @@ internal sealed interface JournalEntry {
 
     data class Remove(override val key: String) : JournalEntry
 
-    val opcode: Int
+    val opcode: Byte
         get() = when (this) {
             is Dirty -> DIRTY
             is Clean -> CLEAN
@@ -17,15 +17,15 @@ internal sealed interface JournalEntry {
         }
 
     companion object {
-        operator fun invoke(opcode: Int, key: String) = when (opcode) {
+        operator fun invoke(opcode: Byte, key: String) = when (opcode) {
             DIRTY -> Dirty(key)
             CLEAN -> Clean(key)
             REMOVE -> Remove(key)
             else -> throw JournalInvalidOpcodeException()
         }
 
-        const val DIRTY = 1
-        const val CLEAN = 2
-        const val REMOVE = 3
+        const val DIRTY: Byte = 1
+        const val CLEAN: Byte = 2
+        const val REMOVE: Byte = 3
     }
 }

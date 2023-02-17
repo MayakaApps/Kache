@@ -1,46 +1,42 @@
 package com.mayakapps.lrucache.journal
 
 import com.mayakapps.lrucache.io.Closeable
-import com.mayakapps.lrucache.io.InputStream
+import okio.BufferedSource
+import okio.EOFException
 
-internal class JournalReader(private val inputStream: InputStream) : Closeable {
+internal class JournalReader(private val source: BufferedSource) : Closeable {
 
     internal fun validateHeader() {
         val magic = try {
-            inputStream.readString(JOURNAL_MAGIC.length)
-        } catch (ex: JournalEOFException) {
+            source.readUtf8(JOURNAL_MAGIC.length.toLong())
+        } catch (ex: EOFException) {
             throw JournalInvalidHeaderException("File size is less than journal magic code size")
         }
 
-        val version = inputStream.read()
+        val version = source.readByte()
 
         if (magic != JOURNAL_MAGIC) throw JournalInvalidHeaderException("Journal magic ($magic) doesn't match")
         if (version != JOURNAL_VERSION) throw JournalInvalidHeaderException("Journal version ($version) doesn't match")
     }
 
     internal fun readEntry(): JournalEntry? {
-        val opcodeId = inputStream.read()
-        if (opcodeId == -1) return null // Expected EOF
+        val opcodeId = try {
+            source.readByte()
+        } catch (ex: EOFException) {
+            return null // Expected EOF
+        }
 
-        val key = inputStream.readString()
+        val key = source.readByteLengthUtf8()
 
         return JournalEntry(opcodeId, key)
     }
 
     override fun close() {
-        inputStream.close()
+        source.close()
     }
 
-    // Read Helpers
-
-    private fun InputStream.readString(): String {
-        val length = read()
-        return if (length != -1) readString(length)
-        else throw JournalEOFException()
+    private fun BufferedSource.readByteLengthUtf8(): String {
+        val length = readByte()
+        return readUtf8(length.toLong())
     }
-
-    private fun InputStream.readString(length: Int) = readBytes(length).decodeToString()
-
-    private fun InputStream.readBytes(count: Int) =
-        ByteArray(count).also { if (read(it) != count) throw JournalEOFException() }
 }
