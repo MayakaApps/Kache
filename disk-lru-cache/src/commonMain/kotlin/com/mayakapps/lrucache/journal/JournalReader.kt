@@ -1,7 +1,7 @@
 package com.mayakapps.lrucache.journal
 
-import com.mayakapps.lrucache.io.Closeable
 import okio.BufferedSource
+import okio.Closeable
 import okio.EOFException
 
 internal class JournalReader(private val source: BufferedSource) : Closeable {

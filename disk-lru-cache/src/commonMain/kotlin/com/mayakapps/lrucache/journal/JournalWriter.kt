@@ -1,7 +1,7 @@
 package com.mayakapps.lrucache.journal
 
-import com.mayakapps.lrucache.io.Closeable
 import okio.BufferedSink
+import okio.Closeable
 
 internal class JournalWriter(private val sink: BufferedSink) : Closeable {
 

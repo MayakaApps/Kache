@@ -1,10 +1,10 @@
 package com.mayakapps.lrucache.journal
 
 import com.mayakapps.lrucache.atomicMove
-import com.mayakapps.lrucache.io.use
 import okio.FileSystem
 import okio.Path
 import okio.buffer
+import okio.use
 
 internal data class JournalData(
     val cleanEntriesKeys: List<String>,

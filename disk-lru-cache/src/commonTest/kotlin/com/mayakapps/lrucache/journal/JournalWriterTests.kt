@@ -1,11 +1,7 @@
 package com.mayakapps.lrucache.journal
 
-import com.mayakapps.lrucache.io.use
 import io.kotest.matchers.shouldBe
-import okio.Buffer
-import okio.Sink
-import okio.Timeout
-import okio.buffer
+import okio.*
 import kotlin.test.Test
 
 class JournalWriterTests {

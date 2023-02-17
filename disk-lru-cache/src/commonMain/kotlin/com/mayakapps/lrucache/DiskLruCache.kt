@@ -34,7 +34,7 @@ class DiskLruCache private constructor(
     private val journalMutex = Mutex()
     private val journalFile = directory.resolve(JOURNAL_FILE)
     private var journalWriter =
-        JournalWriter(SystemFileSystem.appendingSink(journalFile, mustExist = true).buffer())
+        JournalWriter(fileSystem.appendingSink(journalFile, mustExist = true).buffer())
 
     private var redundantJournalEntriesCount = initialRedundantJournalEntriesCount
 
@@ -167,10 +167,10 @@ class DiskLruCache private constructor(
             journalWriter.close()
 
             val (cleanKeys, dirtyKeys) = lruCache.getAllKeys()
-            SystemFileSystem.writeJournalAtomically(directory, cleanKeys, dirtyKeys)
+            fileSystem.writeJournalAtomically(directory, cleanKeys, dirtyKeys)
 
             journalWriter =
-                JournalWriter(SystemFileSystem.appendingSink(journalFile, mustExist = true).buffer())
+                JournalWriter(fileSystem.appendingSink(journalFile, mustExist = true).buffer())
             redundantJournalEntriesCount = 0
         }
     }
@@ -212,7 +212,7 @@ class DiskLruCache private constructor(
             fileSystem.createDirectories(directory)
 
             val journalData = try {
-                SystemFileSystem.readJournalIfExists(directory)
+                fileSystem.readJournalIfExists(directory)
             } catch (ex: JournalException) {
                 // Journal is corrupted - Clear cache
                 fileSystem.deleteContents(directory)
@@ -230,12 +230,12 @@ class DiskLruCache private constructor(
             var redundantJournalEntriesCount = journalData?.redundantEntriesCount ?: 0
 
             if (journalData == null) {
-                SystemFileSystem.writeJournalAtomically(directory, emptyList(), emptyList())
+                fileSystem.writeJournalAtomically(directory, emptyList(), emptyList())
             } else if (
                 journalData.redundantEntriesCount >= REDUNDANT_ENTRIES_THRESHOLD &&
                 journalData.redundantEntriesCount >= journalData.cleanEntriesKeys.size
             ) {
-                SystemFileSystem
+                fileSystem
                     .writeJournalAtomically(directory, journalData.cleanEntriesKeys, emptyList())
                 redundantJournalEntriesCount = 0
             }

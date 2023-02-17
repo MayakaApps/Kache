@@ -1,8 +1,8 @@
 package com.mayakapps.lrucache.journal
 
 import com.mayakapps.lrucache.combineResults
-import com.mayakapps.lrucache.io.use
 import com.mayakapps.lrucache.named
+import com.mayakapps.lrucache.nullableUse
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.Matcher
@@ -10,6 +10,7 @@ import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import okio.Buffer
+import okio.use
 import kotlin.test.Test
 
 class JournalReaderTests {
@@ -59,7 +60,7 @@ class JournalReaderTests {
             0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01,
         )
 
-        JournalReader(Buffer().apply { write(bytes) }).use {
+        JournalReader(Buffer().apply { write(bytes) }).nullableUse {
             it.validateHeader()
             it.readEntry()
         } shouldBe null
