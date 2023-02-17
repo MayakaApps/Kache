@@ -1,20 +1,20 @@
 package com.mayakapps.lrucache.journal
 
-import com.mayakapps.lrucache.io.Closeable
-import com.mayakapps.lrucache.io.OutputStream
+import okio.BufferedSink
+import okio.Closeable
 
-internal class JournalWriter(private val outputStream: OutputStream) : Closeable {
+internal class JournalWriter(private val sink: BufferedSink) : Closeable {
 
     internal fun writeHeader() {
-        outputStream.writeString(JOURNAL_MAGIC)
-        outputStream.write(JOURNAL_VERSION)
-        outputStream.flush()
+        sink.writeUtf8(JOURNAL_MAGIC)
+        sink.writeByte(JOURNAL_VERSION.toInt())
+        sink.flush()
     }
 
     internal fun writeAll(cleanKeys: Collection<String>, dirtyKeys: Collection<String>) {
         for (key in cleanKeys) writeEntry(JournalEntry.CLEAN, key)
         for (key in dirtyKeys) writeEntry(JournalEntry.DIRTY, key)
-        outputStream.flush()
+        sink.flush()
     }
 
     internal fun writeDirty(key: String) = writeEntryAndFlush(JournalEntry.DIRTY, key)
@@ -23,26 +23,22 @@ internal class JournalWriter(private val outputStream: OutputStream) : Closeable
 
     internal fun writeRemove(key: String) = writeEntryAndFlush(JournalEntry.REMOVE, key)
 
-    private fun writeEntryAndFlush(opcode: Int, key: String) {
+    private fun writeEntryAndFlush(opcode: Byte, key: String) {
         writeEntry(opcode, key)
-        outputStream.flush()
+        sink.flush()
     }
 
-    private fun writeEntry(opcode: Int, key: String) {
-        outputStream.write(opcode)
-        outputStream.writeLengthString(key)
+    private fun writeEntry(opcode: Byte, key: String) {
+        sink.writeByte(opcode.toInt())
+        sink.writeByteLengthUtf8(key)
+    }
+
+    private fun BufferedSink.writeByteLengthUtf8(string: String) {
+        writeByte(string.length)
+        writeUtf8(string)
     }
 
     override fun close() {
-        outputStream.close()
+        sink.close()
     }
-
-    // Write Helpers
-
-    private fun OutputStream.writeLengthString(string: String) {
-        write(string.length)
-        writeString(string)
-    }
-
-    private fun OutputStream.writeString(string: String) = write(string.encodeToByteArray())
 }

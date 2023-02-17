@@ -3,6 +3,8 @@ kotlinx-coroutines = "1.6.4"
 
 stately = "1.2.5"
 
+okio = "3.3.0"
+
 kotest = "5.5.4"
 
 [libraries]
@@ -10,5 +12,9 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 
 stately-isoCollections = { module = "co.touchlab:stately-iso-collections", version.ref = "stately" }
+
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+okio-nodeFilesystem = { module = "com.squareup.okio:okio-nodefilesystem", version.ref = "okio" }
+okio-fakeFilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "okio" }
 
 kotest-assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }

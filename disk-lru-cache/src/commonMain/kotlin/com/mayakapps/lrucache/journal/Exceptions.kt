@@ -1,10 +1,8 @@
 package com.mayakapps.lrucache.journal
 
-import com.mayakapps.lrucache.io.IOException
+import okio.IOException
 
 internal sealed class JournalException(override val message: String? = null) : IOException(message)
-
-internal class JournalEOFException : JournalException()
 
 internal class JournalInvalidHeaderException(override val message: String? = null) : JournalException(message)
 

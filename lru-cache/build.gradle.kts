@@ -93,6 +93,7 @@ kotlin {
 
         val nonJvmTest by creating {
             dependsOn(commonTest)
+
             dependsOn(nonJvmMain)
         }
 
@@ -105,12 +106,10 @@ kotlin {
         }
 
         val appleMain by creating {
-            dependsOn(commonMain)
             dependsOn(nonJvmMain)
         }
 
         val appleTest by creating {
-            dependsOn(commonTest)
             dependsOn(nonJvmTest)
 
             dependsOn(appleMain)

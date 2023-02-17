@@ -1,24 +1,24 @@
 package com.mayakapps.lrucache.journal
 
 import com.mayakapps.lrucache.combineResults
-import com.mayakapps.lrucache.io.ByteArrayInputStream
-import com.mayakapps.lrucache.io.use
 import com.mayakapps.lrucache.named
+import com.mayakapps.lrucache.nullableUse
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import okio.Buffer
+import okio.use
 import kotlin.test.Test
 
 class JournalReaderTests {
 
     @Test
     fun testValidateHeaderEmptyStream() {
-        val bytes = ByteArray(0)
         shouldThrow<JournalInvalidHeaderException> {
-            JournalReader(ByteArrayInputStream(bytes)).use { it.validateHeader() }
+            JournalReader(Buffer()).use { it.validateHeader() }
         }
     }
 
@@ -27,7 +27,7 @@ class JournalReaderTests {
         // Text file containing "Text File"
         val bytes = byteArrayOf(0x54, 0x65, 0x78, 0x74, 0x20, 0x46, 0x69, 0x6C, 0x65)
         shouldThrow<JournalInvalidHeaderException> {
-            JournalReader(ByteArrayInputStream(bytes)).use { it.validateHeader() }
+            JournalReader(Buffer().apply { write(bytes) }).use { it.validateHeader() }
         }
     }
 
@@ -39,7 +39,7 @@ class JournalReaderTests {
         )
 
         shouldThrow<JournalInvalidHeaderException> {
-            JournalReader(ByteArrayInputStream(bytes)).use { it.validateHeader() }
+            JournalReader(Buffer().apply { write(bytes) }).use { it.validateHeader() }
         }
     }
 
@@ -50,7 +50,7 @@ class JournalReaderTests {
         )
 
         shouldNotThrow<JournalInvalidHeaderException> {
-            JournalReader(ByteArrayInputStream(bytes)).use { it.validateHeader() }
+            JournalReader(Buffer().apply { write(bytes) }).use { it.validateHeader() }
         }
     }
 
@@ -60,7 +60,7 @@ class JournalReaderTests {
             0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01,
         )
 
-        JournalReader(ByteArrayInputStream(bytes)).use {
+        JournalReader(Buffer().apply { write(bytes) }).nullableUse {
             it.validateHeader()
             it.readEntry()
         } shouldBe null
@@ -72,7 +72,7 @@ class JournalReaderTests {
             0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readEntry() }
+        val readResult = JournalReader(Buffer().apply { write(bytes) }).use { it.readEntry() }
         readResult shouldMatch JournalEntry.Dirty("TestKey")
     }
 
@@ -82,7 +82,7 @@ class JournalReaderTests {
             0x02, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readEntry() }
+        val readResult = JournalReader(Buffer().apply { write(bytes) }).use { it.readEntry() }
         readResult shouldMatch JournalEntry.Clean("TestKey")
     }
 
@@ -92,7 +92,7 @@ class JournalReaderTests {
             0x03, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        val readResult = JournalReader(ByteArrayInputStream(bytes)).use { it.readEntry() }
+        val readResult = JournalReader(Buffer().apply { write(bytes) }).use { it.readEntry() }
         readResult shouldMatch JournalEntry.Remove("TestKey")
     }
 
