@@ -7,7 +7,7 @@ pluginManagement {
         kotlin("multiplatform") version "1.8.10"
 
         id("org.jetbrains.dokka") version "1.7.20"
-        id("com.vanniktech.maven.publish") version "0.24.0"
+        id("com.vanniktech.maven.publish") version "0.25.1"
     }
 }
 
