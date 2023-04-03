@@ -24,7 +24,7 @@ kotlin {
     val appleConfig: KotlinNativeTarget.() -> Unit = {
         binaries {
             framework {
-                baseName = "disk-lru-cache"
+                baseName = "file-kache-okio"
             }
         }
     }

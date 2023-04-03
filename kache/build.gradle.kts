@@ -29,7 +29,7 @@ kotlin {
     val appleConfig: KotlinNativeTarget.() -> Unit = {
         binaries {
             framework {
-                baseName = "lru-cache"
+                baseName = "kache"
             }
         }
     }
