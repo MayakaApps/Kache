@@ -4,7 +4,7 @@
     <img src="res/logo.png" alt="Logo"/>
 </div>
 
-<h1 align="center" style="margin-top: 0;">LRU Kache</h1>
+<h1 align="center" style="margin-top: 0;">Kache</h1>
 
 <div align="center">
 
@@ -12,12 +12,14 @@
 [![GitHub stars](https://img.shields.io/github/stars/MayakaApps/LruKache)](https://github.com/MayakaApps/LruKache/stargazers)
 [![GitHub license](https://img.shields.io/github/license/MayakaApps/LruKache)](https://github.com/MayakaApps/LruKache/blob/main/LICENSE)
 ![Maven Central](https://img.shields.io/maven-central/v/com.mayakapps.lrucache/lru-cache)
-![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/com.mayakapps.lrucache/lru-cache?server=https%3A%2F%2Fs01.oss.sonatype.org)
+![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/com.mayakapps.kache/kache?server=https%3A%2F%2Fs01.oss.sonatype.org)
 [![Twitter](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2FMayakaApps%2FLruKache)](https://twitter.com/intent/tweet?text=LRU%20Kache%20is%20a%20lightweight%20library%20for%20Kotlin%2FMultiplatform%20that%20is%20inspired%20by%20Android%27s%20LruCache%20and%20Jake%20Wharton%27s%20DiskLruCache.&url=https%3A%2F%2Fgithub.com%2FMayakaApps%2FLruKache)
 
 </div>
 
-**LRU Kache is a lightweight Kotlin Multiplatform library for that is inspired by Android's LruCache and [Jake Wharton](https://github.com/JakeWharton)'s DiskLruCache.**
+**Kache (previously Kotlinized LRU Cache) is a lightweight Kotlin Multiplatform library for that is inspired by Android's LruCache and [Jake Wharton](https://github.com/JakeWharton)'s DiskLruCache.**
+
+**Note: This README is for the stable v1 version. Currently, v2 that is compatible with Kotlin Multiplatform is a work-in-progress and once it gets stable, I'll update this file and documentation.**
 
 ## Setup (Gradle)
 
@@ -106,7 +108,7 @@ lruCache.getOrPut(imageFilename) { cacheFile ->
 
 See documentation [here](https://mayakaapps.github.io/LruKache/lrucache/com.mayakapps.lrucache/index.html)
 
-## Why use LRU Kache?
+## Why use Kache?
 
 * Coroutine-friendly. Get rid of Java's blocking implementation.
 * Much simpler and modern API that helps you do almost whatever you want using a single call.

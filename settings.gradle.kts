@@ -11,6 +11,6 @@ pluginManagement {
     }
 }
 
-rootProject.name = "KotlinLruCache"
-include(":lru-cache")
-include(":disk-lru-cache")
+rootProject.name = "Kache"
+include(":file-kache-okio")
+include(":kache")
