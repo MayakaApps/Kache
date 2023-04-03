@@ -46,14 +46,14 @@ class LruCacheGetTests {
 
     @Test
     fun testGetAllKeysEmpty() = runBasicLruCacheTest {
-        getAllKeys() shouldBe LruCache.Keys(emptySet(), emptySet())
+        getAllKeys() shouldBe InMemoryKache.Keys(emptySet(), emptySet())
     }
 
     @Test
     fun testGetAllKeysNonEmpty() = runBasicLruCacheTest {
         put(KEY, VAL)
         putAsync(ALT_KEY) { ALT_VAL }
-        getAllKeys() shouldBe LruCache.Keys(setOf(KEY), setOf(ALT_KEY))
+        getAllKeys() shouldBe InMemoryKache.Keys(setOf(KEY), setOf(ALT_KEY))
     }
 
     /*

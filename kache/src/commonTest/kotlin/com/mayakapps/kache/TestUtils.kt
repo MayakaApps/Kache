@@ -14,10 +14,10 @@ import kotlin.coroutines.EmptyCoroutineContext
 internal fun runBasicLruCacheRemoveListenerTest(
     maxSize: Long = MAX_SIZE,
     sizeCalculator: SizeCalculator<String, Int> = { _, _ -> 1 },
-    testBody: suspend LruCache<String, Int>.(MutableList<RemovedEntry<String, Int>>) -> Unit,
+    testBody: suspend InMemoryKache<String, Int>.(MutableList<RemovedEntry<String, Int>>) -> Unit,
 ) = runTestSoftly {
     val removedEntries = mutableListOf<RemovedEntry<String, Int>>()
-    val cache = LruCache(
+    val cache = InMemoryKache(
         maxSize, creationScope = this, sizeCalculator,
         onEntryRemoved = { evicted, key, oldValue, newValue ->
             removedEntries += RemovedEntry(evicted, key, oldValue, newValue)
@@ -33,7 +33,7 @@ internal data class RemovedEntry<K, V>(val evicted: Boolean, val key: K, val old
 internal fun runBasicLruCacheTest(
     maxSize: Long = MAX_SIZE,
     sizeCalculator: SizeCalculator<String, Int> = { _, _ -> 1 },
-    testBody: suspend LruCache<String, Int>.() -> Unit,
+    testBody: suspend InMemoryKache<String, Int>.() -> Unit,
 ) = runLruCacheTest(maxSize, sizeCalculator, testBody = testBody)
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -41,8 +41,8 @@ internal inline fun <K : Any, V : Any> runLruCacheTest(
     maxSize: Long = MAX_SIZE,
     noinline sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
     noinline onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
-    crossinline testBody: suspend LruCache<K, V>.() -> Unit,
-) = runTestSoftly { testBody(LruCache(maxSize, creationScope = this, sizeCalculator, onEntryRemoved)) }
+    crossinline testBody: suspend InMemoryKache<K, V>.() -> Unit,
+) = runTestSoftly { testBody(InMemoryKache(maxSize, creationScope = this, sizeCalculator, onEntryRemoved)) }
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal inline fun runTestSoftly(

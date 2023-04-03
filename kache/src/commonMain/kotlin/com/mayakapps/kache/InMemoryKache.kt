@@ -35,12 +35,12 @@ typealias EntryRemovedListener<K, V> = (evicted: Boolean, key: K, oldValue: V, n
  * it is moved to the head of a queue. When a value is added to a full cache, the value at the end of that queue is
  * evicted and may become eligible for garbage collection.
  *
- * @param maxSize The max size of this cache. For more information. See [LruCache.maxSize].
+ * @param maxSize The max size of this cache. For more information. See [InMemoryKache.maxSize].
  * @param sizeCalculator function used for calculating the size of the elements. See [SizeCalculator]
  * @param onEntryRemoved listener called when an entry is removed for any reason. See [EntryRemovedListener]
  * @param creationScope The coroutine scope used for executing `creationFunction` of put requests.
  */
-class LruCache<K : Any, V : Any>(
+class InMemoryKache<K : Any, V : Any>(
     maxSize: Long,
     private val creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
     private val sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
@@ -261,9 +261,9 @@ class LruCache<K : Any, V : Any>(
     private fun nonLockedTrimToSize(size: Long) {
         with(map.iterator()) {
             forEach { (key, value) ->
-                if (this@LruCache.size <= size) return@forEach
+                if (this@InMemoryKache.size <= size) return@forEach
                 remove()
-                this@LruCache.size -= safeSizeOf(key, value)
+                this@InMemoryKache.size -= safeSizeOf(key, value)
                 onEntryRemoved(true, key, value, null)
             }
         }

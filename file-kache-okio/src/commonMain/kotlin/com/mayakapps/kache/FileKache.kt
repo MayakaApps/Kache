@@ -10,13 +10,13 @@ import okio.Path.Companion.toPath
 import okio.buffer
 
 /**
- * A persisted Least Recently Used (LRU) cache. It can be opened/created by [DiskLruCache.open]
+ * A persisted Least Recently Used (LRU) cache. It can be opened/created by [FileKache.open]
  *
  * An LRU cache is a cache that holds strong references to a limited number of values. Each time a value is accessed,
  * it is moved to the head of a queue. When a value is added to a full cache, the value at the end of that queue is
  * evicted and may become eligible for garbage collection.
  */
-class DiskLruCache private constructor(
+class FileKache private constructor(
     private val fileSystem: FileSystem,
     private val directory: Path,
     maxSize: Long,
@@ -24,7 +24,7 @@ class DiskLruCache private constructor(
     private val keyTransformer: KeyTransformer?,
     initialRedundantJournalEntriesCount: Int,
 ) {
-    private val lruCache = LruCache<String, Path>(
+    private val underlyingKache = InMemoryKache<String, Path>(
         maxSize = maxSize,
         sizeCalculator = { _, file -> fileSystem.metadata(file).size ?: 0 },
         onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) },
@@ -44,14 +44,14 @@ class DiskLruCache private constructor(
      *
      * It may even throw exceptions for unhandled exceptions in the currently in-progress creation block.
      */
-    suspend fun get(key: String): String? = lruCache.get(key.transform())?.toString()
+    suspend fun get(key: String): String? = underlyingKache.get(key.transform())?.toString()
 
     /**
      * Returns the file for [key] if it already exists in the cache or `null` if it doesn't exist or creation is still
      * in progress.
      */
     suspend fun getIfAvailable(key: String): String? =
-        lruCache.getIfAvailable(key.transform())?.toString()
+        underlyingKache.getIfAvailable(key.transform())?.toString()
 
     /**
      * Returns the file for [key] if it exists in the cache, its creation is in progress or can be created by
@@ -60,7 +60,7 @@ class DiskLruCache private constructor(
      * Any unhandled exceptions inside [creationFunction] won't be handled.
      */
     suspend fun getOrPut(key: String, writeFunction: suspend (String) -> Boolean) =
-        lruCache.getOrPut(key.transform()) { creationFunction(it, writeFunction) }?.toString()
+        underlyingKache.getOrPut(key.transform()) { creationFunction(it, writeFunction) }?.toString()
 
     /**
      * Creates a new file for [key] using [creationFunction] and returns the new value. Any existing file or
@@ -69,7 +69,7 @@ class DiskLruCache private constructor(
      * failed by returning `false`. Any unhandled exceptions inside [creationFunction] won't be handled.
      */
     suspend fun put(key: String, writeFunction: suspend (String) -> Boolean) =
-        lruCache.put(key.transform()) { creationFunction(it, writeFunction) }?.toString()
+        underlyingKache.put(key.transform()) { creationFunction(it, writeFunction) }?.toString()
 
     /**
      * Creates a new file for [key] using [creationFunction] and returns a [Deferred]. Any existing file or
@@ -78,7 +78,7 @@ class DiskLruCache private constructor(
      */
     suspend fun putAsync(key: String, writeFunction: suspend (String) -> Boolean) =
         creationScope.async {
-            lruCache.putAsync(key.transform()) { creationFunction(it, writeFunction) }.await()?.toString()
+            underlyingKache.putAsync(key.transform()) { creationFunction(it, writeFunction) }.await()?.toString()
         }
 
     /**
@@ -88,7 +88,7 @@ class DiskLruCache private constructor(
         // It's fine to consider the file is dirty now. Even if removal failed it's scheduled for
         val transformedKey = key.transform()
         writeDirty(transformedKey)
-        lruCache.remove(transformedKey)
+        underlyingKache.remove(transformedKey)
     }
 
     /**
@@ -104,7 +104,7 @@ class DiskLruCache private constructor(
      * Closes the journal file and cancels any in-progress creation.
      */
     suspend fun close() {
-        lruCache.removeAllUnderCreation()
+        underlyingKache.removeAllUnderCreation()
         journalMutex.withLock { journalWriter.close() }
     }
 
@@ -166,7 +166,7 @@ class DiskLruCache private constructor(
 
             journalWriter.close()
 
-            val (cleanKeys, dirtyKeys) = lruCache.getAllKeys()
+            val (cleanKeys, dirtyKeys) = underlyingKache.getAllKeys()
             fileSystem.writeJournalAtomically(directory, cleanKeys, dirtyKeys)
 
             journalWriter =
@@ -205,7 +205,7 @@ class DiskLruCache private constructor(
             maxSize: Long,
             creationDispatcher: CoroutineDispatcher,
             keyTransformer: KeyTransformer? = SHA256KeyHasher,
-        ): DiskLruCache {
+        ): FileKache {
             require(maxSize > 0) { "maxSize must be positive value" }
 
             // Make sure that journal directory exists
@@ -240,7 +240,7 @@ class DiskLruCache private constructor(
                 redundantJournalEntriesCount = 0
             }
 
-            val cache = DiskLruCache(
+            val cache = FileKache(
                 fileSystem,
                 directory,
                 maxSize,
@@ -251,7 +251,7 @@ class DiskLruCache private constructor(
 
             if (journalData != null) {
                 for (key in journalData.cleanEntriesKeys) {
-                    cache.lruCache.put(key, directory.resolve(key))
+                    cache.underlyingKache.put(key, directory.resolve(key))
                 }
             }
 
