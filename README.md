@@ -4,7 +4,7 @@
     <img src="res/logo.png" alt="Logo"/>
 </div>
 
-<h1 align="center" style="margin-top: 0;">LRU Kache</h1>
+<h1 align="center" style="margin-top: 0;">Kache</h1>
 
 <div align="center">
 
@@ -17,7 +17,9 @@
 
 </div>
 
-**LRU Kache is a lightweight Kotlin Multiplatform library for that is inspired by Android's LruCache and [Jake Wharton](https://github.com/JakeWharton)'s DiskLruCache.**
+**Kache (previously Kotlinized LRU Cache) is a lightweight Kotlin Multiplatform library for that is inspired by Android's LruCache and [Jake Wharton](https://github.com/JakeWharton)'s DiskLruCache.**
+
+**Note: This README is for the stable v1 version. Currently, v2 that is compatible with Kotlin Multiplatform is a work-in-progress and once it gets stable, I'll update this file and documentation.**
 
 ## Setup (Gradle)
 
@@ -106,7 +108,7 @@ lruCache.getOrPut(imageFilename) { cacheFile ->
 
 See documentation [here](https://mayakaapps.github.io/LruKache/lrucache/com.mayakapps.lrucache/index.html)
 
-## Why use LRU Kache?
+## Why use Kache?
 
 * Coroutine-friendly. Get rid of Java's blocking implementation.
 * Much simpler and modern API that helps you do almost whatever you want using a single call.
