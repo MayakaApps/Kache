@@ -9,36 +9,36 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.test.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class LruCachePutTests {
+class InMemoryKachePutTests {
 
     /*
      * getOrPut tests
      */
 
     @Test
-    fun testGetOrPutNewCreatedSuccessfully() = runBasicLruCacheTest {
+    fun testGetOrPutNewCreatedSuccessfully() = runBasicInMemoryKacheTest {
         getOrPut(KEY) { VAL } shouldBe VAL.asPutResult()
     }
 
     @Test
-    fun testGetOrPutNewFailedCreating() = runBasicLruCacheTest {
+    fun testGetOrPutNewFailedCreating() = runBasicInMemoryKacheTest {
         getOrPut(KEY) { null } shouldBe null.asPutResult()
     }
 
     @Test
-    fun testGetOrPutExistingCreatedSuccessfully() = runBasicLruCacheTest {
+    fun testGetOrPutExistingCreatedSuccessfully() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         getOrPut(KEY) { ALT_VAL } shouldBe VAL.asPutResult()
     }
 
     @Test
-    fun testGetOrPutExistingFailedCreating() = runBasicLruCacheTest {
+    fun testGetOrPutExistingFailedCreating() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         getOrPut(KEY) { null } shouldBe VAL.asPutResult()
     }
 
     @Test
-    fun testGetOrPutCreatingCreatedSuccessfully() = runBasicLruCacheTest {
+    fun testGetOrPutCreatingCreatedSuccessfully() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY) { VAL }
         getOrPut(KEY) { ALT_VAL } shouldBe VAL.asPutResult()
         shouldNotThrow<CancellationException> { deferred.await() }
@@ -46,7 +46,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testGetOrPutCreatingFailedCreating() = runBasicLruCacheTest {
+    fun testGetOrPutCreatingFailedCreating() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY) { VAL }
         getOrPut(KEY) { null } shouldBe VAL.asPutResult()
         shouldNotThrow<CancellationException> { deferred.await() }
@@ -58,20 +58,20 @@ class LruCachePutTests {
      */
 
     @Test
-    fun testPutNew() = runBasicLruCacheTest {
+    fun testPutNew() = runBasicInMemoryKacheTest {
         put(KEY, VAL) shouldBe null.asOldValue()
         getIfAvailable(KEY) shouldBe VAL.asValue()
     }
 
     @Test
-    fun testPutExisting() = runBasicLruCacheTest {
+    fun testPutExisting() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         put(KEY, ALT_VAL) shouldBe VAL.asOldValue()
         getIfAvailable(KEY) shouldBe ALT_VAL.asValue()
     }
 
     @Test
-    fun testPutExistingTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+    fun testPutExistingTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         put(KEY, VAL)
         put(KEY, ALT_VAL)
         removedEntries shouldHaveSize 1
@@ -84,7 +84,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutCreating() = runBasicLruCacheTest {
+    fun testPutCreating() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY) { ALT_VAL }
         put(KEY, VAL) shouldBe null.asOldValue()
         shouldThrow<CancellationException> { deferred.await() }
@@ -96,26 +96,26 @@ class LruCachePutTests {
      */
 
     @Test
-    fun testPutNewCreatedSuccessfully() = runBasicLruCacheTest {
+    fun testPutNewCreatedSuccessfully() = runBasicInMemoryKacheTest {
         put(KEY) { VAL } shouldBe VAL.asPutResult()
         getIfAvailable(KEY) shouldBe VAL.asValue()
     }
 
     @Test
-    fun testPutNewFailedCreating() = runBasicLruCacheTest {
+    fun testPutNewFailedCreating() = runBasicInMemoryKacheTest {
         put(KEY) { null } shouldBe null.asPutResult()
         getIfAvailable(KEY) shouldBe null.asValue()
     }
 
     @Test
-    fun testPutExistingCreatedSuccessfully() = runBasicLruCacheTest {
+    fun testPutExistingCreatedSuccessfully() = runBasicInMemoryKacheTest {
         put(KEY, ALT_VAL)
         put(KEY) { VAL } shouldBe VAL.asPutResult()
         getIfAvailable(KEY) shouldBe VAL.asValue()
     }
 
     @Test
-    fun testPutExistingCreatedSuccessfullyTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+    fun testPutExistingCreatedSuccessfullyTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         put(KEY, ALT_VAL)
         put(KEY) { VAL }
 
@@ -129,14 +129,14 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutExistingFailedCreating() = runBasicLruCacheTest {
+    fun testPutExistingFailedCreating() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         put(KEY) { null } shouldBe null.asPutResult()
         getIfAvailable(KEY) shouldBe VAL.asValue()
     }
 
     @Test
-    fun testPutExistingFailedCreatingTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+    fun testPutExistingFailedCreatingTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         put(KEY, VAL)
         put(KEY) { null }
 
@@ -144,7 +144,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutCreatingCreatedSuccessfully() = runBasicLruCacheTest {
+    fun testPutCreatingCreatedSuccessfully() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY) { ALT_VAL }
         put(KEY) { VAL } shouldBe VAL.asPutResult()
         shouldThrow<CancellationException> { deferred.await() }
@@ -152,7 +152,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutCreatingCreationFailed() = runBasicLruCacheTest {
+    fun testPutCreatingCreationFailed() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY) { VAL }
         put(KEY) { null } shouldBe null.asPutResult()
         shouldThrow<CancellationException> { deferred.await() }
@@ -164,7 +164,7 @@ class LruCachePutTests {
      */
 
     @Test
-    fun testPutAsyncNewCreatedSuccessfully() = runBasicLruCacheTest {
+    fun testPutAsyncNewCreatedSuccessfully() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY) { VAL }
         getIfAvailable(KEY) shouldBe null.asOldValue()
         deferred.await() shouldBe VAL.asPutResult()
@@ -172,7 +172,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutAsyncNewFailedCreating() = runBasicLruCacheTest {
+    fun testPutAsyncNewFailedCreating() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY) { null }
         getIfAvailable(KEY) shouldBe null.asOldValue()
         deferred.await() shouldBe null.asPutResult()
@@ -180,7 +180,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutAsyncExistingCreatedSuccessfully() = runBasicLruCacheTest {
+    fun testPutAsyncExistingCreatedSuccessfully() = runBasicInMemoryKacheTest {
         put(KEY, ALT_VAL)
         val deferred = putAsync(KEY) { VAL }
         getIfAvailable(KEY) shouldBe ALT_VAL.asOldValue()
@@ -189,7 +189,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutAsyncExistingCreatedSuccessfullyTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+    fun testPutAsyncExistingCreatedSuccessfullyTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         put(KEY, ALT_VAL)
         putAsync(KEY) { VAL }.await()
 
@@ -203,7 +203,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutAsyncExistingFailedCreating() = runBasicLruCacheTest {
+    fun testPutAsyncExistingFailedCreating() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         val deferred = putAsync(KEY) { null }
         getIfAvailable(KEY) shouldBe VAL.asOldValue()
@@ -212,7 +212,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutAsyncExistingFailedCreatingTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+    fun testPutAsyncExistingFailedCreatingTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         put(KEY, VAL)
         putAsync(KEY) { null }.await()
 
@@ -220,7 +220,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutAsyncCreatingCreatedSuccessfully() = runBasicLruCacheTest {
+    fun testPutAsyncCreatingCreatedSuccessfully() = runBasicInMemoryKacheTest {
         val oldDeferred = putAsync(KEY) { ALT_VAL }
         val deferred = putAsync(KEY) { VAL }
         shouldThrow<CancellationException> { oldDeferred.await() }
@@ -229,7 +229,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutAsyncCreatingCreationFailed() = runBasicLruCacheTest {
+    fun testPutAsyncCreatingCreationFailed() = runBasicInMemoryKacheTest {
         val oldDeferred = putAsync(KEY) { VAL }
         val deferred = putAsync(KEY) { null }
         shouldThrow<CancellationException> { oldDeferred.await() }
@@ -242,7 +242,7 @@ class LruCachePutTests {
      */
 
     @Test
-    fun testGetIfAvailableSameKeyInsidePut() = runBasicLruCacheTest {
+    fun testGetIfAvailableSameKeyInsidePut() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         put(KEY) {
             getIfAvailable(KEY) shouldBe VAL
@@ -251,7 +251,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testGetIfAvailableDifferentKeyInsidePut() = runBasicLruCacheTest {
+    fun testGetIfAvailableDifferentKeyInsidePut() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         put(ALT_KEY) {
             getIfAvailable(KEY) shouldBe VAL
@@ -260,7 +260,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testGetDifferentKeyInsidePut() = runBasicLruCacheTest {
+    fun testGetDifferentKeyInsidePut() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         put(ALT_KEY) {
             get(KEY) shouldBe VAL
@@ -269,7 +269,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testGetOrPutDifferentKeyInsidePut() = runBasicLruCacheTest {
+    fun testGetOrPutDifferentKeyInsidePut() = runBasicInMemoryKacheTest {
         put(ALT_KEY) {
             getOrPut(KEY) { VAL } shouldBe VAL
             ALT_VAL
@@ -277,7 +277,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutSameKeyInsidePut() = runBasicLruCacheTest {
+    fun testPutSameKeyInsidePut() = runBasicInMemoryKacheTest {
         put(KEY) {
             put(KEY, ALT_VAL)
             VAL
@@ -287,7 +287,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testPutDifferentKeyInsidePut() = runBasicLruCacheTest {
+    fun testPutDifferentKeyInsidePut() = runBasicInMemoryKacheTest {
         put(KEY) {
             put(ALT_KEY, VAL)
             ALT_VAL
@@ -295,7 +295,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testRemoveSameKeyInsidePut() = runBasicLruCacheTest {
+    fun testRemoveSameKeyInsidePut() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         put(KEY) {
             remove(KEY)
@@ -304,7 +304,7 @@ class LruCachePutTests {
     }
 
     @Test
-    fun testRemoveDifferentKeyInsidePut() = runBasicLruCacheTest {
+    fun testRemoveDifferentKeyInsidePut() = runBasicInMemoryKacheTest {
         put(ALT_KEY, ALT_VAL)
         put(KEY) {
             remove(ALT_KEY)
@@ -317,7 +317,7 @@ class LruCachePutTests {
      */
 
     @Test
-    fun testPutNewBiggerThanMaxSize() = runBasicLruCacheRemoveListenerTest(
+    fun testPutNewBiggerThanMaxSize() = runBasicInMemoryKacheRemoveListenerTest(
         maxSize = 10,
         sizeCalculator = { _, _ -> 20 },
     ) {

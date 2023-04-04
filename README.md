@@ -8,12 +8,12 @@
 
 <div align="center">
 
-![LRU Kache](https://img.shields.io/badge/LRU%20Kache-blue?logo=kotlin)
+![Kache](https://img.shields.io/badge/ache-blue?logo=kotlin)
 [![GitHub stars](https://img.shields.io/github/stars/MayakaApps/LruKache)](https://github.com/MayakaApps/LruKache/stargazers)
 [![GitHub license](https://img.shields.io/github/license/MayakaApps/LruKache)](https://github.com/MayakaApps/LruKache/blob/main/LICENSE)
 ![Maven Central](https://img.shields.io/maven-central/v/com.mayakapps.lrucache/lru-cache)
 ![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/com.mayakapps.kache/kache?server=https%3A%2F%2Fs01.oss.sonatype.org)
-[![Twitter](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2FMayakaApps%2FLruKache)](https://twitter.com/intent/tweet?text=LRU%20Kache%20is%20a%20lightweight%20library%20for%20Kotlin%2FMultiplatform%20that%20is%20inspired%20by%20Android%27s%20LruCache%20and%20Jake%20Wharton%27s%20DiskLruCache.&url=https%3A%2F%2Fgithub.com%2FMayakaApps%2FLruKache)
+[![Twitter](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2FMayakaApps%2FLruKache)](https://twitter.com/intent/tweet?text=Kache%20is%20a%20lightweight%20caching%20library%20for%20Kotlin%20Multiplatform.%20Check%20it%20out.&url=https%3A%2F%2Fgithub.com%2FMayakaApps%2FKache)
 
 </div>
 
