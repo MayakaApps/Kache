@@ -19,9 +19,9 @@ class InMemoryKacheGetTests {
 
     @Test
     fun testGetKeysNonEmpty() = runBasicInMemoryKacheTest {
-        put(KEY, VAL)
-        put(ALT_KEY, ALT_VAL)
-        getKeys() shouldBe setOf(KEY, ALT_KEY)
+        put(KEY_1, VAL_1)
+        put(KEY_2, VAL_2)
+        getKeys() shouldBe setOf(KEY_1, KEY_2)
     }
 
     /*
@@ -35,9 +35,9 @@ class InMemoryKacheGetTests {
 
     @Test
     fun testGetUnderCreationKeysNonEmpty() = runBasicInMemoryKacheTest {
-        putAsync(KEY) { VAL }
-        putAsync(ALT_KEY) { ALT_VAL }
-        getUnderCreationKeys() shouldBe setOf(KEY, ALT_KEY)
+        putAsync(KEY_1) { VAL_1 }
+        putAsync(KEY_2) { VAL_2 }
+        getUnderCreationKeys() shouldBe setOf(KEY_1, KEY_2)
     }
 
     /*
@@ -51,9 +51,9 @@ class InMemoryKacheGetTests {
 
     @Test
     fun testGetAllKeysNonEmpty() = runBasicInMemoryKacheTest {
-        put(KEY, VAL)
-        putAsync(ALT_KEY) { ALT_VAL }
-        getAllKeys() shouldBe InMemoryKache.Keys(setOf(KEY), setOf(ALT_KEY))
+        put(KEY_1, VAL_1)
+        putAsync(KEY_2) { VAL_2 }
+        getAllKeys() shouldBe InMemoryKache.Keys(setOf(KEY_1), setOf(KEY_2))
     }
 
     /*
@@ -62,19 +62,19 @@ class InMemoryKacheGetTests {
 
     @Test
     fun testGetOrDefaultNonExisting() = runBasicInMemoryKacheTest {
-        getOrDefault(KEY, VAL) shouldBe VAL.asValue()
+        getOrDefault(KEY_1, VAL_1) shouldBe VAL_1.asValue()
     }
 
     @Test
     fun testGetOrDefaultExisting() = runBasicInMemoryKacheTest {
-        put(KEY, VAL)
-        getOrDefault(KEY, ALT_VAL) shouldBe VAL.asValue()
+        put(KEY_1, VAL_1)
+        getOrDefault(KEY_1, VAL_2) shouldBe VAL_1.asValue()
     }
 
     @Test
     fun testGetOrDefaultCreating() = runBasicInMemoryKacheTest {
-        putAsync(KEY) { VAL }
-        getOrDefault(KEY, ALT_VAL) shouldBe VAL.asValue()
+        putAsync(KEY_1) { VAL_1 }
+        getOrDefault(KEY_1, VAL_2) shouldBe VAL_1.asValue()
     }
 
     /*
@@ -83,20 +83,20 @@ class InMemoryKacheGetTests {
 
     @Test
     fun testGetNonExisting() = runBasicInMemoryKacheTest {
-        put(KEY, VAL)
-        get(ALT_KEY) shouldBe null.asValue()
+        put(KEY_1, VAL_1)
+        get(KEY_2) shouldBe null.asValue()
     }
 
     @Test
     fun testGetExisting() = runBasicInMemoryKacheTest {
-        put(KEY, VAL)
-        get(KEY) shouldBe VAL.asValue()
+        put(KEY_1, VAL_1)
+        get(KEY_1) shouldBe VAL_1.asValue()
     }
 
     @Test
     fun testGetCreating() = runBasicInMemoryKacheTest {
-        putAsync(KEY) { VAL }
-        get(KEY) shouldBe VAL.asValue()
+        putAsync(KEY_1) { VAL_1 }
+        get(KEY_1) shouldBe VAL_1.asValue()
     }
 
     /*
@@ -105,19 +105,19 @@ class InMemoryKacheGetTests {
 
     @Test
     fun testGetIfAvailableOrDefaultNonExisting() = runBasicInMemoryKacheTest {
-        getIfAvailableOrDefault(KEY, VAL) shouldBe VAL.asValue()
+        getIfAvailableOrDefault(KEY_1, VAL_1) shouldBe VAL_1.asValue()
     }
 
     @Test
     fun testGetIfAvailableOrDefaultExisting() = runBasicInMemoryKacheTest {
-        put(KEY, VAL)
-        getIfAvailableOrDefault(KEY, ALT_VAL) shouldBe VAL.asValue()
+        put(KEY_1, VAL_1)
+        getIfAvailableOrDefault(KEY_1, VAL_2) shouldBe VAL_1.asValue()
     }
 
     @Test
     fun testGetIfAvailableOrDefaultCreating() = runBasicInMemoryKacheTest {
-        putAsync(KEY) { VAL }
-        getIfAvailableOrDefault(KEY, ALT_VAL) shouldBe ALT_VAL.asValue()
+        putAsync(KEY_1) { VAL_1 }
+        getIfAvailableOrDefault(KEY_1, VAL_2) shouldBe VAL_2.asValue()
     }
 
     /*
@@ -126,18 +126,18 @@ class InMemoryKacheGetTests {
 
     @Test
     fun testGetIfAvailableNonExisting() = runBasicInMemoryKacheTest {
-        getIfAvailable(KEY) shouldBe null.asValue()
+        getIfAvailable(KEY_1) shouldBe null.asValue()
     }
 
     @Test
     fun testGetIfAvailableExisting() = runBasicInMemoryKacheTest {
-        put(KEY, VAL)
-        getIfAvailable(KEY) shouldBe VAL.asValue()
+        put(KEY_1, VAL_1)
+        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
     }
 
     @Test
     fun testGetIfAvailableCreating() = runBasicInMemoryKacheTest {
-        putAsync(KEY) { VAL }
-        getIfAvailable(KEY) shouldBe null.asValue()
+        putAsync(KEY_1) { VAL_1 }
+        getIfAvailable(KEY_1) shouldBe null.asValue()
     }
 }

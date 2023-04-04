@@ -78,7 +78,11 @@ private fun <T> genericMatcher(name: String, expected: T) = Matcher<T> { value -
 }
 
 internal const val MAX_SIZE = 10L
-internal const val KEY = "key"
-internal const val ALT_KEY = "alt_key"
-internal const val VAL = 201
-internal const val ALT_VAL = 202
+internal const val KEY_1 = "key 1"
+internal const val VAL_1 = 201
+internal const val KEY_2 = "key 2"
+internal const val VAL_2 = 202
+internal const val KEY_3 = "key 3"
+internal const val VAL_3 = 203
+internal const val KEY_4 = "key 4"
+internal const val VAL_4 = 204
