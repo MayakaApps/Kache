@@ -11,7 +11,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal fun runBasicLruCacheRemoveListenerTest(
+internal fun runBasicInMemoryKacheRemoveListenerTest(
     maxSize: Long = MAX_SIZE,
     sizeCalculator: SizeCalculator<String, Int> = { _, _ -> 1 },
     testBody: suspend InMemoryKache<String, Int>.(MutableList<RemovedEntry<String, Int>>) -> Unit,
@@ -30,14 +30,14 @@ internal fun runBasicLruCacheRemoveListenerTest(
 internal data class RemovedEntry<K, V>(val evicted: Boolean, val key: K, val oldValue: V, val newValue: V?)
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal fun runBasicLruCacheTest(
+internal fun runBasicInMemoryKacheTest(
     maxSize: Long = MAX_SIZE,
     sizeCalculator: SizeCalculator<String, Int> = { _, _ -> 1 },
     testBody: suspend InMemoryKache<String, Int>.() -> Unit,
-) = runLruCacheTest(maxSize, sizeCalculator, testBody = testBody)
+) = runInMemoryKacheTest(maxSize, sizeCalculator, testBody = testBody)
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal inline fun <K : Any, V : Any> runLruCacheTest(
+internal inline fun <K : Any, V : Any> runInMemoryKacheTest(
     maxSize: Long = MAX_SIZE,
     noinline sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
     noinline onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },

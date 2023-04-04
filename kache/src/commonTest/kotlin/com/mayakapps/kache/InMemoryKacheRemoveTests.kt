@@ -8,26 +8,26 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.test.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class LruCacheRemoveTests {
+class InMemoryKacheRemoveTests {
 
     /*
      * remove tests
      */
 
     @Test
-    fun testRemoveNonExisting() = runBasicLruCacheTest {
+    fun testRemoveNonExisting() = runBasicInMemoryKacheTest {
         remove(KEY) shouldBe null.asOldValue()
     }
 
     @Test
-    fun testRemoveExisting() = runBasicLruCacheTest {
+    fun testRemoveExisting() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         remove(KEY) shouldBe VAL.asOldValue()
         getIfAvailable(KEY) shouldBe null.asValue()
     }
 
     @Test
-    fun testRemoveCreating() = runBasicLruCacheTest {
+    fun testRemoveCreating() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY) { VAL }
         remove(KEY) shouldBe null.asOldValue()
         shouldThrow<CancellationException> { deferred.await() }
@@ -35,7 +35,7 @@ class LruCacheRemoveTests {
     }
 
     @Test
-    fun testRemoveExistingTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+    fun testRemoveExistingTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         put(KEY, VAL)
         remove(KEY)
 
@@ -50,7 +50,7 @@ class LruCacheRemoveTests {
 
     @Test
     @Suppress("DeferredResultUnused")
-    fun testRemoveCreatingTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+    fun testRemoveCreatingTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         putAsync(KEY) { VAL }
         remove(KEY)
 
@@ -62,14 +62,14 @@ class LruCacheRemoveTests {
      */
 
     @Test
-    fun testClearExisting() = runBasicLruCacheTest {
+    fun testClearExisting() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         clear()
         getIfAvailable(KEY) shouldBe null.asValue()
     }
 
     @Test
-    fun testClearCreating() = runBasicLruCacheTest {
+    fun testClearCreating() = runBasicInMemoryKacheTest {
         val deferred1 = putAsync(KEY) { VAL }
         val deferred2 = putAsync(ALT_KEY) { ALT_VAL }
         clear()
@@ -80,7 +80,7 @@ class LruCacheRemoveTests {
     }
 
     @Test
-    fun testClearExistingTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+    fun testClearExistingTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         put(KEY, VAL)
         put(ALT_KEY, ALT_VAL)
         clear()
@@ -103,7 +103,7 @@ class LruCacheRemoveTests {
 
     @Test
     @Suppress("DeferredResultUnused")
-    fun testClearCreatingTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+    fun testClearCreatingTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         putAsync(KEY) { VAL }
         putAsync(ALT_KEY) { ALT_VAL }
         clear()
@@ -116,7 +116,7 @@ class LruCacheRemoveTests {
      */
 
     @Test
-    fun testRemoveAllUnderCreation() = runBasicLruCacheTest {
+    fun testRemoveAllUnderCreation() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         val deferred = putAsync(ALT_KEY) { ALT_VAL }
         removeAllUnderCreation()
@@ -127,7 +127,7 @@ class LruCacheRemoveTests {
 
     @Test
     @Suppress("DeferredResultUnused")
-    fun testRemoveAllUnderCreationTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+    fun testRemoveAllUnderCreationTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         putAsync(KEY) { VAL }
         putAsync(ALT_KEY) { ALT_VAL }
         removeAllUnderCreation()

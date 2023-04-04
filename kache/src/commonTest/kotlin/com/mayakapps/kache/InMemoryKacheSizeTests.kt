@@ -6,14 +6,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.test.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class LruCacheSizeTests {
+class InMemoryKacheSizeTests {
 
     /*
      * 'trimToSize' Tests
      */
 
     @Test
-    fun testTrimToSizeEndSize() = runBasicLruCacheTest {
+    fun testTrimToSizeEndSize() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         put(ALT_KEY, ALT_VAL)
         trimToSize(1)
@@ -22,7 +22,7 @@ class LruCacheSizeTests {
     }
 
     @Test
-    fun testTrimToSizeElements() = runBasicLruCacheTest {
+    fun testTrimToSizeElements() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         put(ALT_KEY, ALT_VAL)
         trimToSize(1)
@@ -31,7 +31,7 @@ class LruCacheSizeTests {
     }
 
     @Test
-    fun testTrimToSizeTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+    fun testTrimToSizeTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         put(KEY, VAL)
         put(ALT_KEY, ALT_VAL)
         trimToSize(1)
@@ -50,7 +50,7 @@ class LruCacheSizeTests {
      */
 
     @Test
-    fun testResizeEndSize() = runBasicLruCacheTest {
+    fun testResizeEndSize() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         put(ALT_KEY, ALT_VAL)
         resize(1)
@@ -59,7 +59,7 @@ class LruCacheSizeTests {
     }
 
     @Test
-    fun testResizeElements() = runBasicLruCacheTest {
+    fun testResizeElements() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         put(ALT_KEY, ALT_VAL)
         resize(1)
@@ -68,7 +68,7 @@ class LruCacheSizeTests {
     }
 
     @Test
-    fun testResizeTrigger() = runBasicLruCacheRemoveListenerTest { removedEntries ->
+    fun testResizeTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         put(KEY, VAL)
         put(ALT_KEY, ALT_VAL)
         resize(1)
@@ -87,7 +87,7 @@ class LruCacheSizeTests {
      */
 
     @Test
-    fun testEviction() = runBasicLruCacheRemoveListenerTest(maxSize = 1) { removedEntries ->
+    fun testEviction() = runBasicInMemoryKacheRemoveListenerTest(maxSize = 1) { removedEntries ->
         put(KEY, VAL)
         put(ALT_KEY, ALT_VAL)
 
@@ -102,7 +102,7 @@ class LruCacheSizeTests {
     }
 
     @Test
-    fun testEvictionSameAsMaxSize() = runBasicLruCacheRemoveListenerTest(maxSize = 2) { removedEntries ->
+    fun testEvictionSameAsMaxSize() = runBasicInMemoryKacheRemoveListenerTest(maxSize = 2) { removedEntries ->
         put(KEY, VAL)
         put(ALT_KEY, ALT_VAL)
 
@@ -115,7 +115,7 @@ class LruCacheSizeTests {
      */
 
     @Test
-    fun testSizeCalculator() = runBasicLruCacheTest(
+    fun testSizeCalculator() = runBasicInMemoryKacheTest(
         maxSize = 1L + VAL + ALT_VAL,
         sizeCalculator = { _, value -> value.toLong() },
     ) {

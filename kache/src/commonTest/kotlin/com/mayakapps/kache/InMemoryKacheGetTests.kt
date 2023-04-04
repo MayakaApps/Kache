@@ -6,19 +6,19 @@ import kotlin.test.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Suppress("DeferredResultUnused")
-class LruCacheGetTests {
+class InMemoryKacheGetTests {
 
     /*
      * getKeys() tests
      */
 
     @Test
-    fun testGetKeysEmpty() = runBasicLruCacheTest {
+    fun testGetKeysEmpty() = runBasicInMemoryKacheTest {
         getKeys() shouldBe emptySet()
     }
 
     @Test
-    fun testGetKeysNonEmpty() = runBasicLruCacheTest {
+    fun testGetKeysNonEmpty() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         put(ALT_KEY, ALT_VAL)
         getKeys() shouldBe setOf(KEY, ALT_KEY)
@@ -29,12 +29,12 @@ class LruCacheGetTests {
      */
 
     @Test
-    fun testGetUnderCreationKeysEmpty() = runBasicLruCacheTest {
+    fun testGetUnderCreationKeysEmpty() = runBasicInMemoryKacheTest {
         getUnderCreationKeys() shouldBe emptySet()
     }
 
     @Test
-    fun testGetUnderCreationKeysNonEmpty() = runBasicLruCacheTest {
+    fun testGetUnderCreationKeysNonEmpty() = runBasicInMemoryKacheTest {
         putAsync(KEY) { VAL }
         putAsync(ALT_KEY) { ALT_VAL }
         getUnderCreationKeys() shouldBe setOf(KEY, ALT_KEY)
@@ -45,12 +45,12 @@ class LruCacheGetTests {
      */
 
     @Test
-    fun testGetAllKeysEmpty() = runBasicLruCacheTest {
+    fun testGetAllKeysEmpty() = runBasicInMemoryKacheTest {
         getAllKeys() shouldBe InMemoryKache.Keys(emptySet(), emptySet())
     }
 
     @Test
-    fun testGetAllKeysNonEmpty() = runBasicLruCacheTest {
+    fun testGetAllKeysNonEmpty() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         putAsync(ALT_KEY) { ALT_VAL }
         getAllKeys() shouldBe InMemoryKache.Keys(setOf(KEY), setOf(ALT_KEY))
@@ -61,18 +61,18 @@ class LruCacheGetTests {
      */
 
     @Test
-    fun testGetOrDefaultNonExisting() = runBasicLruCacheTest {
+    fun testGetOrDefaultNonExisting() = runBasicInMemoryKacheTest {
         getOrDefault(KEY, VAL) shouldBe VAL.asValue()
     }
 
     @Test
-    fun testGetOrDefaultExisting() = runBasicLruCacheTest {
+    fun testGetOrDefaultExisting() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         getOrDefault(KEY, ALT_VAL) shouldBe VAL.asValue()
     }
 
     @Test
-    fun testGetOrDefaultCreating() = runBasicLruCacheTest {
+    fun testGetOrDefaultCreating() = runBasicInMemoryKacheTest {
         putAsync(KEY) { VAL }
         getOrDefault(KEY, ALT_VAL) shouldBe VAL.asValue()
     }
@@ -82,19 +82,19 @@ class LruCacheGetTests {
      */
 
     @Test
-    fun testGetNonExisting() = runBasicLruCacheTest {
+    fun testGetNonExisting() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         get(ALT_KEY) shouldBe null.asValue()
     }
 
     @Test
-    fun testGetExisting() = runBasicLruCacheTest {
+    fun testGetExisting() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         get(KEY) shouldBe VAL.asValue()
     }
 
     @Test
-    fun testGetCreating() = runBasicLruCacheTest {
+    fun testGetCreating() = runBasicInMemoryKacheTest {
         putAsync(KEY) { VAL }
         get(KEY) shouldBe VAL.asValue()
     }
@@ -104,18 +104,18 @@ class LruCacheGetTests {
      */
 
     @Test
-    fun testGetIfAvailableOrDefaultNonExisting() = runBasicLruCacheTest {
+    fun testGetIfAvailableOrDefaultNonExisting() = runBasicInMemoryKacheTest {
         getIfAvailableOrDefault(KEY, VAL) shouldBe VAL.asValue()
     }
 
     @Test
-    fun testGetIfAvailableOrDefaultExisting() = runBasicLruCacheTest {
+    fun testGetIfAvailableOrDefaultExisting() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         getIfAvailableOrDefault(KEY, ALT_VAL) shouldBe VAL.asValue()
     }
 
     @Test
-    fun testGetIfAvailableOrDefaultCreating() = runBasicLruCacheTest {
+    fun testGetIfAvailableOrDefaultCreating() = runBasicInMemoryKacheTest {
         putAsync(KEY) { VAL }
         getIfAvailableOrDefault(KEY, ALT_VAL) shouldBe ALT_VAL.asValue()
     }
@@ -125,18 +125,18 @@ class LruCacheGetTests {
      */
 
     @Test
-    fun testGetIfAvailableNonExisting() = runBasicLruCacheTest {
+    fun testGetIfAvailableNonExisting() = runBasicInMemoryKacheTest {
         getIfAvailable(KEY) shouldBe null.asValue()
     }
 
     @Test
-    fun testGetIfAvailableExisting() = runBasicLruCacheTest {
+    fun testGetIfAvailableExisting() = runBasicInMemoryKacheTest {
         put(KEY, VAL)
         getIfAvailable(KEY) shouldBe VAL.asValue()
     }
 
     @Test
-    fun testGetIfAvailableCreating() = runBasicLruCacheTest {
+    fun testGetIfAvailableCreating() = runBasicInMemoryKacheTest {
         putAsync(KEY) { VAL }
         getIfAvailable(KEY) shouldBe null.asValue()
     }
