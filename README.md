@@ -8,7 +8,7 @@
 
 <div align="center">
 
-![LRU Kache](https://img.shields.io/badge/LRU%20Kache-blue?logo=kotlin)
+![Kache](https://img.shields.io/badge/ache-blue?logo=kotlin)
 [![GitHub stars](https://img.shields.io/github/stars/MayakaApps/LruKache)](https://github.com/MayakaApps/LruKache/stargazers)
 [![GitHub license](https://img.shields.io/github/license/MayakaApps/LruKache)](https://github.com/MayakaApps/LruKache/blob/main/LICENSE)
 ![Maven Central](https://img.shields.io/maven-central/v/com.mayakapps.lrucache/lru-cache)
