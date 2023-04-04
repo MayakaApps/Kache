@@ -13,12 +13,13 @@ import kotlin.coroutines.EmptyCoroutineContext
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun runBasicInMemoryKacheRemoveListenerTest(
     maxSize: Long = MAX_SIZE,
+    strategy: KacheStrategy = KacheStrategy.LRU,
     sizeCalculator: SizeCalculator<String, Int> = { _, _ -> 1 },
     testBody: suspend InMemoryKache<String, Int>.(MutableList<RemovedEntry<String, Int>>) -> Unit,
 ) = runTestSoftly {
     val removedEntries = mutableListOf<RemovedEntry<String, Int>>()
     val cache = InMemoryKache(
-        maxSize, creationScope = this, sizeCalculator,
+        maxSize, strategy, creationScope = this, sizeCalculator,
         onEntryRemoved = { evicted, key, oldValue, newValue ->
             removedEntries += RemovedEntry(evicted, key, oldValue, newValue)
         },
@@ -32,17 +33,25 @@ internal data class RemovedEntry<K, V>(val evicted: Boolean, val key: K, val old
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun runBasicInMemoryKacheTest(
     maxSize: Long = MAX_SIZE,
+    strategy: KacheStrategy = KacheStrategy.LRU,
     sizeCalculator: SizeCalculator<String, Int> = { _, _ -> 1 },
     testBody: suspend InMemoryKache<String, Int>.() -> Unit,
-) = runInMemoryKacheTest(maxSize, sizeCalculator, testBody = testBody)
+) = runInMemoryKacheTest(maxSize, strategy, sizeCalculator, testBody = testBody)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal inline fun <K : Any, V : Any> runInMemoryKacheTest(
     maxSize: Long = MAX_SIZE,
+    strategy: KacheStrategy = KacheStrategy.LRU,
     noinline sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
     noinline onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
     crossinline testBody: suspend InMemoryKache<K, V>.() -> Unit,
-) = runTestSoftly { testBody(InMemoryKache(maxSize, creationScope = this, sizeCalculator, onEntryRemoved)) }
+) = runTestSoftly {
+    testBody(
+        InMemoryKache(
+            maxSize, strategy, creationScope = this, sizeCalculator, onEntryRemoved,
+        )
+    )
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal inline fun runTestSoftly(
