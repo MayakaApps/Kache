@@ -61,7 +61,7 @@ class InMemoryKache<K : Any, V : Any>(
         map = when (strategy) {
             KacheStrategy.LRU -> LinkedHashMap(0, 0.75F)
             KacheStrategy.MRU -> TODO()
-            KacheStrategy.FIFO -> TODO()
+            KacheStrategy.FIFO -> LinkedHashMap(0, 0.75F)
             KacheStrategy.FILO -> TODO()
         }
     }
