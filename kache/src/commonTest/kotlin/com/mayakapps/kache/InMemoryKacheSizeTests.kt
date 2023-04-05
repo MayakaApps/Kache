@@ -22,25 +22,55 @@ class InMemoryKacheSizeTests {
     }
 
     @Test
-    fun testTrimToSizeElements() = runBasicInMemoryKacheTest {
-        put(KEY_1, VAL_1)
-        put(KEY_2, VAL_2)
-        trimToSize(1)
+    fun testTrimToSizeElementsForLRU() = runBasicInMemoryKacheTest(strategy = KacheStrategy.LRU) {
+        prepareKache()
+        trimToSize(3)
+        get(KEY_1) shouldBe VAL_1.asValue()
+        get(KEY_2) shouldBe VAL_2.asValue()
+        get(KEY_3) shouldBe null.asValue()
+        get(KEY_4) shouldBe VAL_4.asValue()
+    }
+
+    @Test
+    fun testTrimToSizeElementsForMRU() = runBasicInMemoryKacheTest(strategy = KacheStrategy.MRU) {
+        prepareKache()
+        trimToSize(3)
+        get(KEY_1) shouldBe VAL_1.asValue()
+        get(KEY_2) shouldBe null.asValue()
+        get(KEY_3) shouldBe VAL_3.asValue()
+        get(KEY_4) shouldBe VAL_4.asValue()
+    }
+
+    @Test
+    fun testTrimToSizeElementsForFIFO() = runBasicInMemoryKacheTest(strategy = KacheStrategy.FIFO) {
+        prepareKache()
+        trimToSize(3)
         get(KEY_1) shouldBe null.asValue()
         get(KEY_2) shouldBe VAL_2.asValue()
+        get(KEY_3) shouldBe VAL_3.asValue()
+        get(KEY_4) shouldBe VAL_4.asValue()
+    }
+
+    @Test
+    fun testTrimToSizeElementsForFILO() = runBasicInMemoryKacheTest(strategy = KacheStrategy.FILO) {
+        prepareKache()
+        trimToSize(3)
+        get(KEY_1) shouldBe VAL_1.asValue()
+        get(KEY_2) shouldBe VAL_2.asValue()
+        get(KEY_3) shouldBe VAL_3.asValue()
+        get(KEY_4) shouldBe null.asValue()
     }
 
     @Test
     fun testTrimToSizeTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
-        put(KEY_1, VAL_1)
-        put(KEY_2, VAL_2)
-        trimToSize(1)
+        prepareKache()
+        trimToSize(3)
 
         removedEntries shouldHaveSize 1
         removedEntries.firstOrNull()?.run {
             evicted shouldBe true.asEvicted()
-            key shouldBe KEY_1.asKey()
-            oldValue shouldBe VAL_1.asOldValue()
+            key shouldBe KEY_3.asKey()
+            oldValue shouldBe VAL_3.asOldValue()
             newValue shouldBe null.asValue()
         }
     }
@@ -123,5 +153,26 @@ class InMemoryKacheSizeTests {
         put(KEY_2, VAL_2)
 
         size shouldBe (VAL_1 + VAL_2).asSize()
+    }
+
+
+    /*
+     * Helpers
+     */
+
+    /**
+     * Puts 4 elements into the kache and gets 2 of them. This way the state of the kache is as follows:
+     * - The least-recently-used element is [KEY_3] with [VAL_3]
+     * - The most-recently-used element is [KEY_2] with [VAL_2]
+     * - The first-in element is [KEY_1] with [VAL_1]
+     * - The last-in element is [KEY_4] with [VAL_4]
+     */
+    private suspend fun InMemoryKache<String, Int>.prepareKache() {
+        put(KEY_1, VAL_1)
+        put(KEY_2, VAL_2)
+        put(KEY_3, VAL_3)
+        put(KEY_4, VAL_4)
+        get(KEY_1)
+        get(KEY_2)
     }
 }
