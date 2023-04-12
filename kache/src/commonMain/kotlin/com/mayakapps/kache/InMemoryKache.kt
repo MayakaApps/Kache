@@ -54,17 +54,8 @@ class InMemoryKache<K : Any, V : Any>(
     private val creationMap = ConcurrentMutableMap<K, Deferred<V?>>()
     private val creationMutex = Mutex()
 
-    private val map: MutableMap<K, V>
+    private val map: MutableMap<K, V> = getMapByStrategy(strategy)
     private val mapMutex = Mutex()
-
-    init {
-        map = when (strategy) {
-            KacheStrategy.LRU -> LinkedHashMap(0, 0.75F)
-            KacheStrategy.MRU -> TODO()
-            KacheStrategy.FIFO -> LinkedHashMap(0, 0.75F)
-            KacheStrategy.FILO -> TODO()
-        }
-    }
 
     /**
      * The max size of this cache in units calculated by [sizeCalculator]. This represents the max number of entries
