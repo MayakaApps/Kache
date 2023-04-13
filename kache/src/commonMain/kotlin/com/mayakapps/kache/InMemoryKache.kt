@@ -42,6 +42,7 @@ typealias EntryRemovedListener<K, V> = (evicted: Boolean, key: K, oldValue: V, n
  */
 class InMemoryKache<K : Any, V : Any>(
     maxSize: Long,
+    strategy: KacheStrategy = KacheStrategy.LRU,
     private val creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
     private val sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
     private val onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
@@ -53,7 +54,7 @@ class InMemoryKache<K : Any, V : Any>(
     private val creationMap = ConcurrentMutableMap<K, Deferred<V?>>()
     private val creationMutex = Mutex()
 
-    private val map = LinkedHashMap<K, V>(0, 0.75F)
+    private val map: MutableMap<K, V> = getMapByStrategy(strategy)
     private val mapMutex = Mutex()
 
     /**
