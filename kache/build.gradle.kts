@@ -97,20 +97,53 @@ kotlin {
             dependsOn(nonJvmMain)
         }
 
+        val nonNativeMain by creating {
+            dependsOn(commonMain)
+        }
+
+        val nonNativeTest by creating {
+            dependsOn(commonTest)
+
+            dependsOn(nonNativeMain)
+        }
+
+        val nativeMain by creating {
+            dependsOn(nonJvmMain)
+        }
+
+        val nativeTest by creating {
+            dependsOn(nonJvmTest)
+
+            dependsOn(nativeMain)
+        }
+
+        val jvmMain by getting {
+            dependsOn(nonNativeMain)
+        }
+
+        val jvmTest by getting {
+            dependsOn(nonNativeTest)
+
+            // Workaround for a weird bug
+            dependsOn(jvmMain)
+        }
+
         val jsMain by getting {
             dependsOn(nonJvmMain)
+            dependsOn(nonNativeMain)
         }
 
         val jsTest by getting {
             dependsOn(nonJvmTest)
+            dependsOn(nonNativeTest)
         }
 
         val appleMain by creating {
-            dependsOn(nonJvmMain)
+            dependsOn(nativeMain)
         }
 
         val appleTest by creating {
-            dependsOn(nonJvmTest)
+            dependsOn(nativeTest)
 
             dependsOn(appleMain)
         }
@@ -181,19 +214,19 @@ kotlin {
         }
 
         val linuxX64Main by getting {
-            dependsOn(nonJvmMain)
+            dependsOn(nativeMain)
         }
 
         val linuxX64Test by getting {
-            dependsOn(nonJvmTest)
+            dependsOn(nativeTest)
         }
 
         val mingwX64Main by getting {
-            dependsOn(nonJvmMain)
+            dependsOn(nativeMain)
         }
 
         val mingwX64Test by getting {
-            dependsOn(nonJvmTest)
+            dependsOn(nativeTest)
         }
     }
 

@@ -1,6 +1,6 @@
 package com.mayakapps.kache
 
-internal class AccessOrderedMap<K : Any, V : Any>(
+internal class AccessOrderedMap<K, V>(
     private val baseMap: MutableMap<K, V>,
 ) : MutableMap<K, V> by baseMap {
 
