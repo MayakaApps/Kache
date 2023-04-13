@@ -136,6 +136,9 @@ kotlin {
         val jsTest by getting {
             dependsOn(nonJvmTest)
             dependsOn(nonNativeTest)
+
+            // Workaround for a weird bug
+            dependsOn(jsMain)
         }
 
         val appleMain by creating {
