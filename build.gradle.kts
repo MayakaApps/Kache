@@ -1,10 +1,8 @@
 plugins {
-    // this is necessary to avoid the plugins to be loaded multiple times
-    // in each subproject's classloader
-    kotlin("multiplatform") apply false
+    alias(libs.plugins.kotlin.multiplatform) apply false
 
-    id("org.jetbrains.dokka") apply false
-    id("com.vanniktech.maven.publish") apply false
+    alias(libs.plugins.dokka) apply false
+    alias(libs.plugins.mavenPublish) apply false
 }
 
 allprojects {
