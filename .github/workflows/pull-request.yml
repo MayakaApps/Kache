@@ -1,0 +1,72 @@
+name: Test Pull Request
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macOS-latest ]
+
+    runs-on: ${{matrix.os}}
+    if: github.repository == 'MayakaApps/Kache'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Run spotless
+        run: ./gradlew spotlessCheck
+
+      - name: Assemble parallel
+        run: ./gradlew assemble
+
+      - name: Run Linux-specific and common tests
+        if: matrix.os == 'ubuntu-latest'
+        run: ./gradlew allTests --stacktrace
+
+      - name: Run Windows-specific tests
+        if: matrix.os == 'windows-latest'
+        run: ./gradlew mingwX64Test --stacktrace
+
+      - name: Run macOS-specific tests
+        if: matrix.os == 'windows-latest'
+        run: |
+          ./gradlew macosX64Test macosArm64Test iosX64Test iosSimulatorArm64Test watchosX64Test watchosSimulatorArm64Test tvosX64Test tvosSimulatorArm64Test  --stacktrace
+
+      - name: Bundle the build report
+        if: failure()
+        run: find . -type d -name 'reports' | zip -@ -r build-reports.zip
+      - name: Upload the build report
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: error-report
+          path: build-reports.zip
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v3
+        if: github.repository == 'MayakaApps/Kache'
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
