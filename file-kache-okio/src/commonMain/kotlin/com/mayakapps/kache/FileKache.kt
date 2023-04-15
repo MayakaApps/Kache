@@ -44,14 +44,21 @@ class FileKache private constructor(
      *
      * It may even throw exceptions for unhandled exceptions in the currently in-progress creation block.
      */
-    suspend fun get(key: String): String? = underlyingKache.get(key.transform())?.toString()
+    suspend fun get(key: String): String? {
+        val result = underlyingKache.get(key.transform())?.toString()
+        if (result != null) writeRead(key)
+        return result
+    }
 
     /**
      * Returns the file for [key] if it already exists in the cache or `null` if it doesn't exist or creation is still
      * in progress.
      */
-    suspend fun getIfAvailable(key: String): String? =
-        underlyingKache.getIfAvailable(key.transform())?.toString()
+    suspend fun getIfAvailable(key: String): String? {
+        val result = underlyingKache.getIfAvailable(key.transform())?.toString()
+        if (result != null) writeRead(key)
+        return result
+    }
 
     /**
      * Returns the file for [key] if it exists in the cache, its creation is in progress or can be created by
@@ -59,8 +66,16 @@ class FileKache private constructor(
      * file is not cached and cannot be created. You can imply that the creation has failed by returning `false`.
      * Any unhandled exceptions inside [creationFunction] won't be handled.
      */
-    suspend fun getOrPut(key: String, writeFunction: suspend (String) -> Boolean) =
-        underlyingKache.getOrPut(key.transform()) { creationFunction(it, writeFunction) }?.toString()
+    suspend fun getOrPut(key: String, writeFunction: suspend (String) -> Boolean): String? {
+        var created = false
+        val result = underlyingKache.getOrPut(key.transform()) {
+            created = true
+            creationFunction(it, writeFunction)
+        }?.toString()
+
+        if (!created && result != null) writeRead(key)
+        return result
+    }
 
     /**
      * Creates a new file for [key] using [creationFunction] and returns the new value. Any existing file or
@@ -163,7 +178,7 @@ class FileKache private constructor(
     }
 
     private suspend fun writeRead(key: String) = journalMutex.withLock {
-        journalWriter.writeCancel(key)
+        journalWriter.writeRead(key)
         redundantJournalEntriesCount += 1
     }
 
