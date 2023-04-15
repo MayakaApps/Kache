@@ -16,6 +16,7 @@ jobs:
     if: github.repository == 'MayakaApps/Kache'
     permissions:
       contents: read
+      checks: write
 
     steps:
       - name: Checkout
