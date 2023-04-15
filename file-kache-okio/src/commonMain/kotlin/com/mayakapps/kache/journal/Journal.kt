@@ -49,6 +49,9 @@ internal fun FileSystem.readJournalIfExists(directory: Path): JournalData? {
                 }
 
                 is JournalEntry.Clean -> {
+                    // Remove existing entry if it exists to avoid duplicates
+                    cleanEntriesKeys.remove(entry.key)
+
                     dirtyEntriesKeys.remove(entry.key)
                     cleanEntriesKeys += entry.key
                 }
