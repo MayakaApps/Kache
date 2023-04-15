@@ -362,12 +362,11 @@ class JournalReadTests {
             redundantEntriesCount = 2,
         )
 
-        // TODO: should be different from adding and removing
         private val journalWithAddAndCancelledAdd =
             byteArrayOf(
                 *journalStartWithAdd,
                 JournalEntry.DIRTY, *keyBytes,
-                JournalEntry.REMOVE, *keyBytes,
+                JournalEntry.CANCEL, *keyBytes,
                 JournalEntry.EOJ,
             )
 

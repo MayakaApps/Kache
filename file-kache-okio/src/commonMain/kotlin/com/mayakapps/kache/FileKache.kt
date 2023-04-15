@@ -127,7 +127,7 @@ class FileKache private constructor(
             cleanFile
         } else {
             fileSystem.delete(tempFile)
-            writeRemove(key)
+            writeCancel(key)
             rebuildJournalIfRequired()
             null
         }
