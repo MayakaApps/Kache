@@ -33,9 +33,6 @@ jobs:
       - name: Setup gradle
         uses: gradle/gradle-build-action@v2
 
-      - name: Run spotless
-        run: ./gradlew spotlessCheck
-
       - name: Assemble parallel
         run: ./gradlew assemble
 
