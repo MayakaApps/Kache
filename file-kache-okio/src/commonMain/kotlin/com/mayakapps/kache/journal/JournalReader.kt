@@ -20,11 +20,9 @@ internal class JournalReader(private val source: BufferedSource) : Closeable {
     }
 
     internal fun readEntry(): JournalEntry? {
-        val opcodeId = try {
-            source.readByte()
-        } catch (ex: EOFException) {
-            return null // Expected EOF
-        }
+        val opcodeId = source.readByte()
+
+        if (opcodeId == JournalEntry.EOJ) return null
 
         val key = source.readByteLengthUtf8()
 
