@@ -21,7 +21,11 @@ internal class JournalWriter(private val sink: BufferedSink) : Closeable {
 
     internal fun writeClean(key: String) = writeEntryAndFlush(JournalEntry.CLEAN, key)
 
+    internal fun writeCancel(key: String) = writeEntryAndFlush(JournalEntry.CANCEL, key)
+
     internal fun writeRemove(key: String) = writeEntryAndFlush(JournalEntry.REMOVE, key)
+
+    internal fun writeRead(key: String) = writeEntryAndFlush(JournalEntry.READ, key)
 
     private fun writeEntryAndFlush(opcode: Byte, key: String) {
         writeEntry(opcode, key)

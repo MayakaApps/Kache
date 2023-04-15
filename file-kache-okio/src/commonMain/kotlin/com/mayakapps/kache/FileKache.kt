@@ -143,18 +143,28 @@ class FileKache private constructor(
         }
     }
 
+    private suspend fun writeDirty(key: String) = journalMutex.withLock {
+        journalWriter.writeDirty(key)
+    }
+
     private suspend fun writeClean(key: String) = journalMutex.withLock {
         journalWriter.writeClean(key)
         redundantJournalEntriesCount++
     }
 
-    private suspend fun writeDirty(key: String) = journalMutex.withLock {
-        journalWriter.writeDirty(key)
+    private suspend fun writeCancel(key: String) = journalMutex.withLock {
+        journalWriter.writeCancel(key)
+        redundantJournalEntriesCount += 2
     }
 
     private suspend fun writeRemove(key: String) = journalMutex.withLock {
         journalWriter.writeRemove(key)
         redundantJournalEntriesCount += 3
+    }
+
+    private suspend fun writeRead(key: String) = journalMutex.withLock {
+        journalWriter.writeCancel(key)
+        redundantJournalEntriesCount += 1
     }
 
     private suspend fun rebuildJournalIfRequired() {
