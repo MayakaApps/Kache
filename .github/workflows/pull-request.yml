@@ -42,7 +42,7 @@ jobs:
         run: ./gradlew mingwX64Test --stacktrace
 
       - name: Run macOS-specific tests
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'macOS-latest'
         run: |
           ./gradlew macosX64Test macosArm64Test iosX64Test iosSimulatorArm64Test watchosX64Test watchosSimulatorArm64Test tvosX64Test tvosSimulatorArm64Test  --stacktrace
 
