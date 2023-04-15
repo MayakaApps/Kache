@@ -36,7 +36,19 @@ class JournalReadTests {
     @Test
     fun testValidateHeaderIncorrectVersion() {
         val bytes = byteArrayOf(
-            0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x00,
+            0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x00, 0x00, 0x00, 0x00, 0x01,
+            0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
+        )
+
+        shouldThrow<JournalInvalidHeaderException> {
+            JournalReader(Buffer().apply { write(bytes) }).use { it.validateHeader() }
+        }
+    }
+
+    @Test
+    fun testValidateHeaderDifferentCacheVersion() {
+        val bytes = byteArrayOf(
+            0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01, 0x00, 0x00, 0x00, 0x02,
             0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
@@ -48,7 +60,7 @@ class JournalReadTests {
     @Test
     fun testValidateHeaderValidHeader() {
         val bytes = byteArrayOf(
-            0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01,
+            0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, JOURNAL_VERSION, 0x00, 0x00, 0x00, 0x01,
         )
 
         shouldNotThrow<JournalInvalidHeaderException> {
@@ -58,9 +70,7 @@ class JournalReadTests {
 
     @Test
     fun testReadEntryEmptyJournal() {
-        val bytes = byteArrayOf(
-            0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01,
-        )
+        val bytes = byteArrayOf(*journalHeader, JournalEntry.EOJ)
 
         JournalReader(Buffer().apply { write(bytes) }).nullableUse {
             it.validateHeader()
@@ -71,7 +81,7 @@ class JournalReadTests {
     @Test
     fun testReadSingleDirtyOperation() {
         val bytes = byteArrayOf(
-            0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
+            JournalEntry.DIRTY, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
         val readResult = JournalReader(Buffer().apply { write(bytes) }).use { it.readEntry() }
@@ -81,7 +91,7 @@ class JournalReadTests {
     @Test
     fun testReadSingleCleanOperation() {
         val bytes = byteArrayOf(
-            0x02, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
+            JournalEntry.CLEAN, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
         val readResult = JournalReader(Buffer().apply { write(bytes) }).use { it.readEntry() }
@@ -91,7 +101,7 @@ class JournalReadTests {
     @Test
     fun testReadSingleRemoveOperation() {
         val bytes = byteArrayOf(
-            0x03, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
+            JournalEntry.REMOVE, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
         val readResult = JournalReader(Buffer().apply { write(bytes) }).use { it.readEntry() }
@@ -101,7 +111,7 @@ class JournalReadTests {
     @Test
     fun testReadInvalidOperation() {
         val bytes = byteArrayOf(
-            0x04, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
+            (JournalEntry.EOJ - 1).toByte(), 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
         shouldThrow<JournalInvalidOpcodeException> {
@@ -288,53 +298,91 @@ class JournalReadTests {
         private val keyBytes = byteArrayOf(KEY.length.toByte()) + KEY.encodeToByteArray()
         private val altKeyBytes = byteArrayOf(ALT_KEY.length.toByte()) + ALT_KEY.encodeToByteArray()
 
-        private val journalHeader = byteArrayOf(0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01)
+        private val journalHeader =
+            byteArrayOf(0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, JOURNAL_VERSION, 0x00, 0x00, 0x00, 0x01)
         private val emptyJournal = journalHeader
 
-        private val journalWithDirty = byteArrayOf(*journalHeader, 0x01, *keyBytes, 0x01, *altKeyBytes)
+        private val journalStartWithDirty =
+            byteArrayOf(*journalHeader, JournalEntry.DIRTY, *keyBytes, JournalEntry.DIRTY, *altKeyBytes)
+
+        private val journalWithDirty =
+            byteArrayOf(*journalStartWithDirty, JournalEntry.EOJ)
         private val journalWithDirtyData = JournalData(
             cleanEntriesKeys = emptyList(),
             dirtyEntriesKeys = listOf(KEY, ALT_KEY),
             redundantEntriesCount = 2,
         )
 
-        private val journalWithAdd = byteArrayOf(*journalHeader, 0x01, *keyBytes, 0x02, *keyBytes)
+        private val journalStartWithAdd =
+            byteArrayOf(*journalHeader, JournalEntry.DIRTY, *keyBytes, JournalEntry.CLEAN, *keyBytes)
+
+        private val journalWithAdd =
+            byteArrayOf(*journalStartWithAdd, JournalEntry.EOJ)
         private val journalWithAddData = JournalData(
             cleanEntriesKeys = listOf(KEY),
             dirtyEntriesKeys = emptyList(),
             redundantEntriesCount = 1,
         )
 
-        private val journalWithMixedAdd = byteArrayOf(*journalWithDirty, 0x02, *keyBytes, 0x02, *altKeyBytes)
+        private val journalWithMixedAdd =
+            byteArrayOf(
+                *journalStartWithDirty,
+                JournalEntry.CLEAN, *keyBytes,
+                JournalEntry.CLEAN, *altKeyBytes,
+                JournalEntry.EOJ,
+            )
         private val journalWithMixedAddData = JournalData(
             cleanEntriesKeys = listOf(KEY, ALT_KEY),
             dirtyEntriesKeys = emptyList(),
             redundantEntriesCount = 2,
         )
 
-        private val journalWithAddAndRemove = byteArrayOf(*journalWithAdd, 0x01, *keyBytes, 0x03, *keyBytes)
+        private val journalWithAddAndRemove =
+            byteArrayOf(
+                *journalStartWithAdd,
+                JournalEntry.DIRTY, *keyBytes,
+                JournalEntry.REMOVE, *keyBytes,
+                JournalEntry.EOJ,
+            )
         private val journalWithAddAndRemoveData = JournalData(
             cleanEntriesKeys = emptyList(),
             dirtyEntriesKeys = emptyList(),
             redundantEntriesCount = 4,
         )
 
-        private val journalWithAddAndReAdd = byteArrayOf(*journalWithAdd, 0x01, *keyBytes, 0x02, *keyBytes)
+        private val journalWithAddAndReAdd =
+            byteArrayOf(
+                *journalStartWithAdd,
+                JournalEntry.DIRTY, *keyBytes,
+                JournalEntry.CLEAN, *keyBytes,
+                JournalEntry.EOJ,
+            )
         private val journalWithAddAndReAddData = JournalData(
             cleanEntriesKeys = listOf(KEY),
             dirtyEntriesKeys = emptyList(),
             redundantEntriesCount = 3,
         )
 
-        private val journalWithAddAndDirtyAdd = byteArrayOf(*journalWithAdd, 0x01, *keyBytes)
+        private val journalWithAddAndDirtyAdd =
+            byteArrayOf(
+                *journalStartWithAdd,
+                JournalEntry.DIRTY, *keyBytes,
+                JournalEntry.EOJ,
+            )
         private val journalWithAddAndDirtyAddData = JournalData(
             cleanEntriesKeys = listOf(KEY),
             dirtyEntriesKeys = listOf(KEY),
             redundantEntriesCount = 2,
         )
 
-        // TODO: should be different from adding and removing
-        private val journalWithAddAndCancelledAdd = byteArrayOf(*journalWithAdd, 0x01, *keyBytes, 0x03, *keyBytes)
+        private val journalWithAddAndCancelledAdd =
+            byteArrayOf(
+                *journalStartWithAdd,
+                JournalEntry.DIRTY, *keyBytes,
+                JournalEntry.CANCEL, *keyBytes,
+                JournalEntry.EOJ,
+            )
+
         private val journalWithAddAndCancelledAddData = JournalData(
             cleanEntriesKeys = listOf(KEY),
             dirtyEntriesKeys = emptyList(),

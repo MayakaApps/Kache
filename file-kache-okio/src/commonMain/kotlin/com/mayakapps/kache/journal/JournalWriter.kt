@@ -3,11 +3,15 @@ package com.mayakapps.kache.journal
 import okio.BufferedSink
 import okio.Closeable
 
-internal class JournalWriter(private val sink: BufferedSink) : Closeable {
+internal class JournalWriter(
+    private val sink: BufferedSink,
+    private val cacheVersion: Int = 1,
+) : Closeable {
 
     internal fun writeHeader() {
         sink.writeUtf8(JOURNAL_MAGIC)
         sink.writeByte(JOURNAL_VERSION.toInt())
+        sink.writeInt(cacheVersion)
         sink.flush()
     }
 
@@ -21,7 +25,11 @@ internal class JournalWriter(private val sink: BufferedSink) : Closeable {
 
     internal fun writeClean(key: String) = writeEntryAndFlush(JournalEntry.CLEAN, key)
 
+    internal fun writeCancel(key: String) = writeEntryAndFlush(JournalEntry.CANCEL, key)
+
     internal fun writeRemove(key: String) = writeEntryAndFlush(JournalEntry.REMOVE, key)
+
+    internal fun writeRead(key: String) = writeEntryAndFlush(JournalEntry.READ, key)
 
     private fun writeEntryAndFlush(opcode: Byte, key: String) {
         writeEntry(opcode, key)

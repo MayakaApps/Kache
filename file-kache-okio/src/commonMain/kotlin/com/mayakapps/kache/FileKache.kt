@@ -44,14 +44,21 @@ class FileKache private constructor(
      *
      * It may even throw exceptions for unhandled exceptions in the currently in-progress creation block.
      */
-    suspend fun get(key: String): String? = underlyingKache.get(key.transform())?.toString()
+    suspend fun get(key: String): String? {
+        val result = underlyingKache.get(key.transform())?.toString()
+        if (result != null) writeRead(key)
+        return result
+    }
 
     /**
      * Returns the file for [key] if it already exists in the cache or `null` if it doesn't exist or creation is still
      * in progress.
      */
-    suspend fun getIfAvailable(key: String): String? =
-        underlyingKache.getIfAvailable(key.transform())?.toString()
+    suspend fun getIfAvailable(key: String): String? {
+        val result = underlyingKache.getIfAvailable(key.transform())?.toString()
+        if (result != null) writeRead(key)
+        return result
+    }
 
     /**
      * Returns the file for [key] if it exists in the cache, its creation is in progress or can be created by
@@ -59,8 +66,16 @@ class FileKache private constructor(
      * file is not cached and cannot be created. You can imply that the creation has failed by returning `false`.
      * Any unhandled exceptions inside [creationFunction] won't be handled.
      */
-    suspend fun getOrPut(key: String, writeFunction: suspend (String) -> Boolean) =
-        underlyingKache.getOrPut(key.transform()) { creationFunction(it, writeFunction) }?.toString()
+    suspend fun getOrPut(key: String, writeFunction: suspend (String) -> Boolean): String? {
+        var created = false
+        val result = underlyingKache.getOrPut(key.transform()) {
+            created = true
+            creationFunction(it, writeFunction)
+        }?.toString()
+
+        if (!created && result != null) writeRead(key)
+        return result
+    }
 
     /**
      * Creates a new file for [key] using [creationFunction] and returns the new value. Any existing file or
@@ -127,7 +142,7 @@ class FileKache private constructor(
             cleanFile
         } else {
             fileSystem.delete(tempFile)
-            writeRemove(key)
+            writeCancel(key)
             rebuildJournalIfRequired()
             null
         }
@@ -143,18 +158,28 @@ class FileKache private constructor(
         }
     }
 
+    private suspend fun writeDirty(key: String) = journalMutex.withLock {
+        journalWriter.writeDirty(key)
+    }
+
     private suspend fun writeClean(key: String) = journalMutex.withLock {
         journalWriter.writeClean(key)
         redundantJournalEntriesCount++
     }
 
-    private suspend fun writeDirty(key: String) = journalMutex.withLock {
-        journalWriter.writeDirty(key)
+    private suspend fun writeCancel(key: String) = journalMutex.withLock {
+        journalWriter.writeCancel(key)
+        redundantJournalEntriesCount += 2
     }
 
     private suspend fun writeRemove(key: String) = journalMutex.withLock {
         journalWriter.writeRemove(key)
         redundantJournalEntriesCount += 3
+    }
+
+    private suspend fun writeRead(key: String) = journalMutex.withLock {
+        journalWriter.writeRead(key)
+        redundantJournalEntriesCount += 1
     }
 
     private suspend fun rebuildJournalIfRequired() {
@@ -190,12 +215,14 @@ class FileKache private constructor(
             directoryPath: String,
             maxSize: Long,
             creationDispatcher: CoroutineDispatcher,
+            cacheVersion: Int = 1,
             keyTransformer: KeyTransformer? = SHA256KeyHasher,
         ) = open(
             fileSystem = getSystemFileSystem(),
             directory = directoryPath.toPath(),
             maxSize = maxSize,
             creationDispatcher = creationDispatcher,
+            cacheVersion = cacheVersion,
             keyTransformer = keyTransformer,
         )
 
@@ -204,6 +231,7 @@ class FileKache private constructor(
             directory: Path,
             maxSize: Long,
             creationDispatcher: CoroutineDispatcher,
+            cacheVersion: Int = 1,
             keyTransformer: KeyTransformer? = SHA256KeyHasher,
         ): FileKache {
             require(maxSize > 0) { "maxSize must be positive value" }
@@ -212,7 +240,7 @@ class FileKache private constructor(
             fileSystem.createDirectories(directory)
 
             val journalData = try {
-                fileSystem.readJournalIfExists(directory)
+                fileSystem.readJournalIfExists(directory, cacheVersion)
             } catch (ex: JournalException) {
                 // Journal is corrupted - Clear cache
                 fileSystem.deleteContents(directory)
