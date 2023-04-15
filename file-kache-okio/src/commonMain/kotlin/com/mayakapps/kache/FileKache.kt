@@ -215,12 +215,14 @@ class FileKache private constructor(
             directoryPath: String,
             maxSize: Long,
             creationDispatcher: CoroutineDispatcher,
+            cacheVersion: Int = 1,
             keyTransformer: KeyTransformer? = SHA256KeyHasher,
         ) = open(
             fileSystem = getSystemFileSystem(),
             directory = directoryPath.toPath(),
             maxSize = maxSize,
             creationDispatcher = creationDispatcher,
+            cacheVersion = cacheVersion,
             keyTransformer = keyTransformer,
         )
 
@@ -229,6 +231,7 @@ class FileKache private constructor(
             directory: Path,
             maxSize: Long,
             creationDispatcher: CoroutineDispatcher,
+            cacheVersion: Int = 1,
             keyTransformer: KeyTransformer? = SHA256KeyHasher,
         ): FileKache {
             require(maxSize > 0) { "maxSize must be positive value" }
@@ -237,7 +240,7 @@ class FileKache private constructor(
             fileSystem.createDirectories(directory)
 
             val journalData = try {
-                fileSystem.readJournalIfExists(directory)
+                fileSystem.readJournalIfExists(directory, cacheVersion)
             } catch (ex: JournalException) {
                 // Journal is corrupted - Clear cache
                 fileSystem.deleteContents(directory)

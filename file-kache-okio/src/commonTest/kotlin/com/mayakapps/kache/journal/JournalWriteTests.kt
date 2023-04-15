@@ -79,6 +79,7 @@ class JournalWriteTests {
     companion object {
         private const val KEY = "TestKey"
         private const val ALT_KEY = "AltTestKey"
-        private val headerBytes = JOURNAL_MAGIC.encodeToByteArray() + JOURNAL_VERSION
+        private val headerBytes =
+            JOURNAL_MAGIC.encodeToByteArray() + JOURNAL_VERSION + byteArrayOf(0x00, 0x00, 0x00, 0x01)
     }
 }

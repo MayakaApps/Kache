@@ -12,7 +12,7 @@ internal data class JournalData(
     val redundantEntriesCount: Int,
 )
 
-internal fun FileSystem.readJournalIfExists(directory: Path): JournalData? {
+internal fun FileSystem.readJournalIfExists(directory: Path, cacheVersion: Int = 1): JournalData? {
     val journalFile = directory.resolve(JOURNAL_FILE)
     val tempJournalFile = directory.resolve(JOURNAL_FILE_TEMP)
     val backupJournalFile = directory.resolve(JOURNAL_FILE_BACKUP)
@@ -36,7 +36,7 @@ internal fun FileSystem.readJournalIfExists(directory: Path): JournalData? {
     val dirtyEntriesKeys = mutableListOf<String>()
     val cleanEntriesKeys = mutableListOf<String>()
 
-    JournalReader(source(journalFile).buffer()).use { reader ->
+    JournalReader(source(journalFile).buffer(), cacheVersion).use { reader ->
         reader.validateHeader()
 
         while (true) {

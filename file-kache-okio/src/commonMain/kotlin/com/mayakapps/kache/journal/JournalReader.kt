@@ -4,7 +4,10 @@ import okio.BufferedSource
 import okio.Closeable
 import okio.EOFException
 
-internal class JournalReader(private val source: BufferedSource) : Closeable {
+internal class JournalReader(
+    private val source: BufferedSource,
+    private val cacheVersion: Int = 1,
+) : Closeable {
 
     internal fun validateHeader() {
         val magic = try {
@@ -13,10 +16,14 @@ internal class JournalReader(private val source: BufferedSource) : Closeable {
             throw JournalInvalidHeaderException("File size is less than journal magic code size")
         }
 
-        val version = source.readByte()
-
         if (magic != JOURNAL_MAGIC) throw JournalInvalidHeaderException("Journal magic ($magic) doesn't match")
+
+        val version = source.readByte()
         if (version != JOURNAL_VERSION) throw JournalInvalidHeaderException("Journal version ($version) doesn't match")
+
+        val existingCacheVersion = source.readInt()
+        if (cacheVersion != existingCacheVersion)
+            throw JournalInvalidHeaderException("Existing cache version ($existingCacheVersion) doesn't match current version ($cacheVersion)")
     }
 
     internal fun readEntry(): JournalEntry? {
