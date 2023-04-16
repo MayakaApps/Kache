@@ -35,13 +35,15 @@ jobs:
       - name: Setup gradle
         uses: gradle/gradle-build-action@v2
 
-      - name: Extract Kotlin version
+      - name: Extract Kotlin version - Linux and macOS
+        if: matrix.os != 'windows-latest'
         run: |
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            powershell -command "echo "KOTLIN_VERSION=$((Select-String -Path 'gradle/libs.versions.toml' -Pattern '^kotlin = \"(.*)\"').Matches.Groups[1].Value)" >> $GITHUB_ENV"
-          else
-            echo "KOTLIN_VERSION=$(sed -rn 's/^kotlin\s?=\s?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
-          fi
+          echo "KOTLIN_VERSION=$(sed -rn 's/^\n?kotlin\s?=\s?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
+
+      - name: Extract Kotlin version - Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          powershell -command "echo "KOTLIN_VERSION=$((Select-String -Path 'gradle/libs.versions.toml' -Pattern '^kotlin\s?=\s?\"(.*)\"').Matches.Groups[1].Value)" >> $GITHUB_ENV"
 
       - name: Cache Konan
         uses: actions/cache@v2
