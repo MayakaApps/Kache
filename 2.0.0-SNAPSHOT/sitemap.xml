@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://mayakaapps.github.io/Kache/2.0.0-SNAPSHOT/</loc>
+         <lastmod>2023-04-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://mayakaapps.github.io/Kache/2.0.0-SNAPSHOT/file-kache-okio/</loc>
+         <lastmod>2023-04-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://mayakaapps.github.io/Kache/2.0.0-SNAPSHOT/kache/</loc>
+         <lastmod>2023-04-16</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+</urlset>
