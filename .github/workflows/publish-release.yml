@@ -33,6 +33,10 @@ jobs:
       - name: Setup gradle
         uses: gradle/gradle-build-action@v2
 
+      - name: Extract Kotlin version
+        run: |
+          echo "KOTLIN_VERSION=$(sed -rn 's/^kotlin\s?=\s?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
+
       - name: Upload Linux-specific and common artifacts
         if: matrix.os == 'ubuntu-latest'
         env:

@@ -16,7 +16,6 @@ jobs:
         os: [ macOS-latest, ubuntu-latest ]
 
     runs-on: ${{matrix.os}}
-    if: github.repository == 'MayakaApps/Kache'
 
     steps:
       - name: Checkout
@@ -34,19 +33,20 @@ jobs:
       - name: Setup gradle
         uses: gradle/gradle-build-action@v2
 
-      - name: Retrieve version
+      - name: Extract Kache and Kotlin versions
         run: |
-          echo "VERSION_NAME=$(./gradlew -q getVersion)" >> $GITHUB_ENV
+          echo "KACHE_VERSION=$(sed -rn 's/^VERSION_NAME=(.*)\r?$/\1/p' 'gradle.properties')" >> $GITHUB_ENV
+          echo "KOTLIN_VERSION=$(sed -rn 's/^kotlin\s?=\s?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
 
       - name: Upload Linux-specific and common snapshot artifacts
-        if: endsWith(env.VERSION_NAME, '-SNAPSHOT') && matrix.os == 'ubuntu-latest'
+        if: endsWith(env.KACHE_VERSION, '-SNAPSHOT') && matrix.os == 'ubuntu-latest'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
         run: ./gradlew publishAllPublicationsToMavenCentralRepository -PisMainHost=true
 
       - name: Upload macOS-specific snapshot artifacts
-        if: endsWith(env.VERSION_NAME, '-SNAPSHOT') && matrix.os == 'macOS-latest'
+        if: endsWith(env.KACHE_VERSION, '-SNAPSHOT') && matrix.os == 'macOS-latest'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
