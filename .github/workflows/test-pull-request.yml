@@ -45,12 +45,12 @@ jobs:
         run: |
           powershell -command "echo "KOTLIN_VERSION=$((Select-String -Path 'gradle/libs.versions.toml' -Pattern '^kotlin\s?=\s?\"(.*)\"').Matches.Groups[1].Value)" >> $env:GITHUB_ENV"
 
-      - name: Cache Konan
-        uses: actions/cache@v2
+      - name: Restore Konan cache
+        uses: actions/cache/restore@v3
+        id: restore-cache
         with:
           path: ~/.konan
           key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
-          restore-keys: ${{ runner.os }}-konan-
 
       - name: Run Linux-specific and common tests
         if: matrix.os == 'ubuntu-latest'
