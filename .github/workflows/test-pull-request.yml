@@ -54,7 +54,7 @@ jobs:
 
       - name: Run Linux-specific and common tests
         if: matrix.os == 'ubuntu-latest'
-        run: ./gradlew jvmTest jsTest linuxX64 --stacktrace
+        run: ./gradlew jvmTest jsTest linuxX64Test --stacktrace
 
       - name: Run Windows-specific tests
         if: matrix.os == 'windows-latest'
