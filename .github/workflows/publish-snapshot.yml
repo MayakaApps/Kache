@@ -35,8 +35,8 @@ jobs:
 
       - name: Extract Kache and Kotlin versions
         run: |
-          echo "KACHE_VERSION=$(sed -rn 's/^\n?VERSION_NAME=(.*)\r?$/\1/p' 'gradle.properties')" >> $GITHUB_ENV
-          echo "KOTLIN_VERSION=$(sed -rn 's/^\n?kotlin\s?=\s?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
+          echo "KACHE_VERSION=$(sed -rn 's/^VERSION_NAME=(.*)\r?$/\1/p' 'gradle.properties')" >> $GITHUB_ENV
+          echo "KOTLIN_VERSION=$(sed -rn 's/^kotlin[[:space:]]?=[[:space:]]?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
 
       - name: Cache Konan
         uses: actions/cache@v2

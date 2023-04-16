@@ -38,7 +38,7 @@ jobs:
       - name: Extract Kotlin version - Linux and macOS
         if: matrix.os != 'windows-latest'
         run: |
-          echo "KOTLIN_VERSION=$(sed -rn 's/^\n?kotlin\s?=\s?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
+          echo "KOTLIN_VERSION=$(sed -rn 's/^kotlin[[:space:]]?=[[:space:]]?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
 
       - name: Extract Kotlin version - Windows
         if: matrix.os == 'windows-latest'
