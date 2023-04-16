@@ -106,7 +106,7 @@ lruCache.getOrPut(imageFilename) { cacheFile ->
 
 ## Documentation
 
-See documentation [here](https://mayakaapps.github.io/Kache/)
+See documentation [here](https://mayakaapps.github.io/Kache/2.0.0-SNAPSHOT/)
 
 ## Why use Kache?
 
