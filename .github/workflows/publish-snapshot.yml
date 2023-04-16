@@ -38,6 +38,13 @@ jobs:
           echo "KACHE_VERSION=$(sed -rn 's/^VERSION_NAME=(.*)\r?$/\1/p' 'gradle.properties')" >> $GITHUB_ENV
           echo "KOTLIN_VERSION=$(sed -rn 's/^kotlin\s?=\s?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
 
+      - name: Cache Konan
+        uses: actions/cache@v2
+        with:
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
+          restore-keys: ${{ runner.os }}-konan-
+
       - name: Upload Linux-specific and common snapshot artifacts
         if: endsWith(env.KACHE_VERSION, '-SNAPSHOT') && matrix.os == 'ubuntu-latest'
         env:

@@ -43,6 +43,13 @@ jobs:
             echo "KOTLIN_VERSION=$(sed -rn 's/^kotlin\s?=\s?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
           fi
 
+      - name: Cache Konan
+        uses: actions/cache@v2
+        with:
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
+          restore-keys: ${{ runner.os }}-konan-
+
       - name: Run Linux-specific and common tests
         if: matrix.os == 'ubuntu-latest'
         run: ./gradlew allTests --stacktrace
