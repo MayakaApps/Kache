@@ -11,3 +11,7 @@ local.properties
 
 # Mac files
 .DS_Store
+
+# Mkdocs
+site/
+docs/api/
