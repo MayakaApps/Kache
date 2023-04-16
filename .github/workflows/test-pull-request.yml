@@ -7,7 +7,7 @@ on:
       - '*.md'
 
 jobs:
-  test:
+  Test:
     strategy:
       fail-fast: false
       matrix:
