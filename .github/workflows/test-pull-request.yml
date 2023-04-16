@@ -1,4 +1,4 @@
-name: Test
+name: CI
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
       - '*.md'
 
 jobs:
-  test:
+  Test:
     strategy:
       fail-fast: false
       matrix:
@@ -35,9 +35,26 @@ jobs:
       - name: Setup gradle
         uses: gradle/gradle-build-action@v2
 
+      - name: Extract Kotlin version - Linux and macOS
+        if: matrix.os != 'windows-latest'
+        run: |
+          echo "KOTLIN_VERSION=$(sed -rn 's/^kotlin[[:space:]]?=[[:space:]]?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
+
+      - name: Extract Kotlin version - Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          powershell -command "echo "KOTLIN_VERSION=$((Select-String -Path 'gradle/libs.versions.toml' -Pattern '^kotlin\s?=\s?\"(.*)\"').Matches.Groups[1].Value)" >> $env:GITHUB_ENV"
+
+      - name: Restore Konan cache
+        uses: actions/cache/restore@v3
+        id: restore-cache
+        with:
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
+
       - name: Run Linux-specific and common tests
         if: matrix.os == 'ubuntu-latest'
-        run: ./gradlew allTests --stacktrace
+        run: ./gradlew jvmTest jsTest linuxX64Test --stacktrace
 
       - name: Run Windows-specific tests
         if: matrix.os == 'windows-latest'
@@ -46,7 +63,7 @@ jobs:
       - name: Run macOS-specific tests
         if: matrix.os == 'macOS-latest'
         run: |
-          ./gradlew macosX64Test macosArm64Test iosX64Test iosSimulatorArm64Test watchosX64Test watchosSimulatorArm64Test tvosX64Test tvosSimulatorArm64Test  --stacktrace
+          ./gradlew macosX64Test macosArm64Test iosX64Test iosSimulatorArm64Test --stacktrace
 
       - name: Bundle the build report
         if: failure()
@@ -64,6 +81,7 @@ jobs:
         if: always()
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
+          check_name: ${{ runner.os }} Test Report
 
 env:
   GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.caching=true

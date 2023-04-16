@@ -33,6 +33,17 @@ jobs:
       - name: Setup gradle
         uses: gradle/gradle-build-action@v2
 
+      - name: Extract Kotlin version
+        run: |
+          echo "KOTLIN_VERSION=$(sed -rn 's/^kotlin[[:space:]]?=[[:space:]]?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
+
+      - name: Restore Konan cache
+        uses: actions/cache/restore@v3
+        id: restore-cache
+        with:
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
+
       - name: Upload Linux-specific and common artifacts
         if: matrix.os == 'ubuntu-latest'
         env:
@@ -59,3 +70,9 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
         run: ./gradlew closeAndReleaseRepository
+
+      - name: Save Konan cache
+        uses: actions/cache/save@v3
+        with:
+          path: ~/.konan
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
