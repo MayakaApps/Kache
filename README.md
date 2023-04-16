@@ -1,7 +1,7 @@
 <br />
 
 <div align="center">
-    <img src="res/logo.png" alt="Logo"/>
+    <img src="docs/images/kache-logo.png" alt="Logo"/>
 </div>
 
 <h1 align="center" style="margin-top: 0;">Kache</h1>
@@ -106,7 +106,7 @@ lruCache.getOrPut(imageFilename) { cacheFile ->
 
 ## Documentation
 
-See documentation [here](https://mayakaapps.github.io/LruKache/lrucache/com.mayakapps.lrucache/index.html)
+See documentation [here](https://mayakaapps.github.io/Kache/)
 
 ## Why use Kache?
 

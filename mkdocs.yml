@@ -1,0 +1,76 @@
+site_name: Kache
+site_description: A Kotlin Multiplatform library for in-memory and persistent caching
+site_author: MayakaApps
+site_url: https://mayakaapps.github.io/Kache
+repo_name: Kache
+repo_url: https://github.com/MayakaApps/Kache
+copyright: Copyright &copy; 2023 MayakaApps.
+remote_branch: gh-pages
+
+nav:
+  - 'Overview': index.md
+  - 'In-Memory Kache':
+      - 'Overview': kache/index.md
+      - 'API Reference': api/kache/index.html
+  - 'File Kache (Okio)':
+      - 'Overview': file-kache-okio/index.md
+      - 'API Reference': api/file-kache-okio/index.html
+
+theme:
+  name: 'material'
+  favicon: images/kache-logo.png
+  logo: images/kache-logo.png
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      media: "(prefers-color-scheme: light)"
+      primary: 'indigo'
+      accent: 'pink'
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      media: "(prefers-color-scheme: dark)"
+      primary: 'indigo'
+      accent: 'pink'
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - content.tabs.link
+    - content.code.annotate
+    - content.action.view
+
+markdown_extensions:
+  - pymdownx.highlight:
+      use_pygments: true
+  - pymdownx.superfences
+  - codehilite:
+      guess_lang: false
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.critic
+  - pymdownx.critic
+  - admonition
+  - pymdownx.details
+  - toc:
+      permalink: true
+  - md_in_html
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+plugins:
+  - search
+  - macros
+  - mike
+
+extra:
+  versions:
+    kache: !ENV [KACHE_VERSION]
+  version:
+    provider: mike

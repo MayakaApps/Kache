@@ -2,5 +2,16 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:base"
-  ]
+  ],
+  "constraints": {
+    "python": "3.11"
+  },
+  "ignorePaths": [
+    ".github/workflows/publish-docs-requirements.txt"
+  ],
+  "pip-compile": {
+    "fileMatch": [
+      ".github/workflows/publish-docs-requirements.in"
+    ]
+  }
 }

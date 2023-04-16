@@ -1,0 +1,76 @@
+name: Publish the documentation to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: "docs"
+  cancel-in-progress: false
+
+jobs:
+  deploy-website:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v3
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11 # See the pinned version in renovate.json too
+
+      - name: Extract Kache version
+        run: |
+          echo "KACHE_VERSION=$(sed -rn 's/^VERSION_NAME=(.*)\r?$/\1/p' 'gradle.properties')" >> $GITHUB_ENV
+
+      - name: Generate the API documentation
+        run: ./gradlew dokkaHtmlMultiModule
+
+      - name: Build mkdocs
+        env:
+          SQLDELIGHT_VERSION: ${{ steps.version.outputs.VERSION_NAME }}
+        run: |
+          pip3 install --no-deps -r .github/workflows/publish-docs-requirements.txt
+          mkdocs build
+
+      - name: Configure git for mike
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git fetch origin gh-pages --depth=1
+
+      - name: Deploy SNAPSHOT Docs with mike 🗿
+        if: ${{ success() && endsWith(env.KACHE_VERSION, '-SNAPSHOT') }}
+        run: mike deploy -u --push ${{ env.KACHE_VERSION }} snapshot
+
+      - name: Deploy Docs with mike 🚀
+        if: ${{ success() && !endsWith(env.KACHE_VERSION, '-SNAPSHOT') }}
+        run: mike deploy -u --push ${{ env.KACHE_VERSION }} latest
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
