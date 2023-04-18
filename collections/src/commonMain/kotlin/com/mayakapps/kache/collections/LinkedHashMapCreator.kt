@@ -1,7 +1,6 @@
 package com.mayakapps.kache.collections
 
-@Suppress("FunctionName")
-expect fun <K, V> LinkedHashMap(
+expect fun <K, V> createLinkedHashMap(
     initialCapacity: Int = 0,
     loadFactor: Float = 0.75F,
     accessOrder: Boolean = false,

@@ -1,7 +1,6 @@
 package com.mayakapps.kache.collections
 
-@Suppress("FunctionName")
-actual fun <K, V> LinkedHashMap(
+actual fun <K, V> createLinkedHashMap(
     initialCapacity: Int,
     loadFactor: Float,
     accessOrder: Boolean,
