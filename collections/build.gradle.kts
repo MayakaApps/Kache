@@ -13,6 +13,8 @@ kotlin {
         compilations.configureEach {
             kotlinOptions.jvmTarget = "1.8"
         }
+
+        withJava()
     }
 
     js(IR) {

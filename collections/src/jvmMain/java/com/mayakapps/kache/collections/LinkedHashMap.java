@@ -66,7 +66,7 @@ import java.util.function.Consumer;
  * the copy.  (Clients generally appreciate having things returned in the same
  * order they were presented.)
  *
- * <p>A special {@link #LinkedHashMap(int, float, boolean) constructor} is
+ * <p>A special {@link #LinkedHashMap(int, float, boolean, boolean) constructor} is
  * provided to create a linked hash map whose order of iteration is the order
  * in which its entries were last accessed, from least-recently accessed to
  * most-recently (<i>access-order</i>).  This kind of map is well-suited to
@@ -218,6 +218,13 @@ public class LinkedHashMap<K, V>
      */
     final boolean accessOrder;
 
+    // MODIFICATION: add the following field
+
+    /**
+     * Whether to reverse the order of iteration
+     */
+    final boolean reverseOrder;
+
     // internal utilities
 
     // link at the end of list
@@ -348,6 +355,7 @@ public class LinkedHashMap<K, V>
     public LinkedHashMap(int initialCapacity, float loadFactor) {
         super(initialCapacity, loadFactor);
         accessOrder = false;
+        reverseOrder = false; // MODIFICATION: add this line
     }
 
     /**
@@ -360,6 +368,7 @@ public class LinkedHashMap<K, V>
     public LinkedHashMap(int initialCapacity) {
         super(initialCapacity);
         accessOrder = false;
+        reverseOrder = false; // MODIFICATION: add this line
     }
 
     /**
@@ -369,6 +378,7 @@ public class LinkedHashMap<K, V>
     public LinkedHashMap() {
         super();
         accessOrder = false;
+        reverseOrder = false; // MODIFICATION: add this line
     }
 
     /**
@@ -383,6 +393,7 @@ public class LinkedHashMap<K, V>
     public LinkedHashMap(Map<? extends K, ? extends V> m) {
         super();
         accessOrder = false;
+        reverseOrder = false; // MODIFICATION: add this line
         putMapEntries(m, false);
     }
 
@@ -399,9 +410,11 @@ public class LinkedHashMap<K, V>
      */
     public LinkedHashMap(int initialCapacity,
                          float loadFactor,
-                         boolean accessOrder) {
+                         boolean accessOrder,
+                         boolean reverseOrder) { // MODIFICATION: add reverseOrder parameter
         super(initialCapacity, loadFactor);
         this.accessOrder = accessOrder;
+        this.reverseOrder = reverseOrder; // MODIFICATION: add this line
     }
 
 
@@ -533,6 +546,10 @@ public class LinkedHashMap<K, V>
         }
 
         public final Iterator<K> iterator() {
+            // MODIFICATION: use the reversed iterator if reverseOrder is true
+            if (reverseOrder) {
+                return new ReversedLinkedKeyIterator();
+            }
             return new LinkedKeyIterator();
         }
 
@@ -594,6 +611,10 @@ public class LinkedHashMap<K, V>
         }
 
         public final Iterator<V> iterator() {
+            // MODIFICATION: use the reversed iterator if reverseOrder is true
+            if (reverseOrder) {
+                return new ReversedLinkedValueIterator();
+            }
             return new LinkedValueIterator();
         }
 
@@ -651,6 +672,10 @@ public class LinkedHashMap<K, V>
         }
 
         public final Iterator<Map.Entry<K, V>> iterator() {
+            // MODIFICATION: use the reversed iterator if reverseOrder is true
+            if (reverseOrder) {
+                return new ReversedLinkedEntryIterator();
+            }
             return new LinkedEntryIterator();
         }
 
@@ -774,5 +799,67 @@ public class LinkedHashMap<K, V>
         }
     }
 
+    // MODIFICATION: reversed Iterators
 
+    abstract class ReversedLinkedHashIterator {
+        LinkedHashMap.Entry<K, V> next;
+        LinkedHashMap.Entry<K, V> current;
+        int expectedModCount;
+
+        ReversedLinkedHashIterator() {
+            // MODIFICATION: use tail instead of head
+            next = tail;
+            expectedModCount = modCount;
+            current = null;
+        }
+
+        public final boolean hasNext() {
+            return next != null;
+        }
+
+        final LinkedHashMap.Entry<K, V> nextNode() {
+            LinkedHashMap.Entry<K, V> e = next;
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
+            if (e == null)
+                throw new NoSuchElementException();
+            current = e;
+            // MODIFICATION: use before instead of after
+            next = e.before;
+            return e;
+        }
+
+        public final void remove() {
+            Node<K, V> p = current;
+            if (p == null)
+                throw new IllegalStateException();
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
+            current = null;
+            K key = p.key;
+            removeNode(hash(key), key, null, false, false);
+            expectedModCount = modCount;
+        }
+    }
+
+    final class ReversedLinkedKeyIterator extends ReversedLinkedHashIterator
+            implements Iterator<K> {
+        public final K next() {
+            return nextNode().getKey();
+        }
+    }
+
+    final class ReversedLinkedValueIterator extends ReversedLinkedHashIterator
+            implements Iterator<V> {
+        public final V next() {
+            return nextNode().value;
+        }
+    }
+
+    final class ReversedLinkedEntryIterator extends ReversedLinkedHashIterator
+            implements Iterator<Map.Entry<K, V>> {
+        public final Map.Entry<K, V> next() {
+            return nextNode();
+        }
+    }
 }
