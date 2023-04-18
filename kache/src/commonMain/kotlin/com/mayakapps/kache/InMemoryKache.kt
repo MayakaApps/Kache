@@ -54,7 +54,7 @@ class InMemoryKache<K : Any, V : Any>(
     private val creationMap = ConcurrentMutableMap<K, Deferred<V?>>()
     private val creationMutex = Mutex()
 
-    private val map: MutableMap<K, V> = getMapByStrategy(strategy)
+    private val map: MutableMap<K, V> = strategy.createMap()
     private val mapMutex = Mutex()
 
     /**
