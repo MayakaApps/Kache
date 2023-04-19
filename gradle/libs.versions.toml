@@ -10,7 +10,7 @@ stately = "1.2.5"
 
 okio = "3.3.0"
 
-kotest = "5.6.1"
+kotest = "5.5.4"
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
