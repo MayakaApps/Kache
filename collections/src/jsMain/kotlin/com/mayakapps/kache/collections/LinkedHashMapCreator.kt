@@ -7,7 +7,5 @@ actual fun <K, V> createLinkedHashMap(
     reverseOrder: Boolean
 ): MutableMap<K, V> = when {
     !accessOrder && !reverseOrder -> kotlin.collections.LinkedHashMap(initialCapacity, loadFactor)
-    accessOrder && !reverseOrder -> TODO()
-    !accessOrder && reverseOrder -> TODO()
-    else -> TODO()
+    else -> LinkedHashMap(initialCapacity, loadFactor, accessOrder, reverseOrder)
 }

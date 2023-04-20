@@ -91,14 +91,59 @@ public open class LinkedHashMap<K, V> : HashMap<K, V>, MutableMap<K, V> {
             }
         }
 
-        override fun add(element: MutableEntry<K, V>): Boolean = throw UnsupportedOperationException("Add is not supported on entries")
+        // MODIFICATION: add a reverse iterator
+        private inner class ReverseEntryIterator : MutableIterator<MutableEntry<K, V>> {
+            // The last entry that was returned from this iterator.
+            private var last: ChainEntry<K, V>? = null
+
+            // The next entry to return from this iterator.
+            private var next: ChainEntry<K, V>? = null
+
+            init {
+                // MODIFICATION: Use tail instead of head
+                next = head?.prev
+//                recordLastKnownStructure(map, this)
+            }
+
+            override fun hasNext(): Boolean {
+                return next !== null
+            }
+
+            override fun next(): MutableEntry<K, V> {
+//                checkStructuralChange(map, this)
+                if (!hasNext()) throw NoSuchElementException()
+
+                val current = next!!
+                last = current
+                // MODIFICATION: Use prev instead of next and check current instead of it
+                next = current.prev.takeIf { current !== head }
+                return current
+            }
+
+            override fun remove() {
+                check(last != null)
+                // MODIFICATION: comment out the following line as we're not going to use read-only collections
+//                this@EntrySet.checkIsMutable()
+//                checkStructuralChange(map, this)
+
+                last!!.remove()
+                map.remove(last!!.key)
+//                recordLastKnownStructure(map, this)
+                last = null
+            }
+        }
+
+        override fun add(element: MutableEntry<K, V>): Boolean =
+            throw UnsupportedOperationException("Add is not supported on entries")
+
         override fun clear() {
             this@LinkedHashMap.clear()
         }
 
         override fun containsEntry(element: Map.Entry<K, V>): Boolean = this@LinkedHashMap.containsEntry(element)
 
-        override operator fun iterator(): MutableIterator<MutableEntry<K, V>> = EntryIterator()
+        // MODIFICATION: add a reverseOrder condition
+        override operator fun iterator(): MutableIterator<MutableEntry<K, V>> = if (!reverseOrder) EntryIterator() else ReverseEntryIterator()
 
         override fun removeEntry(element: Map.Entry<K, V>): Boolean {
             checkIsMutable()
@@ -168,12 +213,39 @@ public open class LinkedHashMap<K, V> : HashMap<K, V>, MutableMap<K, V> {
         prev = null
     }
 
+    // MODIFICATION: add this
+    private fun ChainEntry<K, V>.afterAccess() {
+        var _head = checkNotNull(head)
+        val _tail = checkNotNull(_head.prev)
+
+        // if this is the tail or we don't care about access order, return
+        if (!accessOrder || this === _tail) return
+
+        // remove this from the chain
+        next!!.prev = prev
+        prev!!.next = next
+        if (_head === this) {
+            head = next
+            _head = checkNotNull(head)
+        }
+
+        // add this to the end of the chain
+        prev = _tail
+        next = _head
+        _head.prev = this
+        _tail.next = this
+    }
+
     /*
    * The hashmap that keeps track of our entries and the chain. Note that we
    * duplicate the key here to eliminate changes to HashMap and minimize the
    * code here, at the expense of additional space.
    */
     private val map: HashMap<K, ChainEntry<K, V>>
+
+    // MODIFICATION: add these variables
+    private val accessOrder: Boolean
+    private val reverseOrder: Boolean
 
     private var isReadOnly: Boolean = false
 
@@ -182,11 +254,19 @@ public open class LinkedHashMap<K, V> : HashMap<K, V>, MutableMap<K, V> {
      */
     constructor() : super() {
         map = HashMap<K, ChainEntry<K, V>>()
+
+        // MODIFICATION: add the next two lines
+        accessOrder = false
+        reverseOrder = false
     }
 
     internal constructor(backingMap: HashMap<K, Any>) : super() {
         @Suppress("UNCHECKED_CAST") // expected to work due to erasure
         map = backingMap as HashMap<K, ChainEntry<K, V>>
+
+        // MODIFICATION: add the next two lines
+        accessOrder = false
+        reverseOrder = false
     }
 
     /**
@@ -197,11 +277,18 @@ public open class LinkedHashMap<K, V> : HashMap<K, V>, MutableMap<K, V> {
      *
      * @throws IllegalArgumentException if the initial capacity or load factor are negative
      */
-    constructor(initialCapacity: Int, loadFactor: Float) : super(initialCapacity, loadFactor) {
+    constructor(initialCapacity: Int, loadFactor: Float, accessOrder: Boolean, reverseOrder: Boolean) : super(
+        initialCapacity,
+        loadFactor
+    ) {
         map = HashMap<K, ChainEntry<K, V>>()
+
+        // MODIFICATION: add the next two lines and the parameters
+        this.accessOrder = accessOrder
+        this.reverseOrder = reverseOrder
     }
 
-    constructor(initialCapacity: Int) : this(initialCapacity, 0.0f)
+    constructor(initialCapacity: Int) : this(initialCapacity, 0.0f, false, false)
 
     /**
      * Constructs an instance of [LinkedHashMap] filled with the contents of the specified [original] map.
@@ -209,6 +296,10 @@ public open class LinkedHashMap<K, V> : HashMap<K, V>, MutableMap<K, V> {
     constructor(original: Map<out K, V>) {
         map = HashMap<K, ChainEntry<K, V>>()
         this.putAll(original)
+
+        // MODIFICATION: add the next two lines
+        accessOrder = false
+        reverseOrder = false
     }
 
     @PublishedApi
@@ -246,7 +337,8 @@ public open class LinkedHashMap<K, V> : HashMap<K, V>, MutableMap<K, V> {
 
     internal override fun createEntrySet(): MutableSet<MutableMap.MutableEntry<K, V>> = EntrySet()
 
-    override operator fun get(key: K): V? = map.get(key)?.value
+    // MODIFICATION: add afterAccess call
+    override operator fun get(key: K): V? = map.get(key)?.run { afterAccess(); value }
 
     override fun put(key: K, value: V): V? {
         checkIsMutable()
@@ -258,7 +350,8 @@ public open class LinkedHashMap<K, V> : HashMap<K, V>, MutableMap<K, V> {
             newEntry.addToEnd()
             return null
         } else {
-            return old.setValue(value)
+            // MODIFICATION: add afterAccess call
+            return old.setValue(value).also { old.afterAccess() }
         }
     }
 
