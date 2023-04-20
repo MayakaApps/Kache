@@ -29,4 +29,10 @@ internal class AccessOrderedMap<K, V>(
 
         return item
     }
+
+    override fun putAll(from: Map<out K, V>) {
+        for ((key, value) in from) {
+            put(key, value)
+        }
+    }
 }
