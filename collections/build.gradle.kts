@@ -56,7 +56,19 @@ kotlin {
     androidNativeX86()
     androidNativeX64()
 
-    wasm()
+    wasm() {
+        browser {
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                }
+            }
+        }
+
+        nodejs()
+
+        d8()
+    }
 
     @Suppress("UNUSED_VARIABLE")
     sourceSets {
