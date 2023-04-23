@@ -46,14 +46,14 @@ class InMemoryKacheGetTests {
 
     @Test
     fun testGetAllKeysEmpty() = runBasicInMemoryKacheTest {
-        getAllKeys() shouldBe InMemoryKache.Keys(emptySet(), emptySet())
+        getAllKeys() shouldBe KacheKeys(emptySet(), emptySet())
     }
 
     @Test
     fun testGetAllKeysNonEmpty() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_1)
         putAsync(KEY_2) { VAL_2 }
-        getAllKeys() shouldBe InMemoryKache.Keys(setOf(KEY_1), setOf(KEY_2))
+        getAllKeys() shouldBe KacheKeys(setOf(KEY_1), setOf(KEY_2))
     }
 
     /*

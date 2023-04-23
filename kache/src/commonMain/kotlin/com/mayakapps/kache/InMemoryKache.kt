@@ -46,7 +46,8 @@ class InMemoryKache<K : Any, V : Any>(
     private val creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
     private val sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
     private val onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
-) {
+) : ObjectKache<K, V> {
+
     init {
         require(maxSize > 0) { "maxSize must be positive value" }
     }
@@ -61,22 +62,22 @@ class InMemoryKache<K : Any, V : Any>(
      * The max size of this cache in units calculated by [sizeCalculator]. This represents the max number of entries
      * if [sizeCalculator] used the default implementation (returning 1 for each entry),
      */
-    var maxSize = maxSize
+    override var maxSize = maxSize
         private set
 
     /**
      * The current size of this cache in units calculated by [sizeCalculator]. This represents the current number of
      * entries if [sizeCalculator] used the default implementation (returning 1 for each entry),
      */
-    var size = 0L
+    override var size = 0L
         private set
 
-    suspend fun getKeys(): Set<K> = mapMutex.withLock { map.keys.toSet() }
+    override suspend fun getKeys(): Set<K> = mapMutex.withLock { map.keys.toSet() }
 
-    suspend fun getUnderCreationKeys(): Set<K> = mapMutex.withLock { creationMap.keys.toSet() }
+    override suspend fun getUnderCreationKeys(): Set<K> = mapMutex.withLock { creationMap.keys.toSet() }
 
-    suspend fun getAllKeys(): Keys<K> =
-        mapMutex.withLock { Keys(map.keys.toSet(), creationMap.keys.toSet()) }
+    override suspend fun getAllKeys(): KacheKeys<K> =
+        mapMutex.withLock { KacheKeys(map.keys.toSet(), creationMap.keys.toSet()) }
 
     /**
      * Returns the value for [key] if it exists in the cache or wait for its creation if it is currently in progress.
@@ -84,7 +85,7 @@ class InMemoryKache<K : Any, V : Any>(
      *
      * It may even throw exceptions for unhandled exceptions in the currently in-progress creation block.
      */
-    suspend fun getOrDefault(key: K, defaultValue: V): V =
+    override suspend fun getOrDefault(key: K, defaultValue: V): V =
         getFromCreation(key) ?: getIfAvailableOrDefault(key, defaultValue)
 
     /**
@@ -93,21 +94,21 @@ class InMemoryKache<K : Any, V : Any>(
      *
      * It may even throw exceptions for unhandled exceptions in the currently in-progress creation block.
      */
-    suspend fun get(key: K): V? =
+    override suspend fun get(key: K): V? =
         getFromCreation(key) ?: getIfAvailable(key)
 
     /**
      * Returns the value for [key] if it already exists in the cache or [defaultValue] if it doesn't exist or creation
      * is still in progress.
      */
-    fun getIfAvailableOrDefault(key: K, defaultValue: V): V =
+    override fun getIfAvailableOrDefault(key: K, defaultValue: V): V =
         getIfAvailable(key) ?: defaultValue
 
     /**
      * Returns the value for [key] if it already exists in the cache or `null` if it doesn't exist or creation is still
      * in progress.
      */
-    fun getIfAvailable(key: K): V? =
+    override fun getIfAvailable(key: K): V? =
         map[key]
 
 
@@ -117,7 +118,7 @@ class InMemoryKache<K : Any, V : Any>(
      * value is not cached and cannot be created. You can imply that the creation has failed by returning `null`.
      * Any unhandled exceptions inside [creationFunction] won't be handled.
      */
-    suspend fun getOrPut(key: K, creationFunction: suspend (key: K) -> V?): V? {
+    override suspend fun getOrPut(key: K, creationFunction: suspend (key: K) -> V?): V? {
         get(key)?.let { return it }
 
         creationMutex.withLock {
@@ -136,7 +137,7 @@ class InMemoryKache<K : Any, V : Any>(
      * head of the queue. This returns `null` if the value cannot be created. You can imply that the creation has
      * failed by returning `null`. Any unhandled exceptions inside [creationFunction] won't be handled.
      */
-    suspend fun put(key: K, creationFunction: suspend (key: K) -> V?): V? =
+    override suspend fun put(key: K, creationFunction: suspend (key: K) -> V?): V? =
         getFromCreation(key, putAsync(key, creationFunction))
 
     /**
@@ -144,7 +145,7 @@ class InMemoryKache<K : Any, V : Any>(
      * in-progress creation of [key] would be replaced by the new function. If a value was created, it is moved to the
      * head of the queue. You can imply that the creation has failed by returning `null`.
      */
-    suspend fun putAsync(key: K, creationFunction: suspend (key: K) -> V?): Deferred<V?> =
+    override suspend fun putAsync(key: K, creationFunction: suspend (key: K) -> V?): Deferred<V?> =
         creationMutex.withLock { internalPutAsync(key, creationFunction) }
 
     private suspend fun internalPutAsync(
@@ -189,7 +190,7 @@ class InMemoryKache<K : Any, V : Any>(
      * in-progress creation, it will be removed/cancelled. It returns the previous value if it already exists,
      * or `null`
      */
-    suspend fun put(key: K, value: V): V? {
+    override suspend fun put(key: K, value: V): V? {
         val oldValue = mapMutex.withLock {
             val oldValue = map.put(key, value)
 
@@ -208,7 +209,7 @@ class InMemoryKache<K : Any, V : Any>(
     /**
      * Removes the entry and in-progress creation for [key] if it exists. It returns the previous value for [key].
      */
-    suspend fun remove(key: K): V? {
+    override suspend fun remove(key: K): V? {
         removeCreation(key)
 
         return mapMutex.withLock {
@@ -224,7 +225,7 @@ class InMemoryKache<K : Any, V : Any>(
     /**
      * Clears the cache, calling [onEntryRemoved] on each removed entry.
      */
-    suspend fun clear() {
+    override suspend fun clear() {
         for (key in creationMap.keys) {
             removeCreation(key)
         }
@@ -239,7 +240,7 @@ class InMemoryKache<K : Any, V : Any>(
         }
     }
 
-    suspend fun removeAllUnderCreation() {
+    override suspend fun removeAllUnderCreation() {
         mapMutex.withLock {
             for (key in creationMap.keys) {
                 removeCreation(key)
@@ -251,7 +252,7 @@ class InMemoryKache<K : Any, V : Any>(
      * Sets the max size of the cache to [maxSize]. If the new maxSize is smaller than the previous value, the cache
      * would be trimmed.
      */
-    suspend fun resize(maxSize: Long) {
+    override suspend fun resize(maxSize: Long) {
         require(maxSize > 0) { "maxSize <= 0" }
         this.maxSize = maxSize
         trimToSize(maxSize)
@@ -261,7 +262,7 @@ class InMemoryKache<K : Any, V : Any>(
      * Remove the eldest entries until the total of remaining entries is/at/or below [size]. It won't affect the max
      * size of the cache, allowing it to grow again.
      */
-    suspend fun trimToSize(size: Long) {
+    override suspend fun trimToSize(size: Long) {
         mapMutex.withLock {
             nonLockedTrimToSize(size)
         }
@@ -314,7 +315,6 @@ class InMemoryKache<K : Any, V : Any>(
         )
     }
 
-    data class Keys<K>(val keys: Set<K>, val underCreationKeys: Set<K>)
 }
 
 private const val CODE_CREATION = 1
