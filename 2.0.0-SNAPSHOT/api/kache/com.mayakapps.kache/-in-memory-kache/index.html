@@ -109,6 +109,21 @@
               </div>
             </div>
           </div>
+<a data-name="-279353477%2FFunctions%2F-998611621" anchor-label="evictAll" id="-279353477%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="evict-all.html"><span>evict</span><wbr><span><span>All</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-279353477%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="evict-all.html"><span class="token function">evictAll</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
 <a data-name="-1816662978%2FFunctions%2F-998611621" anchor-label="get" id="-1816662978%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
           <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
             <div class="main-subrow keyValue ">
@@ -240,6 +255,21 @@
               <div>
                 <div class="title">
                   <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="put.html"><span class="token function">put</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">key<span class="token operator">: </span><a href="index.html">K</a><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="index.html">V</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">V</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Caches <a href="put.html">value</a> for <a href="put.html">key</a>. The value is moved to the head of the queue. If there is a previous value or in-progress creation, it will be removed/cancelled. It returns the previous value if it already exists, or <code class="lang-kotlin">null</code></p></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="put.html"><span class="token function">put</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">key<span class="token operator">: </span><a href="index.html">K</a><span class="token punctuation">, </span></span><span class="parameter ">creationFunction<span class="token operator">: </span><span class="token keyword">suspend </span><span class="token punctuation">(</span><span class="token keyword"></span>key<span class="token operator">: </span><a href="index.html">K</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="index.html">V</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">V</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Creates a new entry for <a href="put.html">key</a> using <a href="put.html">creationFunction</a> and returns the new value. Any existing value or in-progress creation of <a href="put.html">key</a> would be replaced by the new function. If a value was created, it is moved to the head of the queue. This returns <code class="lang-kotlin">null</code> if the value cannot be created. You can imply that the creation has failed by returning <code class="lang-kotlin">null</code>. Any unhandled exceptions inside <a href="put.html">creationFunction</a> won't be handled.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-273052757%2FFunctions%2F-998611621" anchor-label="putAll" id="-273052757%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="put-all.html"><span>put</span><wbr><span><span>All</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-273052757%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">suspend override </span><span class="token keyword">fun </span><a href="put-all.html"><span class="token function">putAll</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">from<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a><span class="token operator">&lt;</span><span class="token keyword">out </span><a href="index.html">K</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html">V</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span></div></div></div>
                 </div>
               </div>
             </div>
