@@ -23,7 +23,7 @@ class FileKache private constructor(
     private val creationScope: CoroutineScope,
     private val keyTransformer: KeyTransformer?,
     initialRedundantJournalEntriesCount: Int,
-) {
+) : ContainerKache<String, String> {
     private val underlyingKache = InMemoryKache<String, Path>(
         maxSize = maxSize,
         sizeCalculator = { _, file -> fileSystem.metadata(file).size ?: 0 },
@@ -44,7 +44,7 @@ class FileKache private constructor(
      *
      * It may even throw exceptions for unhandled exceptions in the currently in-progress creation block.
      */
-    suspend fun get(key: String): String? {
+    override suspend fun get(key: String): String? {
         val result = underlyingKache.get(key.transform())?.toString()
         if (result != null) writeRead(key)
         return result
@@ -54,7 +54,7 @@ class FileKache private constructor(
      * Returns the file for [key] if it already exists in the cache or `null` if it doesn't exist or creation is still
      * in progress.
      */
-    suspend fun getIfAvailable(key: String): String? {
+    override suspend fun getIfAvailable(key: String): String? {
         val result = underlyingKache.getIfAvailable(key.transform())?.toString()
         if (result != null) writeRead(key)
         return result
@@ -66,7 +66,7 @@ class FileKache private constructor(
      * file is not cached and cannot be created. You can imply that the creation has failed by returning `false`.
      * Any unhandled exceptions inside [creationFunction] won't be handled.
      */
-    suspend fun getOrPut(key: String, writeFunction: suspend (String) -> Boolean): String? {
+    override suspend fun getOrPut(key: String, writeFunction: suspend (String) -> Boolean): String? {
         var created = false
         val result = underlyingKache.getOrPut(key.transform()) {
             created = true
@@ -83,7 +83,7 @@ class FileKache private constructor(
      * head of the queue. This returns `null` if the file cannot be created. You can imply that the creation has
      * failed by returning `false`. Any unhandled exceptions inside [creationFunction] won't be handled.
      */
-    suspend fun put(key: String, writeFunction: suspend (String) -> Boolean) =
+    override suspend fun put(key: String, writeFunction: suspend (String) -> Boolean) =
         underlyingKache.put(key.transform()) { creationFunction(it, writeFunction) }?.toString()
 
     /**
@@ -91,7 +91,7 @@ class FileKache private constructor(
      * in-progress creation of [key] would be replaced by the new function. If a file is created, it'll be moved to the
      * head of the queue. You can imply that the creation has failed by returning `null`.
      */
-    suspend fun putAsync(key: String, writeFunction: suspend (String) -> Boolean) =
+    override suspend fun putAsync(key: String, writeFunction: suspend (String) -> Boolean) =
         creationScope.async {
             underlyingKache.putAsync(key.transform()) { creationFunction(it, writeFunction) }.await()?.toString()
         }
@@ -99,7 +99,7 @@ class FileKache private constructor(
     /**
      * Removes the entry and in-progress creation for [key] if it exists. It returns the previous value for [key].
      */
-    suspend fun remove(key: String) {
+    override suspend fun remove(key: String) {
         // It's fine to consider the file is dirty now. Even if removal failed it's scheduled for
         val transformedKey = key.transform()
         writeDirty(transformedKey)
@@ -109,7 +109,7 @@ class FileKache private constructor(
     /**
      * Clears the cache, calling [onEntryRemoved] on each removed entry.
      */
-    suspend fun clear() {
+    override suspend fun clear() {
         close()
         if (fileSystem.metadata(directory).isDirectory) fileSystem.deleteRecursively(directory)
         fileSystem.createDirectories(directory)
@@ -118,7 +118,7 @@ class FileKache private constructor(
     /**
      * Closes the journal file and cancels any in-progress creation.
      */
-    suspend fun close() {
+    override suspend fun close() {
         underlyingKache.removeAllUnderCreation()
         journalMutex.withLock { journalWriter.close() }
     }
