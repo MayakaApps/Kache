@@ -35,7 +35,7 @@ internal fun runBasicInMemoryKacheTest(
     maxSize: Long = MAX_SIZE,
     strategy: KacheStrategy = KacheStrategy.LRU,
     sizeCalculator: SizeCalculator<String, Int> = { _, _ -> 1 },
-    testBody: suspend InMemoryKache<String, Int>.() -> Unit,
+    testBody: suspend InMemoryKache<String, Int>.(TestScope) -> Unit,
 ) = runInMemoryKacheTest(maxSize, strategy, sizeCalculator, testBody = testBody)
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -44,12 +44,13 @@ internal inline fun <K : Any, V : Any> runInMemoryKacheTest(
     strategy: KacheStrategy = KacheStrategy.LRU,
     noinline sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
     noinline onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
-    crossinline testBody: suspend InMemoryKache<K, V>.() -> Unit,
+    crossinline testBody: suspend InMemoryKache<K, V>.(TestScope) -> Unit,
 ) = runTestSoftly {
     testBody(
         InMemoryKache(
             maxSize, strategy, creationScope = this, sizeCalculator, onEntryRemoved,
-        )
+        ),
+        this,
     )
 }
 
