@@ -40,17 +40,13 @@ typealias EntryRemovedListener<K, V> = (evicted: Boolean, key: K, oldValue: V, n
  * @param onEntryRemoved listener called when an entry is removed for any reason. See [EntryRemovedListener]
  * @param creationScope The coroutine scope used for executing `creationFunction` of put requests.
  */
-class InMemoryKache<K : Any, V : Any>(
+class InMemoryKache<K : Any, V : Any> private constructor(
     maxSize: Long,
-    strategy: KacheStrategy = KacheStrategy.LRU,
-    private val creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
-    private val sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
-    private val onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
+    strategy: KacheStrategy,
+    private val creationScope: CoroutineScope,
+    private val sizeCalculator: SizeCalculator<K, V>,
+    private val onEntryRemoved: EntryRemovedListener<K, V>,
 ) : ObjectKache<K, V> {
-
-    init {
-        require(maxSize > 0) { "maxSize must be positive value" }
-    }
 
     private val creationMap = ConcurrentMutableMap<K, Deferred<V?>>()
     private val creationMutex = Mutex()
@@ -315,6 +311,31 @@ class InMemoryKache<K : Any, V : Any>(
         )
     }
 
+    data class Configuration<K, V>(
+        var maxSize: Long,
+        var strategy: KacheStrategy = KacheStrategy.LRU,
+        var creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
+        var sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
+        var onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
+    )
+
+    companion object {
+        operator fun <K : Any, V : Any> invoke(
+            maxSize: Long,
+            configuration: Configuration<K, V>.() -> Unit = {}
+        ): InMemoryKache<K, V> {
+            require(maxSize > 0) { "maxSize must be positive value" }
+
+            val config = Configuration<K, V>(maxSize).apply(configuration)
+            return InMemoryKache(
+                config.maxSize,
+                config.strategy,
+                config.creationScope,
+                config.sizeCalculator,
+                config.onEntryRemoved
+            )
+        }
+    }
 }
 
 private const val CODE_CREATION = 1

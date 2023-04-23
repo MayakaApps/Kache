@@ -24,12 +24,12 @@ class FileKache private constructor(
     private val keyTransformer: KeyTransformer?,
     initialRedundantJournalEntriesCount: Int,
 ) : ContainerKache<String, String> {
-    private val underlyingKache = InMemoryKache<String, Path>(
-        maxSize = maxSize,
-        sizeCalculator = { _, file -> fileSystem.metadata(file).size ?: 0 },
-        onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) },
-        creationScope = creationScope,
-    )
+
+    private val underlyingKache = InMemoryKache(maxSize = maxSize) {
+        this.sizeCalculator = { _, file -> fileSystem.metadata(file).size ?: 0 }
+        this.onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) }
+        this.creationScope = this@FileKache.creationScope
+    }
 
     private val journalMutex = Mutex()
     private val journalFile = directory.resolve(JOURNAL_FILE)
