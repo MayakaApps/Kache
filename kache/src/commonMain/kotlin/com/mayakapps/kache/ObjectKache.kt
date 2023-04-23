@@ -80,6 +80,8 @@ interface ObjectKache<K : Any, V : Any> {
      */
     suspend fun put(key: K, value: V): V?
 
+    suspend fun putAll(from: Map<out K, V>)
+
     /**
      * Removes the entry and in-progress creation for [key] if it exists. It returns the previous value for [key].
      */
@@ -89,6 +91,8 @@ interface ObjectKache<K : Any, V : Any> {
      * Clears the cache, calling [onEntryRemoved] on each removed entry.
      */
     suspend fun clear()
+
+    suspend fun evictAll()
 
     suspend fun removeAllUnderCreation()
 
