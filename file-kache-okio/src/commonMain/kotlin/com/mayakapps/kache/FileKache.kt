@@ -24,12 +24,14 @@ class FileKache private constructor(
     private val keyTransformer: KeyTransformer?,
     initialRedundantJournalEntriesCount: Int,
 ) : ContainerKache<String, String> {
-    private val underlyingKache = InMemoryKache<String, Path>(
-        maxSize = maxSize,
-        sizeCalculator = { _, file -> fileSystem.metadata(file).size ?: 0 },
-        onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) },
-        creationScope = creationScope,
-    )
+
+    // Removing the explicit type parameter causes a compilation error in the native target.It seems like a bug in the compiler.
+    @Suppress("RemoveExplicitTypeArguments")
+    private val underlyingKache = InMemoryKache<String, Path>(maxSize = maxSize) {
+        this.sizeCalculator = { _, file -> fileSystem.metadata(file).size ?: 0 }
+        this.onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) }
+        this.creationScope = this@FileKache.creationScope
+    }
 
     private val journalMutex = Mutex()
     private val journalFile = directory.resolve(JOURNAL_FILE)
@@ -200,6 +202,15 @@ class FileKache private constructor(
         }
     }
 
+    data class Configuration(
+        var directory: Path,
+        var maxSize: Long,
+        var fileSystem: FileSystem = getDefaultFileSystem(),
+        var creationScope: CoroutineScope = CoroutineScope(getIODispatcher()),
+        var cacheVersion: Int = 1,
+        var keyTransformer: KeyTransformer? = SHA256KeyHasher,
+    )
+
     companion object {
         /**
          * Opens the persisted Least Recently Used (LRU) cache in the provided directory or creates a new one if it
@@ -211,26 +222,31 @@ class FileKache private constructor(
          * @param creationDispatcher The coroutine dispatcher used for executing `creationFunction` of put requests.
          * @param keyTransformer function used for transforming keys to be safe for filenames. See [KeyTransformer]
          */
-        suspend fun open(
-            directoryPath: String,
+        suspend operator fun invoke(
+            directory: Path,
             maxSize: Long,
-            creationDispatcher: CoroutineDispatcher,
-            cacheVersion: Int = 1,
-            keyTransformer: KeyTransformer? = SHA256KeyHasher,
-        ) = open(
-            fileSystem = getSystemFileSystem(),
-            directory = directoryPath.toPath(),
-            maxSize = maxSize,
-            creationDispatcher = creationDispatcher,
-            cacheVersion = cacheVersion,
-            keyTransformer = keyTransformer,
-        )
+            configuration: Configuration.() -> Unit = {},
+        ) {
+            val config = Configuration(
+                directory = directory,
+                maxSize = maxSize,
+            ).apply(configuration)
+
+            open(
+                fileSystem = config.fileSystem,
+                directory = config.directory,
+                maxSize = config.maxSize,
+                creationScope = config.creationScope,
+                cacheVersion = config.cacheVersion,
+                keyTransformer = config.keyTransformer,
+            )
+        }
 
         internal suspend fun open(
             fileSystem: FileSystem,
             directory: Path,
             maxSize: Long,
-            creationDispatcher: CoroutineDispatcher,
+            creationScope: CoroutineScope,
             cacheVersion: Int = 1,
             keyTransformer: KeyTransformer? = SHA256KeyHasher,
         ): FileKache {
@@ -272,7 +288,7 @@ class FileKache private constructor(
                 fileSystem,
                 directory,
                 maxSize,
-                CoroutineScope(creationDispatcher),
+                creationScope,
                 keyTransformer,
                 redundantJournalEntriesCount,
             )

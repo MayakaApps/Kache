@@ -18,12 +18,14 @@ internal fun runBasicInMemoryKacheRemoveListenerTest(
     testBody: suspend InMemoryKache<String, Int>.(MutableList<RemovedEntry<String, Int>>) -> Unit,
 ) = runTestSoftly {
     val removedEntries = mutableListOf<RemovedEntry<String, Int>>()
-    val cache = InMemoryKache(
-        maxSize, strategy, creationScope = this, sizeCalculator,
-        onEntryRemoved = { evicted, key, oldValue, newValue ->
+    val cache = InMemoryKache<String, Int>(maxSize) {
+        this.strategy = strategy
+        this.creationScope = this@runTestSoftly
+        this.sizeCalculator = sizeCalculator
+        this.onEntryRemoved = { evicted, key, oldValue, newValue ->
             removedEntries += RemovedEntry(evicted, key, oldValue, newValue)
-        },
-    )
+        }
+    }
 
     cache.testBody(removedEntries)
 }
@@ -47,9 +49,12 @@ internal inline fun <K : Any, V : Any> runInMemoryKacheTest(
     crossinline testBody: suspend InMemoryKache<K, V>.(TestScope) -> Unit,
 ) = runTestSoftly {
     testBody(
-        InMemoryKache(
-            maxSize, strategy, creationScope = this, sizeCalculator, onEntryRemoved,
-        ),
+        InMemoryKache(maxSize) {
+            this.strategy = strategy
+            this.creationScope = this@runTestSoftly
+            this.sizeCalculator = sizeCalculator
+            this.onEntryRemoved = onEntryRemoved
+        },
         this,
     )
 }
