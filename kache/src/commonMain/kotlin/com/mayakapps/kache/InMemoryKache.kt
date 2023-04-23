@@ -196,10 +196,31 @@ class InMemoryKache<K : Any, V : Any> private constructor(
             oldValue
         }
 
+        oldValue?.let { onEntryRemoved(false, key, it, value) }
+
         trimToSize(maxSize)
 
-        oldValue?.let { onEntryRemoved(false, key, it, value) }
         return oldValue
+    }
+
+    override suspend fun putAll(from: Map<out K, V>) {
+        val removedEntries = mutableMapOf<K, V>()
+        mapMutex.withLock {
+            for ((key, value) in from) {
+                val oldValue = map.put(key, value)
+
+                size += safeSizeOf(key, value) - (oldValue?.let { safeSizeOf(key, it) } ?: 0)
+                removeCreation(key, CODE_VALUE)
+
+                if (oldValue != null) removedEntries[key] = oldValue
+            }
+        }
+
+        for ((key, oldValue) in removedEntries) {
+            onEntryRemoved(false, key, oldValue, from[key])
+        }
+
+        trimToSize(maxSize)
     }
 
     /**
@@ -231,6 +252,21 @@ class InMemoryKache<K : Any, V : Any> private constructor(
                 forEach { (key, value) ->
                     remove()
                     onEntryRemoved(false, key, value, null)
+                }
+            }
+        }
+    }
+
+    override suspend fun evictAll() {
+        for (key in creationMap.keys) {
+            removeCreation(key)
+        }
+
+        mapMutex.withLock {
+            with(map.iterator()) {
+                forEach { (key, value) ->
+                    remove()
+                    onEntryRemoved(true, key, value, null)
                 }
             }
         }

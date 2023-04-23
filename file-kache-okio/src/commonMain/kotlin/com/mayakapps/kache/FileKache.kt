@@ -294,9 +294,7 @@ class FileKache private constructor(
             )
 
             if (journalData != null) {
-                for (key in journalData.cleanEntriesKeys) {
-                    cache.underlyingKache.put(key, directory.resolve(key))
-                }
+                cache.underlyingKache.putAll(journalData.cleanEntriesKeys.associateWith { directory.resolve(it) })
             }
 
             return cache
