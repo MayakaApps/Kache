@@ -117,10 +117,18 @@ class InMemoryKache<K : Any, V : Any>(
      * value is not cached and cannot be created. You can imply that the creation has failed by returning `null`.
      * Any unhandled exceptions inside [creationFunction] won't be handled.
      */
-    suspend fun getOrPut(key: K, creationFunction: suspend (key: K) -> V?) =
+    suspend fun getOrPut(key: K, creationFunction: suspend (key: K) -> V?): Any? {
+        get(key)?.let { return it }
+
         creationMutex.withLock {
-            get(key) ?: getFromCreation(key, internalPutAsync(key, creationFunction))
+            if (creationMap[key] == null && map[key] == null) {
+                @Suppress("DeferredResultUnused")
+                internalPutAsync(key, creationFunction)
+            }
         }
+
+        return get(key)
+    }
 
     /**
      * Creates a new entry for [key] using [creationFunction] and returns the new value. Any existing value or

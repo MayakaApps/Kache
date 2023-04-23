@@ -6,6 +6,9 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.currentTime
 import kotlin.test.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -51,6 +54,22 @@ class InMemoryKachePutTests {
         getOrPut(KEY_1) { null } shouldBe VAL_1.asPutResult()
         shouldNotThrow<CancellationException> { deferred.await() }
         getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+    }
+
+    // See issue #50 (https://github.com/MayakaApps/Kache/issues/50) for more details
+    @Test
+    fun testGetOrPutSimultaneous() = runBasicInMemoryKacheTest { testScope ->
+        @Suppress("DeferredResultUnused")
+        putAsync(KEY_1) {
+            delay(60_000)
+            VAL_1
+        }
+
+        testScope.launch { getOrPut(KEY_1) { VAL_1 } }
+        delay(1)
+        put(KEY_2) { VAL_2 }
+
+        testScope.currentTime shouldBe 1L
     }
 
     /*
