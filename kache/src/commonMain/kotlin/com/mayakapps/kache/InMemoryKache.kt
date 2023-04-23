@@ -100,15 +100,15 @@ class InMemoryKache<K : Any, V : Any>(
      * Returns the value for [key] if it already exists in the cache or [defaultValue] if it doesn't exist or creation
      * is still in progress.
      */
-    suspend fun getIfAvailableOrDefault(key: K, defaultValue: V): V =
+    fun getIfAvailableOrDefault(key: K, defaultValue: V): V =
         getIfAvailable(key) ?: defaultValue
 
     /**
      * Returns the value for [key] if it already exists in the cache or `null` if it doesn't exist or creation is still
      * in progress.
      */
-    suspend fun getIfAvailable(key: K): V? =
-        mapMutex.withLock { map[key] }
+    fun getIfAvailable(key: K): V? =
+        map[key]
 
 
     /**
