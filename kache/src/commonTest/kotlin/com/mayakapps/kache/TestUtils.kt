@@ -18,7 +18,7 @@ internal fun runBasicInMemoryKacheRemoveListenerTest(
     testBody: suspend InMemoryKache<String, Int>.(MutableList<RemovedEntry<String, Int>>) -> Unit,
 ) = runTestSoftly {
     val removedEntries = mutableListOf<RemovedEntry<String, Int>>()
-    val cache = InMemoryKache(maxSize) {
+    val cache = InMemoryKache<String, Int>(maxSize) {
         this.strategy = strategy
         this.creationScope = this@runTestSoftly
         this.sizeCalculator = sizeCalculator
