@@ -10,27 +10,27 @@ import okio.Path.Companion.toPath
 import okio.buffer
 
 /**
- * A persisted Least Recently Used (LRU) cache. It can be opened/created by [FileKache.open]
+ * A persisted Least Recently Used (LRU) cache. It can be opened/created by [OkioFileKache.open]
  *
  * An LRU cache is a cache that holds strong references to a limited number of values. Each time a value is accessed,
  * it is moved to the head of a queue. When a value is added to a full cache, the value at the end of that queue is
  * evicted and may become eligible for garbage collection.
  */
-class FileKache private constructor(
+class OkioFileKache private constructor(
     private val fileSystem: FileSystem,
     private val directory: Path,
     maxSize: Long,
     private val creationScope: CoroutineScope,
     private val keyTransformer: KeyTransformer?,
     initialRedundantJournalEntriesCount: Int,
-) : ContainerKache<String, String> {
+) : ContainerKache<String, Path> {
 
     // Removing the explicit type parameter causes a compilation error in the native target.It seems like a bug in the compiler.
     @Suppress("RemoveExplicitTypeArguments")
     private val underlyingKache = InMemoryKache<String, Path>(maxSize = maxSize) {
         this.sizeCalculator = { _, file -> fileSystem.metadata(file).size ?: 0 }
         this.onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) }
-        this.creationScope = this@FileKache.creationScope
+        this.creationScope = this@OkioFileKache.creationScope
     }
 
     private val journalMutex = Mutex()
@@ -46,8 +46,8 @@ class FileKache private constructor(
      *
      * It may even throw exceptions for unhandled exceptions in the currently in-progress creation block.
      */
-    override suspend fun get(key: String): String? {
-        val result = underlyingKache.get(key.transform())?.toString()
+    override suspend fun get(key: String): Path? {
+        val result = underlyingKache.get(key.transform())
         if (result != null) writeRead(key)
         return result
     }
@@ -56,47 +56,45 @@ class FileKache private constructor(
      * Returns the file for [key] if it already exists in the cache or `null` if it doesn't exist or creation is still
      * in progress.
      */
-    override suspend fun getIfAvailable(key: String): String? {
-        val result = underlyingKache.getIfAvailable(key.transform())?.toString()
+    override suspend fun getIfAvailable(key: String): Path? {
+        val result = underlyingKache.getIfAvailable(key.transform())
         if (result != null) writeRead(key)
         return result
     }
 
     /**
      * Returns the file for [key] if it exists in the cache, its creation is in progress or can be created by
-     * [creationFunction]. If a file is returned, it'll be moved to the head of the queue. This returns `null` if a
+     * [wrapCreationFunction]. If a file is returned, it'll be moved to the head of the queue. This returns `null` if a
      * file is not cached and cannot be created. You can imply that the creation has failed by returning `false`.
-     * Any unhandled exceptions inside [creationFunction] won't be handled.
+     * Any unhandled exceptions inside [wrapCreationFunction] won't be handled.
      */
-    override suspend fun getOrPut(key: String, writeFunction: suspend (String) -> Boolean): String? {
+    override suspend fun getOrPut(key: String, creationFunction: suspend (Path) -> Boolean): Path? {
         var created = false
         val result = underlyingKache.getOrPut(key.transform()) {
             created = true
-            creationFunction(it, writeFunction)
-        }?.toString()
+            wrapCreationFunction(it, creationFunction)
+        }
 
         if (!created && result != null) writeRead(key)
         return result
     }
 
     /**
-     * Creates a new file for [key] using [creationFunction] and returns the new value. Any existing file or
+     * Creates a new file for [key] using [wrapCreationFunction] and returns the new value. Any existing file or
      * in-progress creation of [key] would be replaced by the new function. If a file is created, it'll be moved to the
      * head of the queue. This returns `null` if the file cannot be created. You can imply that the creation has
-     * failed by returning `false`. Any unhandled exceptions inside [creationFunction] won't be handled.
+     * failed by returning `false`. Any unhandled exceptions inside [wrapCreationFunction] won't be handled.
      */
-    override suspend fun put(key: String, writeFunction: suspend (String) -> Boolean) =
-        underlyingKache.put(key.transform()) { creationFunction(it, writeFunction) }?.toString()
+    override suspend fun put(key: String, creationFunction: suspend (Path) -> Boolean) =
+        underlyingKache.put(key.transform()) { wrapCreationFunction(it, creationFunction) }
 
     /**
-     * Creates a new file for [key] using [creationFunction] and returns a [Deferred]. Any existing file or
+     * Creates a new file for [key] using [wrapCreationFunction] and returns a [Deferred]. Any existing file or
      * in-progress creation of [key] would be replaced by the new function. If a file is created, it'll be moved to the
      * head of the queue. You can imply that the creation has failed by returning `null`.
      */
-    override suspend fun putAsync(key: String, writeFunction: suspend (String) -> Boolean) =
-        creationScope.async {
-            underlyingKache.putAsync(key.transform()) { creationFunction(it, writeFunction) }.await()?.toString()
-        }
+    override suspend fun putAsync(key: String, creationFunction: suspend (Path) -> Boolean) =
+        underlyingKache.putAsync(key.transform()) { wrapCreationFunction(it, creationFunction) }
 
     /**
      * Removes the entry and in-progress creation for [key] if it exists. It returns the previous value for [key].
@@ -128,15 +126,15 @@ class FileKache private constructor(
     private suspend fun String.transform() =
         keyTransformer?.transform(this) ?: this
 
-    private suspend fun creationFunction(
+    private suspend fun wrapCreationFunction(
         key: String,
-        writeFunction: suspend (String) -> Boolean,
+        creationFunction: suspend (Path) -> Boolean,
     ): Path? {
         val tempFile = directory.resolve(key + TEMP_EXT)
         val cleanFile = directory.resolve(key)
 
         writeDirty(key)
-        return if (writeFunction(tempFile.toString()) && fileSystem.exists(tempFile)) {
+        return if (creationFunction(tempFile) && fileSystem.exists(tempFile)) {
             fileSystem.atomicMove(tempFile, cleanFile, deleteTarget = true)
             fileSystem.delete(tempFile)
             writeClean(key)
@@ -249,7 +247,7 @@ class FileKache private constructor(
             creationScope: CoroutineScope,
             cacheVersion: Int = 1,
             keyTransformer: KeyTransformer? = SHA256KeyHasher,
-        ): FileKache {
+        ): OkioFileKache {
             require(maxSize > 0) { "maxSize must be positive value" }
 
             // Make sure that journal directory exists
@@ -284,7 +282,7 @@ class FileKache private constructor(
                 redundantJournalEntriesCount = 0
             }
 
-            val cache = FileKache(
+            val cache = OkioFileKache(
                 fileSystem,
                 directory,
                 maxSize,

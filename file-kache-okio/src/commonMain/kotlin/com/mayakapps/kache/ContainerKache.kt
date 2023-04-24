@@ -23,7 +23,7 @@ interface ContainerKache<K : Any, C : Any> {
      * file is not cached and cannot be created. You can imply that the creation has failed by returning `false`.
      * Any unhandled exceptions inside [creationFunction] won't be handled.
      */
-    suspend fun getOrPut(key: String, writeFunction: suspend (C) -> Boolean): C?
+    suspend fun getOrPut(key: String, creationFunction: suspend (C) -> Boolean): C?
 
     /**
      * Creates a new file for [key] using [creationFunction] and returns the new value. Any existing file or
@@ -31,14 +31,14 @@ interface ContainerKache<K : Any, C : Any> {
      * head of the queue. This returns `null` if the file cannot be created. You can imply that the creation has
      * failed by returning `false`. Any unhandled exceptions inside [creationFunction] won't be handled.
      */
-    suspend fun put(key: String, writeFunction: suspend (C) -> Boolean): C?
+    suspend fun put(key: String, creationFunction: suspend (C) -> Boolean): C?
 
     /**
      * Creates a new file for [key] using [creationFunction] and returns a [Deferred]. Any existing file or
      * in-progress creation of [key] would be replaced by the new function. If a file is created, it'll be moved to the
      * head of the queue. You can imply that the creation has failed by returning `null`.
      */
-    suspend fun putAsync(key: String, writeFunction: suspend (C) -> Boolean): Deferred<C?>
+    suspend fun putAsync(key: String, creationFunction: suspend (C) -> Boolean): Deferred<C?>
 
     /**
      * Removes the entry and in-progress creation for [key] if it exists. It returns the previous value for [key].
