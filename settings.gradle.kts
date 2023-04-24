@@ -7,4 +7,4 @@ pluginManagement {
 rootProject.name = "Kache"
 include("collections")
 include(":kache")
-include(":file-kache-okio")
+include(":file-kache-base")
