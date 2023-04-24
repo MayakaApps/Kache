@@ -224,13 +224,13 @@ class OkioFileKache private constructor(
             directory: Path,
             maxSize: Long,
             configuration: Configuration.() -> Unit = {},
-        ) {
+        ): OkioFileKache {
             val config = Configuration(
                 directory = directory,
                 maxSize = maxSize,
             ).apply(configuration)
 
-            open(
+            return open(
                 fileSystem = config.fileSystem,
                 directory = config.directory,
                 maxSize = config.maxSize,
