@@ -1,7 +1,9 @@
 $dokka.format:html-v1
 $dokka.linkExtension:html
 
-module:file-kache-okio
+module:file-kache
+com.mayakapps.kache
+module:file-kache-base
 com.mayakapps.kache
 module:kache
 com.mayakapps.kache
