@@ -66,6 +66,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(project(":file-kache-base"))
+                api(project(":file-kache-utils"))
 
                 api(libs.okio)
             }

@@ -1,6 +1,8 @@
 package com.mayakapps.kache
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.Matcher
+import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -58,4 +60,14 @@ class SHA256KeyHasherTests {
     }
 
     private fun String.asHash() = named("Hash")
+
+    private fun <T> T.named(name: String) = genericMatcher(name, this)
+
+    private fun <T> genericMatcher(name: String, expected: T) = Matcher<T> { value ->
+        MatcherResult(
+            passed = value == expected,
+            failureMessageFn = { "$name ($value) should be ($expected)" },
+            negatedFailureMessageFn = { "$name ($value) should not be ($expected)" },
+        )
+    }
 }
