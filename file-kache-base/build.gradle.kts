@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
 
     alias(libs.plugins.dokka)
-    alias(libs.plugins.mavenPublish)
 }
 
 kotlin {
@@ -24,7 +23,7 @@ kotlin {
     val appleConfig: KotlinNativeTarget.() -> Unit = {
         binaries {
             framework {
-                baseName = "file-kache-okio"
+                baseName = "file-kache-base"
             }
         }
     }
@@ -65,11 +64,23 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":file-kache-base"))
-                api(project(":file-kache"))
+                implementation(project(":kache"))
                 api(project(":file-kache-utils"))
 
-                api(libs.okio)
+                implementation(libs.kotlinx.coroutines.core)
+
+                implementation(libs.okio)
+            }
+        }
+
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(libs.kotest.assertions)
+
+                implementation(libs.kotlinx.coroutines.test)
+
+                implementation(libs.okio.fakeFilesystem)
             }
         }
 
@@ -83,8 +94,20 @@ kotlin {
             dependsOn(commonMain)
         }
 
+        val nativeTest by creating {
+            dependsOn(commonTest)
+
+            dependsOn(nativeMain)
+        }
+
         val appleMain by creating {
             dependsOn(nativeMain)
+        }
+
+        val appleTest by creating {
+            dependsOn(nativeTest)
+
+            dependsOn(appleMain)
         }
 
         val macosX64Main by getting
@@ -97,12 +120,29 @@ kotlin {
             macosArm64Main.dependsOn(this)
         }
 
+        val macosX64Test by getting
+        val macosArm64Test by getting
+        val macosTest by creating {
+            dependsOn(appleTest)
+
+            dependsOn(macosMain)
+            macosX64Test.dependsOn(this)
+            macosArm64Test.dependsOn(this)
+        }
+
         val iosSimulatorArm64Main by getting
         val iosMain by getting {
             dependsOn(appleMain)
 
             // iOS target shortcut only contains: iosArm64, iosX64
             iosSimulatorArm64Main.dependsOn(this)
+        }
+
+        val iosSimulatorArm64Test by getting
+        val iosTest by getting {
+            dependsOn(appleTest)
+
+            iosSimulatorArm64Test.dependsOn(this)
         }
 
         val watchosSimulatorArm64Main by getting
@@ -113,6 +153,13 @@ kotlin {
             watchosSimulatorArm64Main.dependsOn(this)
         }
 
+        val watchosSimulatorArm64Test by getting
+        val watchosTest by getting {
+            dependsOn(appleTest)
+
+            watchosSimulatorArm64Test.dependsOn(this)
+        }
+
         val tvosSimulatorArm64Main by getting
         val tvosMain by getting {
             dependsOn(appleMain)
@@ -121,25 +168,27 @@ kotlin {
             tvosSimulatorArm64Main.dependsOn(this)
         }
 
+        val tvosSimulatorArm64Test by getting
+        val tvosTest by getting {
+            dependsOn(appleTest)
+
+            tvosSimulatorArm64Test.dependsOn(this)
+        }
+
         val linuxX64Main by getting {
             dependsOn(nativeMain)
+        }
+
+        val linuxX64Test by getting {
+            dependsOn(nativeTest)
         }
 
         val mingwX64Main by getting {
             dependsOn(nativeMain)
         }
-    }
 
-    val publicationsFromMainHost =
-        listOf(jvm(), js(), linuxX64(), mingwX64()).map { it.name } + "kotlinMultiplatform"
-    publishing {
-        publications {
-            matching { it.name in publicationsFromMainHost }.all {
-                val targetPublication = this@all
-                tasks.withType<AbstractPublishToMaven>()
-                    .matching { it.publication == targetPublication }
-                    .configureEach { onlyIf { findProperty("isMainHost") == "true" } }
-            }
+        val mingwX64Test by getting {
+            dependsOn(nativeTest)
         }
     }
 }
