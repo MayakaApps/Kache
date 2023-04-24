@@ -7,4 +7,4 @@ import okio.FileSystem
 
 internal actual fun getDefaultFileSystem(): FileSystem = FileSystem.SYSTEM
 
-internal actual fun getIODispatcher(): CoroutineDispatcher = kotlinx.coroutines.Dispatchers.IO
+actual fun getIODispatcher(): CoroutineDispatcher = kotlinx.coroutines.Dispatchers.IO

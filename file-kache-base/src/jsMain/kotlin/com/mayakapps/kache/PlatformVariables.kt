@@ -7,4 +7,4 @@ import okio.NodeJsFileSystem
 
 internal actual fun getDefaultFileSystem(): FileSystem = NodeJsFileSystem
 
-internal actual fun getIODispatcher(): CoroutineDispatcher = Dispatchers.Default
+actual fun getIODispatcher(): CoroutineDispatcher = Dispatchers.Default

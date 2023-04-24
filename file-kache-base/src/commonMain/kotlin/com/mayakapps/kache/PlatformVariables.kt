@@ -10,4 +10,4 @@ import okio.use
 
 internal expect fun getDefaultFileSystem(): FileSystem
 
-internal expect fun getIODispatcher(): CoroutineDispatcher
+expect fun getIODispatcher(): CoroutineDispatcher
