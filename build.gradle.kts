@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
 
@@ -8,6 +10,30 @@ plugins {
 allprojects {
     repositories {
         mavenCentral()
+    }
+}
+
+subprojects {
+    afterEvaluate {
+        extensions.findByType<PublishingExtension>()?.apply {
+            val publishApple = when (findProperty("publicationType")) {
+                "appleOnly" -> true
+                "nonAppleOnly" -> false
+                else -> return@apply
+            }
+
+            val applePublicationsPrefixes = listOf("macos", "ios", "watchos", "tvos")
+            val applePublications = publications.matching { publication ->
+                applePublicationsPrefixes.any { publication.name.startsWith(it) }
+            }
+
+            tasks.withType<AbstractPublishToMaven>().configureEach {
+                onlyIf {
+                    if (publishApple) applePublications.any { it == publication }
+                    else applePublications.none { it == publication }
+                }
+            }
+        }
     }
 }
 

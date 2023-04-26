@@ -12,7 +12,7 @@ jobs:
   publish:
     strategy:
       matrix:
-        os: [macOS-latest, ubuntu-latest]
+        os: [ macOS-latest, ubuntu-latest ]
 
     runs-on: ${{matrix.os}}
     if: github.repository == 'MayakaApps/Kache'
@@ -44,7 +44,7 @@ jobs:
           path: ~/.konan
           key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
 
-      - name: Upload Linux-specific and common artifacts
+      - name: Upload non-Apple artifacts
         if: matrix.os == 'ubuntu-latest'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
@@ -52,9 +52,9 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_KEY_PASSWORD }}
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PisMainHost=true
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=nonAppleOnly
 
-      - name: Upload macOS-specific artifacts
+      - name: Upload Apple artifacts
         if: matrix.os == 'macOS-latest'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
@@ -62,7 +62,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_KEY_PASSWORD }}
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=appleOnly
 
       - name: Publish release
         if: matrix.os == 'ubuntu-latest'
