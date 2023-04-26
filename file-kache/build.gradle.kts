@@ -29,31 +29,23 @@ kotlin {
         nodejs()
     }
 
-    val appleConfig: KotlinNativeTarget.() -> Unit = {
-        binaries {
-            framework {
-                baseName = "file-kache"
-            }
-        }
-    }
+    macosX64()
+    macosArm64()
 
-    macosX64(appleConfig)
-    macosArm64(appleConfig)
+    iosArm64()
+    iosX64()
+    iosSimulatorArm64()
 
-    iosArm64(appleConfig)
-    iosX64(appleConfig)
-    iosSimulatorArm64(appleConfig)
-
-    watchosArm32(appleConfig)
-    watchosArm64(appleConfig)
-    watchosX64(appleConfig)
-    watchosSimulatorArm64(appleConfig)
+    watchosArm32()
+    watchosArm64()
+    watchosX64()
+    watchosSimulatorArm64()
     // Not supported by dependencies
-    // watchosDeviceArm64(appleConfig)
+    // watchosDeviceArm64()
 
-    tvosArm64(appleConfig)
-    tvosX64(appleConfig)
-    tvosSimulatorArm64(appleConfig)
+    tvosArm64()
+    tvosX64()
+    tvosSimulatorArm64()
 
     linuxX64()
     // Not supported by dependencies

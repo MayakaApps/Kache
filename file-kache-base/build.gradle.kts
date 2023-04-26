@@ -21,28 +21,20 @@ kotlin {
         nodejs()
     }
 
-    val appleConfig: org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.() -> Unit = {
-        binaries {
-            framework {
-                baseName = "file-kache-base"
-            }
-        }
-    }
+    macosX64()
+    macosArm64()
 
-    macosX64(appleConfig)
-    macosArm64(appleConfig)
+    ios()
+    iosSimulatorArm64()
 
-    ios(appleConfig)
-    iosSimulatorArm64(appleConfig)
-
-    watchos(appleConfig)
-    watchosSimulatorArm64(appleConfig)
+    watchos()
+    watchosSimulatorArm64()
     // Not supported by Coroutines
     // Issue: https://github.com/Kotlin/kotlinx.coroutines/issues/3601
-    // watchosDeviceArm64(appleConfig)
+    // watchosDeviceArm64()
 
-    tvos(appleConfig)
-    tvosSimulatorArm64(appleConfig)
+    tvos()
+    tvosSimulatorArm64()
 
     linuxX64()
     // Not supported by Coroutines
