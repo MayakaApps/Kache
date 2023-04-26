@@ -7,8 +7,8 @@ plugins {
     alias(libs.plugins.mavenPublish)
 }
 
-@OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 kotlin {
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
     targetHierarchy.default()
 
     jvm {

@@ -2,8 +2,8 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
 }
 
-@OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 kotlin {
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
     targetHierarchy.default()
 
     jvm {
