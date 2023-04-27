@@ -11,17 +11,18 @@ concurrency:
   group: "docs"
   cancel-in-progress: false
 
+env:
+  GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+
 jobs:
   publish-docs:
     runs-on: ubuntu-latest
+    if: github.repository == 'MayakaApps/Kache'
+
     permissions:
       contents: write
       pages: write
       id-token: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout
@@ -42,7 +43,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11 # See the pinned version in renovate.json too
+          python-version: 3.11.3 # See the pinned version in renovate.json too
 
       - name: Extract Kache version
         run: |
@@ -52,8 +53,6 @@ jobs:
         run: ./gradlew dokkaHtmlMultiModule
 
       - name: Build mkdocs
-        env:
-          SQLDELIGHT_VERSION: ${{ steps.version.outputs.VERSION_NAME }}
         run: |
           pip3 install --no-deps -r .github/workflows/publish-docs-requirements.txt
           mkdocs build
@@ -64,13 +63,10 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git fetch origin gh-pages --depth=1
 
-      - name: Deploy SNAPSHOT Docs with mike 🗿
+      - name: Deploy SNAPSHOT documentation with mike
         if: ${{ success() && endsWith(env.KACHE_VERSION, '-SNAPSHOT') }}
         run: mike deploy -u --push ${{ env.KACHE_VERSION }} snapshot
 
-      - name: Deploy Docs with mike 🚀
+      - name: Deploy documentation with mike
         if: ${{ success() && !endsWith(env.KACHE_VERSION, '-SNAPSHOT') }}
         run: mike deploy -u --push ${{ env.KACHE_VERSION }} latest
-
-env:
-  GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.caching=true

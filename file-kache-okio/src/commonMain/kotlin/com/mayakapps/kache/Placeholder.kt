@@ -1,6 +1,5 @@
 package com.mayakapps.kache
 
-// Workaround for native .klib files not getting generated
-
+// Workaround for https://youtrack.jetbrains.com/issue/KT-58253
 @Suppress("unused")
 private class Placeholder

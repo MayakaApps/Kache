@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
 
@@ -7,8 +5,8 @@ plugins {
     alias(libs.plugins.mavenPublish)
 }
 
-@OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 kotlin {
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
     targetHierarchy.default()
 
     jvm {
@@ -29,46 +27,40 @@ kotlin {
         nodejs()
     }
 
-    val appleConfig: KotlinNativeTarget.() -> Unit = {
-        binaries {
-            framework {
-                baseName = "file-kache"
-            }
-        }
-    }
+    // Still experimental
+    // Blocked by coroutines (issue: https://github.com/Kotlin/kotlinx.coroutines/issues/3713) and
+    // Okio (issue: https://github.com/square/okio/issues/1203)
+    // wasm()
 
-    macosX64(appleConfig)
-    macosArm64(appleConfig)
+    macosX64()
+    macosArm64()
 
-    iosArm64(appleConfig)
-    iosX64(appleConfig)
-    iosSimulatorArm64(appleConfig)
+    iosArm64()
+    iosX64()
+    iosSimulatorArm64()
 
-    watchosArm32(appleConfig)
-    watchosArm64(appleConfig)
-    watchosX64(appleConfig)
-    watchosSimulatorArm64(appleConfig)
-    // Not supported by dependencies
-    // watchosDeviceArm64(appleConfig)
+    watchosArm32()
+    watchosArm64()
+    watchosX64()
+    // Blocked by coroutines (expected in 1.7.0) and Okio (issue: https://github.com/square/okio/issues/1242)
+    // watchosDeviceArm64()
+    watchosSimulatorArm64()
 
-    tvosArm64(appleConfig)
-    tvosX64(appleConfig)
-    tvosSimulatorArm64(appleConfig)
+    tvosArm64()
+    tvosX64()
+    tvosSimulatorArm64()
 
     linuxX64()
-    // Not supported by dependencies
+    // Blocked by coroutines (expected in 1.7.0) and Okio (issue: https://github.com/square/okio/issues/1242)
     // linuxArm64()
 
     mingwX64()
 
-    // Not supported by dependencies
+    // Blocked by coroutines (expected in 1.7.0) and Okio (issue: https://github.com/square/okio/issues/1242)
     // androidNativeArm32()
     // androidNativeArm64()
     // androidNativeX86()
     // androidNativeX64()
-
-    // Still experimental and not supported by dependencies
-    // wasm()
 
     @Suppress("UNUSED_VARIABLE")
     sourceSets {
@@ -80,19 +72,6 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.core)
 
                 implementation(libs.okio)
-            }
-        }
-    }
-
-    val publicationsFromMainHost =
-        listOf(jvm(), js(), linuxX64(), mingwX64()).map { it.name } + "kotlinMultiplatform"
-    publishing {
-        publications {
-            matching { it.name in publicationsFromMainHost }.all {
-                val targetPublication = this@all
-                tasks.withType<AbstractPublishToMaven>()
-                    .matching { it.publication == targetPublication }
-                    .configureEach { onlyIf { findProperty("isMainHost") == "true" } }
             }
         }
     }

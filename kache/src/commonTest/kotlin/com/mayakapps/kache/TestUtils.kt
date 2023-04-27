@@ -18,6 +18,7 @@ internal fun runBasicInMemoryKacheRemoveListenerTest(
     testBody: suspend InMemoryKache<String, Int>.(MutableList<RemovedEntry<String, Int>>) -> Unit,
 ) = runTestSoftly {
     val removedEntries = mutableListOf<RemovedEntry<String, Int>>()
+    // Explicit type parameter is a workaround for https://youtrack.jetbrains.com/issue/KT-53109
     val cache = InMemoryKache<String, Int>(maxSize) {
         this.strategy = strategy
         this.creationScope = this@runTestSoftly

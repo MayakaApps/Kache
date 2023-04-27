@@ -2,11 +2,8 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
 }
 
-@OptIn(
-    org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class,
-    org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class,
-)
 kotlin {
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
     targetHierarchy.default()
 
     jvm {
@@ -18,15 +15,15 @@ kotlin {
     }
 
     js(IR) {
-        browser {
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                }
-            }
-        }
-
+        browser()
         nodejs()
+    }
+
+    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+    wasm {
+        browser()
+        nodejs()
+        d8()
     }
 
     macosX64()
@@ -55,20 +52,6 @@ kotlin {
     androidNativeArm64()
     androidNativeX86()
     androidNativeX64()
-
-    wasm() {
-        browser {
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                }
-            }
-        }
-
-        nodejs()
-
-        d8()
-    }
 
     @Suppress("UNUSED_VARIABLE")
     sourceSets {

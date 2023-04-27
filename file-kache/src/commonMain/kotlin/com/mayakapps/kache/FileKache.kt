@@ -46,7 +46,7 @@ class FileKache private constructor(
     data class Configuration(
         var directoryPath: String,
         var maxSize: Long,
-        var creationScope: CoroutineScope = CoroutineScope(getIODispatcher()),
+        var creationScope: CoroutineScope = CoroutineScope(ioDispatcher),
         var cacheVersion: Int = 1,
         var keyTransformer: KeyTransformer? = SHA256KeyHasher,
     )

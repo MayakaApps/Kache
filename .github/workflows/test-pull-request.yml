@@ -6,6 +6,9 @@ on:
       - 'docs/**'
       - '*.md'
 
+env:
+  GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+
 jobs:
   Test:
     strategy:
@@ -15,6 +18,7 @@ jobs:
 
     runs-on: ${{matrix.os}}
     if: github.repository == 'MayakaApps/Kache'
+
     permissions:
       contents: read
       checks: write
@@ -52,15 +56,15 @@ jobs:
           path: ~/.konan
           key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
 
-      - name: Run Linux-specific and common tests
+      - name: Run JVM, JS, WASM, and linuxX64 tests
         if: matrix.os == 'ubuntu-latest'
         run: ./gradlew jvmTest jsTest linuxX64Test --stacktrace
 
-      - name: Run Windows-specific tests
+      - name: Run mingwX64 tests
         if: matrix.os == 'windows-latest'
         run: ./gradlew mingwX64Test --stacktrace
 
-      - name: Run macOS-specific tests
+      - name: Run macosX64, macosArm64, iosX64, and iosSimulatorArm64 tests
         if: matrix.os == 'macOS-latest'
         run: |
           ./gradlew macosX64Test macosArm64Test iosX64Test iosSimulatorArm64Test --stacktrace
@@ -82,6 +86,3 @@ jobs:
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
           check_name: ${{ runner.os }} Test Report
-
-env:
-  GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
