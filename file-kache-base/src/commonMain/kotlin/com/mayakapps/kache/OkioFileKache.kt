@@ -203,8 +203,8 @@ class OkioFileKache private constructor(
     data class Configuration(
         var directory: Path,
         var maxSize: Long,
-        var fileSystem: FileSystem = getDefaultFileSystem(),
-        var creationScope: CoroutineScope = CoroutineScope(getIODispatcher()),
+        var fileSystem: FileSystem = defaultFileSystem,
+        var creationScope: CoroutineScope = CoroutineScope(ioDispatcher),
         var cacheVersion: Int = 1,
         var keyTransformer: KeyTransformer? = SHA256KeyHasher,
     )

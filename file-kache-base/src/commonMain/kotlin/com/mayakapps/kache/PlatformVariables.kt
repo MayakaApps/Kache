@@ -6,8 +6,6 @@ import okio.FileSystem
 import okio.Path
 import okio.use
 
-// Using variables instead of functions cause error in native compilation. It is a bug in Kotlin/Native.
+internal expect val defaultFileSystem: FileSystem
 
-internal expect fun getDefaultFileSystem(): FileSystem
-
-expect fun getIODispatcher(): CoroutineDispatcher
+expect val ioDispatcher: CoroutineDispatcher

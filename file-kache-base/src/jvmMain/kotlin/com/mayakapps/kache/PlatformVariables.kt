@@ -5,6 +5,6 @@ package com.mayakapps.kache
 import kotlinx.coroutines.CoroutineDispatcher
 import okio.FileSystem
 
-internal actual fun getDefaultFileSystem(): FileSystem = FileSystem.SYSTEM
+internal actual val defaultFileSystem: FileSystem = FileSystem.SYSTEM
 
-actual fun getIODispatcher(): CoroutineDispatcher = kotlinx.coroutines.Dispatchers.IO
+actual val ioDispatcher: CoroutineDispatcher = kotlinx.coroutines.Dispatchers.IO
