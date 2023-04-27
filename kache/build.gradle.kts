@@ -27,37 +27,39 @@ kotlin {
         nodejs()
     }
 
+    // Still experimental
+    // Blocked by coroutines (issue: https://github.com/Kotlin/kotlinx.coroutines/issues/3713), Stately, and Kotest (depends on coroutines)
+    // wasm()
+
     macosX64()
     macosArm64()
 
-    ios()
+    iosArm64()
+    iosX64()
     iosSimulatorArm64()
 
-    watchos()
-    watchosSimulatorArm64()
-    // Not supported by Coroutines
-    // Issue: https://github.com/Kotlin/kotlinx.coroutines/issues/3601
+    watchosArm32()
+    watchosArm64()
+    watchosX64()
+    // Blocked by coroutines (expected in 1.7.0), Stately (expected in 2.0.0), and Kotest (depends on coroutines)
     // watchosDeviceArm64()
+    watchosSimulatorArm64()
 
-    tvos()
+    tvosArm64()
+    tvosX64()
     tvosSimulatorArm64()
 
     linuxX64()
-    // Not supported by Coroutines
-    // Issue: https://github.com/Kotlin/kotlinx.coroutines/issues/855
+    // Blocked by coroutines (expected in 1.7.0), Stately, and Kotest (depends on coroutines)
     // linuxArm64()
 
     mingwX64()
 
-    // Not supported by Coroutines
-    // Issue: https://github.com/Kotlin/kotlinx.coroutines/issues/812
+    // Blocked by coroutines (expected in 1.7.0), and Kotest (depends on coroutines)
     // androidNativeArm32()
     // androidNativeArm64()
     // androidNativeX86()
     // androidNativeX64()
-
-    // Still experimental and not supported by dependencies
-    // wasm()
 
     @Suppress("UNUSED_VARIABLE")
     sourceSets {
@@ -78,7 +80,6 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.test)
             }
         }
-
 
         val nonJvmMain by creating {
             dependsOn(commonMain)

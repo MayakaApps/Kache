@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
 

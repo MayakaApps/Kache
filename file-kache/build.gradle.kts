@@ -27,6 +27,11 @@ kotlin {
         nodejs()
     }
 
+    // Still experimental
+    // Blocked by coroutines (issue: https://github.com/Kotlin/kotlinx.coroutines/issues/3713) and
+    // Okio (issue: https://github.com/square/okio/issues/1203)
+    // wasm()
+
     macosX64()
     macosArm64()
 
@@ -37,28 +42,25 @@ kotlin {
     watchosArm32()
     watchosArm64()
     watchosX64()
-    watchosSimulatorArm64()
-    // Not supported by dependencies
+    // Blocked by coroutines (expected in 1.7.0) and Okio (issue: https://github.com/square/okio/issues/1242)
     // watchosDeviceArm64()
+    watchosSimulatorArm64()
 
     tvosArm64()
     tvosX64()
     tvosSimulatorArm64()
 
     linuxX64()
-    // Not supported by dependencies
+    // Blocked by coroutines (expected in 1.7.0) and Okio (issue: https://github.com/square/okio/issues/1242)
     // linuxArm64()
 
     mingwX64()
 
-    // Not supported by dependencies
+    // Blocked by coroutines (expected in 1.7.0) and Okio (issue: https://github.com/square/okio/issues/1242)
     // androidNativeArm32()
     // androidNativeArm64()
     // androidNativeX86()
     // androidNativeX64()
-
-    // Still experimental and not supported by dependencies
-    // wasm()
 
     @Suppress("UNUSED_VARIABLE")
     sourceSets {

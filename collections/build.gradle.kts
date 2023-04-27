@@ -19,6 +19,13 @@ kotlin {
         nodejs()
     }
 
+    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+    wasm {
+        browser()
+        nodejs()
+        d8()
+    }
+
     macosX64()
     macosArm64()
 
@@ -45,14 +52,6 @@ kotlin {
     androidNativeArm64()
     androidNativeX86()
     androidNativeX64()
-
-
-    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
-    wasm {
-        browser()
-        nodejs()
-        d8()
-    }
 
     @Suppress("UNUSED_VARIABLE")
     sourceSets {
