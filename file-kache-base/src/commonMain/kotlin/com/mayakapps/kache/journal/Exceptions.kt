@@ -6,6 +6,5 @@ internal sealed class JournalException(override val message: String? = null) : I
 
 internal class JournalInvalidHeaderException(override val message: String? = null) : JournalException(message)
 
-// message property is required as a workaround for KT-43490
-// TODO: Remove message property when the issue is fixed, most likely in Kotlin 1.9.0
+// Message property is required as a workaround for https://youtrack.jetbrains.com/issue/KT-43490
 internal class JournalInvalidOpcodeException(override val message: String? = null) : JournalException(message)

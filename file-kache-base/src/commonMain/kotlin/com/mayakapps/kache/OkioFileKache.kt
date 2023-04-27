@@ -25,7 +25,7 @@ class OkioFileKache private constructor(
     initialRedundantJournalEntriesCount: Int,
 ) : ContainerKache<String, Path> {
 
-    // Removing the explicit type parameter causes a compilation error in the native target.It seems like a bug in the compiler.
+    // Explicit type parameter is a workaround for https://youtrack.jetbrains.com/issue/KT-53109
     @Suppress("RemoveExplicitTypeArguments")
     private val underlyingKache = InMemoryKache<String, Path>(maxSize = maxSize) {
         this.sizeCalculator = { _, file -> fileSystem.metadata(file).size ?: 0 }
