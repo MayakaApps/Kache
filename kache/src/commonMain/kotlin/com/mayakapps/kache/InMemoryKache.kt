@@ -1,5 +1,6 @@
 package com.mayakapps.kache
 
+import com.mayakapps.kache.collections.createLinkedHashMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -380,3 +381,9 @@ private const val CODE_VALUE = 2
 private class DeferredReplacedException(val replacedWith: Int) : CancellationException(CANCELLATION_MESSAGE)
 
 private const val CANCELLATION_MESSAGE = "The cached element was removed before creation"
+
+private fun <K : Any, V : Any> KacheStrategy.createMap(): MutableMap<K, V> =
+    createLinkedHashMap(
+        accessOrder = this == KacheStrategy.LRU || this == KacheStrategy.MRU,
+        reverseOrder = this == KacheStrategy.MRU || this == KacheStrategy.FILO,
+    )

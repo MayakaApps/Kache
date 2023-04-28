@@ -20,6 +20,7 @@ class OkioFileKache private constructor(
     private val fileSystem: FileSystem,
     private val directory: Path,
     maxSize: Long,
+    strategy: KacheStrategy,
     private val creationScope: CoroutineScope,
     private val keyTransformer: KeyTransformer?,
     initialRedundantJournalEntriesCount: Int,
@@ -28,6 +29,7 @@ class OkioFileKache private constructor(
     // Explicit type parameter is a workaround for https://youtrack.jetbrains.com/issue/KT-53109
     @Suppress("RemoveExplicitTypeArguments")
     private val underlyingKache = InMemoryKache<String, Path>(maxSize = maxSize) {
+        this.strategy = strategy
         this.sizeCalculator = { _, file -> fileSystem.metadata(file).size ?: 0 }
         this.onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) }
         this.creationScope = this@OkioFileKache.creationScope
@@ -203,6 +205,7 @@ class OkioFileKache private constructor(
     data class Configuration(
         var directory: Path,
         var maxSize: Long,
+        var strategy: KacheStrategy = KacheStrategy.LRU,
         var fileSystem: FileSystem = defaultFileSystem,
         var creationScope: CoroutineScope = CoroutineScope(ioDispatcher),
         var cacheVersion: Int = 1,
@@ -234,6 +237,7 @@ class OkioFileKache private constructor(
                 fileSystem = config.fileSystem,
                 directory = config.directory,
                 maxSize = config.maxSize,
+                strategy = config.strategy,
                 creationScope = config.creationScope,
                 cacheVersion = config.cacheVersion,
                 keyTransformer = config.keyTransformer,
@@ -244,6 +248,7 @@ class OkioFileKache private constructor(
             fileSystem: FileSystem,
             directory: Path,
             maxSize: Long,
+            strategy: KacheStrategy,
             creationScope: CoroutineScope,
             cacheVersion: Int = 1,
             keyTransformer: KeyTransformer? = SHA256KeyHasher,
@@ -286,6 +291,7 @@ class OkioFileKache private constructor(
                 fileSystem,
                 directory,
                 maxSize,
+                strategy,
                 creationScope,
                 keyTransformer,
                 redundantJournalEntriesCount,

@@ -62,7 +62,7 @@ kotlin {
             dependencies {
                 api(project(":file-kache-base"))
                 api(project(":file-kache"))
-                api(project(":file-kache-utils"))
+                api(project(":file-kache-common"))
 
                 api(libs.okio)
             }
