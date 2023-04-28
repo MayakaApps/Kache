@@ -51,12 +51,15 @@ internal fun <T> Array<T>.copyOfUninitializedElements(newSize: Int): Array<T> {
  * either throwing exception or returning some kind of implementation-specific default value.
  */
 @PublishedApi
+// MODIFICATION: added the `@Suppress("NOTHING_TO_INLINE")` annotation
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun <E> arrayOfUninitializedElements(size: Int): Array<E> {
     // TODO: special case for size == 0?
     require(size >= 0) { "capacity must be non-negative." }
-    @Suppress("TYPE_PARAMETER_AS_REIFIED")
     // MODIFICATION: replaced with arrayOfNulls
+//    @Suppress("TYPE_PARAMETER_AS_REIFIED")
 //    return Array<E>(size)
+    @Suppress("TYPE_PARAMETER_AS_REIFIED", "UNCHECKED_CAST")
     return arrayOfNulls<E>(size) as Array<E>
 }
 
