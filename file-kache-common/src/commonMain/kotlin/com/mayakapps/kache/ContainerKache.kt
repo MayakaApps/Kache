@@ -52,7 +52,7 @@ interface ContainerKache<K : Any, C : Any> {
     suspend fun remove(key: String)
 
     /**
-     * Clears the cache, calling [EntryRemovedListener] on each removed entry with `evicted` set to `false`.
+     * Clears the cache.
      */
     suspend fun clear()
 
