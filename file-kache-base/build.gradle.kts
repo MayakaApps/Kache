@@ -61,7 +61,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":kache"))
-                api(project(":file-kache-utils"))
+                api(project(":file-kache-common"))
 
                 implementation(libs.kotlinx.coroutines.core)
 
