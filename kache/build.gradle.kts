@@ -66,6 +66,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":collections"))
+                implementation(project(":kache-common"))
 
                 implementation(libs.kotlinx.coroutines.core)
             }
