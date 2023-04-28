@@ -65,8 +65,9 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                api(project(":kache-common"))
+
                 implementation(project(":collections"))
-                implementation(project(":kache-common"))
 
                 implementation(libs.kotlinx.coroutines.core)
             }
