@@ -52,6 +52,8 @@ class LinkedHashMap<K, V> private constructor(
     }
 
     // This implementation doesn't use a loadFactor, this constructor is used for compatibility with common stdlib
+    // MODIFICATION: added accessOrder and reverseOrder and suppression
+    @Suppress("UNUSED_PARAMETER")
     constructor(initialCapacity: Int, loadFactor: Float, accessOrder: Boolean, reverseOrder: Boolean) : this(
         arrayOfUninitializedElements(initialCapacity),
         null,

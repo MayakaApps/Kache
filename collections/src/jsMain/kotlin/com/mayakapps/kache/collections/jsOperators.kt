@@ -16,11 +16,12 @@ package com.mayakapps.kache.collections
 
 // MODIFICATION: comment out the following line
 //@kotlin.internal.InlineOnly
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun jsDeleteProperty(obj: Any, property: Any) {
     js("delete obj[property]")
 }
 
-// MODIFICATION: comment out the following line
+// MODIFICATION: comment out the following function as it is not used
 //@kotlin.internal.InlineOnly
-internal inline fun jsBitwiseOr(lhs: Any?, rhs: Any?): Int =
-    js("lhs | rhs").unsafeCast<Int>()
+//internal inline fun jsBitwiseOr(lhs: Any?, rhs: Any?): Int =
+//    js("lhs | rhs").unsafeCast<Int>()
