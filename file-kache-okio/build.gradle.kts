@@ -62,7 +62,6 @@ kotlin {
             dependencies {
                 api(project(":file-kache-okio-only"))
                 api(project(":file-kache"))
-                api(project(":file-kache-core"))
 
                 api(libs.okio)
             }
@@ -77,10 +76,7 @@ kotlin {
 }
 
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
-    dokkaSourceSets.configureEach {
-        sourceRoot(file("../kache-core/src/$name"))
-        sourceRoot(file("../file-kache-core/src/$name"))
-        sourceRoot(file("../file-kache-okio-only/src/$name"))
-        sourceRoot(file("../file-kache/src/$name"))
+    dokkaSourceSets.named("commonMain") {
+        skipEmptyPackages.set(false)
     }
 }

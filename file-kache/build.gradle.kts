@@ -76,10 +76,3 @@ kotlin {
         }
     }
 }
-
-tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
-    dokkaSourceSets.configureEach {
-        sourceRoot(file("../kache-core/src/$name"))
-        sourceRoot(file("../file-kache-core/src/$name"))
-    }
-}
