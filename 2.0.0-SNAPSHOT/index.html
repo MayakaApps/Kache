@@ -520,14 +520,18 @@ and their different implementations.</p>
 
 <span class="c1">// ...</span>
 
-<span class="kd">val</span><span class="w"> </span><span class="nv">imageData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cache</span><span class="p">.</span><span class="na">getOrPut</span><span class="p">(</span><span class="n">uniqueKey</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">cacheFilename</span><span class="w"> </span><span class="o">-&gt;</span>
-<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="c1">// downloadFromInternet(imageUrl, cacheFilename)</span>
-<span class="w">        </span><span class="kc">true</span><span class="w"> </span><span class="c1">// returning true means caching has succeeded - The file will be kept</span>
-<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">ex</span><span class="p">:</span><span class="w"> </span><span class="n">IOException</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="c1">// Handle exception</span>
-<span class="w">        </span><span class="kc">false</span><span class="w"> </span><span class="c1">// returning false means caching has failed - The file will be deleted</span>
+<span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">imageData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cache</span><span class="p">.</span><span class="na">getOrPut</span><span class="p">(</span><span class="n">uniqueKey</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">cacheFilename</span><span class="w"> </span><span class="o">-&gt;</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// downloadFromInternet(imageUrl, cacheFilename)</span>
+<span class="w">            </span><span class="kc">true</span><span class="w"> </span><span class="c1">// returning true means caching has succeeded - The file will be kept</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">ex</span><span class="p">:</span><span class="w"> </span><span class="n">IOException</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// Handle exception</span>
+<span class="w">            </span><span class="kc">false</span><span class="w"> </span><span class="c1">// returning false means caching has failed - The file will be deleted</span>
+<span class="w">        </span><span class="p">}</span>
 <span class="w">    </span><span class="p">}</span>
+<span class="p">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">cache</span><span class="p">.</span><span class="na">close</span><span class="p">()</span>
 <span class="p">}</span>
 </code></pre></div>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
