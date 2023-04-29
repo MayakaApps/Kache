@@ -47,6 +47,9 @@ internal class JournalWriter(
     }
 
     override fun close() {
+        // Write end of journal marker.
+        sink.writeByte(JournalEntry.EOJ.toInt())
+
         sink.close()
     }
 }
