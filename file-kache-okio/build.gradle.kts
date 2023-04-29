@@ -62,7 +62,7 @@ kotlin {
             dependencies {
                 api(project(":file-kache-base"))
                 api(project(":file-kache"))
-                api(project(":file-kache-common"))
+                api(project(":file-kache-core"))
 
                 api(libs.okio)
             }
@@ -79,7 +79,7 @@ kotlin {
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
     dokkaSourceSets.configureEach {
         sourceRoot(file("../kache-core/src/$name"))
-        sourceRoot(file("../file-kache-common/src/$name"))
+        sourceRoot(file("../file-kache-core/src/$name"))
         sourceRoot(file("../file-kache-base/src/$name"))
         sourceRoot(file("../file-kache/src/$name"))
     }

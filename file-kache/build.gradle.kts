@@ -67,7 +67,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":file-kache-base"))
-                api(project(":file-kache-common"))
+                api(project(":file-kache-core"))
 
                 implementation(libs.kotlinx.coroutines.core)
 
@@ -80,6 +80,6 @@ kotlin {
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
     dokkaSourceSets.configureEach {
         sourceRoot(file("../kache-core/src/$name"))
-        sourceRoot(file("../file-kache-common/src/$name"))
+        sourceRoot(file("../file-kache-core/src/$name"))
     }
 }
