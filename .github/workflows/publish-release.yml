@@ -53,47 +53,16 @@ jobs:
           path: ~/.konan
           key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
 
-      - name: Assemble in parallel
-        run: ./gradlew assemble dokkaHtml
-
       - name: Upload non-Apple artifacts
         if: matrix.os == 'ubuntu-latest'
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=nonAppleOnly --no-parallel
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=nonAppleOnly
 
-      # Publish artifacts by name to avoid creating a new staging repository
       - name: Upload Apple artifacts
         if: matrix.os == 'macOS-latest'
-        run: ./gradlew publishMacosX64PublicationToMavenCentralRepository publishMacosArm64PublicationToMavenCentralRepository publishIosArm64PublicationToMavenCentralRepository publishIosX64PublicationToMavenCentralRepository publishIosSimulatorArm64PublicationToMavenCentralRepository publishWatchosArm32PublicationToMavenCentralRepository publishWatchosArm64PublicationToMavenCentralRepository publishWatchosX64PublicationToMavenCentralRepository publishWatchosDeviceArm64PublicationToMavenCentralRepository publishWatchosSimulatorArm64PublicationToMavenCentralRepository publishTvosArm64PublicationToMavenCentralRepository publishTvosX64PublicationToMavenCentralRepository publishTvosSimulatorArm64PublicationToMavenCentralRepository --no-parallel
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=appleOnly
 
       - name: Save Konan cache
         uses: actions/cache/save@v3
         with:
           path: ~/.konan
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
-
-  publish:
-    name: Publish artifacts from Linux
-
-    needs: upload
-
-    runs-on: ubuntu-latest
-    if: github.repository == 'MayakaApps/Kache'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
-
-      - name: Setup JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: 17
-
-      - name: Setup gradle
-        uses: gradle/gradle-build-action@v2
-
-      - name: Publish release
-        run: ./gradlew closeAndReleaseRepository
