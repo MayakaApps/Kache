@@ -70,9 +70,7 @@ class JournalReadTests {
 
     @Test
     fun testReadEntryEmptyJournal() {
-        val bytes = byteArrayOf(*journalHeader, JournalEntry.EOJ)
-
-        JournalReader(Buffer().apply { write(bytes) }).nullableUse {
+        JournalReader(Buffer().apply { write(journalHeader) }).nullableUse {
             it.validateHeader()
             it.readEntry()
         } shouldBe null
@@ -111,7 +109,7 @@ class JournalReadTests {
     @Test
     fun testReadInvalidOperation() {
         val bytes = byteArrayOf(
-            (JournalEntry.EOJ - 1).toByte(), 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
+            (0xFE).toByte(), 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
         shouldThrow<JournalInvalidOpcodeException> {
@@ -302,22 +300,18 @@ class JournalReadTests {
             byteArrayOf(0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, JOURNAL_VERSION, 0x00, 0x00, 0x00, 0x01)
         private val emptyJournal = journalHeader
 
-        private val journalStartWithDirty =
+        private val journalWithDirty =
             byteArrayOf(*journalHeader, JournalEntry.DIRTY, *keyBytes, JournalEntry.DIRTY, *altKeyBytes)
 
-        private val journalWithDirty =
-            byteArrayOf(*journalStartWithDirty, JournalEntry.EOJ)
         private val journalWithDirtyData = JournalData(
             cleanEntriesKeys = emptyList(),
             dirtyEntriesKeys = listOf(KEY, ALT_KEY),
             redundantEntriesCount = 2,
         )
 
-        private val journalStartWithAdd =
+        private val journalWithAdd =
             byteArrayOf(*journalHeader, JournalEntry.DIRTY, *keyBytes, JournalEntry.CLEAN, *keyBytes)
 
-        private val journalWithAdd =
-            byteArrayOf(*journalStartWithAdd, JournalEntry.EOJ)
         private val journalWithAddData = JournalData(
             cleanEntriesKeys = listOf(KEY),
             dirtyEntriesKeys = emptyList(),
@@ -326,10 +320,9 @@ class JournalReadTests {
 
         private val journalWithMixedAdd =
             byteArrayOf(
-                *journalStartWithDirty,
+                *journalWithDirty,
                 JournalEntry.CLEAN, *keyBytes,
                 JournalEntry.CLEAN, *altKeyBytes,
-                JournalEntry.EOJ,
             )
         private val journalWithMixedAddData = JournalData(
             cleanEntriesKeys = listOf(KEY, ALT_KEY),
@@ -339,10 +332,9 @@ class JournalReadTests {
 
         private val journalWithAddAndRemove =
             byteArrayOf(
-                *journalStartWithAdd,
+                *journalWithAdd,
                 JournalEntry.DIRTY, *keyBytes,
                 JournalEntry.REMOVE, *keyBytes,
-                JournalEntry.EOJ,
             )
         private val journalWithAddAndRemoveData = JournalData(
             cleanEntriesKeys = emptyList(),
@@ -352,10 +344,9 @@ class JournalReadTests {
 
         private val journalWithAddAndReAdd =
             byteArrayOf(
-                *journalStartWithAdd,
+                *journalWithAdd,
                 JournalEntry.DIRTY, *keyBytes,
                 JournalEntry.CLEAN, *keyBytes,
-                JournalEntry.EOJ,
             )
         private val journalWithAddAndReAddData = JournalData(
             cleanEntriesKeys = listOf(KEY),
@@ -365,9 +356,8 @@ class JournalReadTests {
 
         private val journalWithAddAndDirtyAdd =
             byteArrayOf(
-                *journalStartWithAdd,
+                *journalWithAdd,
                 JournalEntry.DIRTY, *keyBytes,
-                JournalEntry.EOJ,
             )
         private val journalWithAddAndDirtyAddData = JournalData(
             cleanEntriesKeys = listOf(KEY),
@@ -377,10 +367,9 @@ class JournalReadTests {
 
         private val journalWithAddAndCancelledAdd =
             byteArrayOf(
-                *journalStartWithAdd,
+                *journalWithAdd,
                 JournalEntry.DIRTY, *keyBytes,
                 JournalEntry.CANCEL, *keyBytes,
-                JournalEntry.EOJ,
             )
 
         private val journalWithAddAndCancelledAddData = JournalData(

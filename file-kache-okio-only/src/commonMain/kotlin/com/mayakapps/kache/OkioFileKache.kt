@@ -4,6 +4,7 @@ import com.mayakapps.kache.journal.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okio.EOFException
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -53,25 +54,28 @@ class OkioFileKache private constructor(
     private var redundantJournalEntriesCount = initialRedundantJournalEntriesCount
 
     override suspend fun get(key: String): Path? {
-        val result = underlyingKache.get(key.transform())
-        if (result != null) writeRead(key)
+        val transformedKey = key.transform()
+        val result = underlyingKache.get(transformedKey)
+        if (result != null) writeRead(transformedKey)
         return result
     }
 
     override suspend fun getIfAvailable(key: String): Path? {
-        val result = underlyingKache.getIfAvailable(key.transform())
-        if (result != null) writeRead(key)
+        val transformedKey = key.transform()
+        val result = underlyingKache.getIfAvailable(transformedKey)
+        if (result != null) writeRead(transformedKey)
         return result
     }
 
     override suspend fun getOrPut(key: String, creationFunction: suspend (Path) -> Boolean): Path? {
         var created = false
-        val result = underlyingKache.getOrPut(key.transform()) {
+        val transformedKey = key.transform()
+        val result = underlyingKache.getOrPut(transformedKey) {
             created = true
             wrapCreationFunction(it, creationFunction)
         }
 
-        if (!created && result != null) writeRead(key)
+        if (!created && result != null) writeRead(transformedKey)
         return result
     }
 
@@ -263,6 +267,10 @@ class OkioFileKache private constructor(
             val journalData = try {
                 fileSystem.readJournalIfExists(directory, cacheVersion)
             } catch (ex: JournalException) {
+                // Journal is corrupted - Clear cache
+                fileSystem.deleteContents(directory)
+                null
+            } catch (ex: EOFException) {
                 // Journal is corrupted - Clear cache
                 fileSystem.deleteContents(directory)
                 null

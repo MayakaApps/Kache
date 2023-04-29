@@ -131,14 +131,18 @@ val cache = FileKache(directoryPath = "cache", maxSize = 10 * 1024 * 1024) {
 
 // ...
 
-val imageData = cache.getOrPut(uniqueKey) { cacheFilename ->
-    try {
-        // downloadFromInternet(imageUrl, cacheFilename)
-        true // returning true means caching has succeeded - The file will be kept
-    } catch (ex: IOException) {
-        // Handle exception
-        false // returning false means caching has failed - The file will be deleted
+try {
+    val imageData = cache.getOrPut(uniqueKey) { cacheFilename ->
+        try {
+            // downloadFromInternet(imageUrl, cacheFilename)
+            true // returning true means caching has succeeded - The file will be kept
+        } catch (ex: IOException) {
+            // Handle exception
+            false // returning false means caching has failed - The file will be deleted
+        }
     }
+} finally {
+    cache.close()
 }
 ```
 
