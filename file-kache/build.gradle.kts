@@ -66,7 +66,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":file-kache-base"))
+                implementation(project(":file-kache-okio-only"))
                 api(project(":file-kache-core"))
 
                 implementation(libs.kotlinx.coroutines.core)
