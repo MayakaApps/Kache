@@ -6,9 +6,6 @@ import kotlinx.coroutines.Deferred
  * An interface for a container cache. A container cache is a cache that stores a value for each key in a container i.e.
  * a file. It is used to cache files that are too large to be stored in memory. Storing an object in a container cache
  * requires serialization and deserialization logic that is handled by the user.
- *
- * @param K the type of keys in the cache.
- * @param C the type of containers in the cache.
  */
 interface ContainerKache<K : Any, C : Any> {
     /**

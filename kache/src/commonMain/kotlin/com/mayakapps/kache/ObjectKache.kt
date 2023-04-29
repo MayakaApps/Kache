@@ -4,9 +4,6 @@ import kotlinx.coroutines.Deferred
 
 /**
  * An interface that represents a cache that stores objects by keys. It is the parent interface for [InMemoryKache].
- *
- * @param K the type of keys.
- * @param V the type of values.
  */
 interface ObjectKache<K : Any, V : Any> {
 
