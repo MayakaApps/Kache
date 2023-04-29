@@ -144,7 +144,7 @@ val imageData = cache.getOrPut(uniqueKey) { cacheFilename ->
 
 ## Documentation
 
-See documentation [here](https://mayakaapps.github.io/Kache/)
+See documentation [here](https://mayakaapps.github.io/Kache/latest/)
 
 ## License
 
