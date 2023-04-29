@@ -1,0 +1,28 @@
+:root {
+    --color-dark: #7e56c2;
+}
+
+.library-name a {
+    position: relative;
+    margin-left: 75px;
+}
+
+.library-name a::before {
+    background: url("../images/kache-logo.png") center no-repeat;
+    background-size: contain;
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    top: -18px;
+    left: -60px;
+}
+
+:root {
+    --color-dark: #4051b5;
+    --background-color: #ffffff;
+}
+
+:root.theme-dark {
+    --color-dark: #4051b5;
+    --background-color: #2e303e;
+}
