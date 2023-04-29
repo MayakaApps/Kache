@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>com.mayakapps.kache</title>
+<link href="../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../scripts/symbol-parameters-wrapper_deferred.js" defer></script>
+<link href="../../images/kache-logo.png">
+<link href="../../styles/kache-dokka.css" rel="Stylesheet"></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../index.html">
+<span>Kache</span>            </a>    </div>
+    <div>
+    </div>
+    <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector common-like" data-active="" data-filter=":kache:dokkaHtmlPartial/commonMain">common</button>
+        </div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" data-page-type="package" id="content" pageids="kache::com.mayakapps.kache////PointingToDeclaration//-998611621">
+  <div class="breadcrumbs"><a href="../index.html">kache</a><span class="delimiter">/</span><span class="current">com.mayakapps.kache</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Package-level</span></span> <span><span>declarations</span></span></h1>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="TYPE">Types</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="-1636385200%2FClasslikes%2F-998611621" anchor-label="EntryRemovedListener" id="-1636385200%2FClasslikes%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-1636385200%2FClasslikes%2F-998611621"><span>Entry</span><wbr><span>Removed</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1636385200%2FClasslikes%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">typealias </span><a href="index.html#-1636385200%2FClasslikes%2F-998611621">EntryRemovedListener</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html#-1636385200%2FClasslikes%2F-998611621">K</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html#-1636385200%2FClasslikes%2F-998611621">V</a><span class="token operator">&gt;</span><span class="token operator"> = </span><span class="token punctuation">(</span><span class="token keyword"></span>evicted<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token punctuation">, </span><span class="token keyword"></span>key<span class="token operator">: </span><a href="index.html#-1636385200%2FClasslikes%2F-998611621">K</a><span class="token punctuation">, </span><span class="token keyword"></span>oldValue<span class="token operator">: </span><a href="index.html#-1636385200%2FClasslikes%2F-998611621">V</a><span class="token punctuation">, </span><span class="token keyword"></span>newValue<span class="token operator">: </span><a href="index.html#-1636385200%2FClasslikes%2F-998611621">V</a><span class="token operator">?</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a></div><div class="brief "><p class="paragraph">A typealias that represents a listener that is triggered when a cache entry is removed.</p><p class="paragraph">This is triggered when the entry represented by the <code class="lang-kotlin">key</code> and <code class="lang-kotlin">oldValue</code> is removed for any reason. If the removal was a result of reaching the max size of the cache, <code class="lang-kotlin">evicted</code> is true, otherwise its value is false. If the entry was removed as a result of replacing it by one of the put operations, the new value is passed as <code class="lang-kotlin">newValue</code>, otherwise, <code class="lang-kotlin">newValue</code> is null.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-490069780%2FClasslikes%2F-998611621" anchor-label="InMemoryKache" id="-490069780%2FClasslikes%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-in-memory-kache/index.html"><span>In</span><wbr><span>Memory</span><wbr><span><span>Kache</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-490069780%2FClasslikes%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-in-memory-kache/index.html">InMemoryKache</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-in-memory-kache/index.html">K</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="-in-memory-kache/index.html">V</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt;</span> : <a href="-object-kache/index.html">ObjectKache</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-in-memory-kache/index.html">K</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="-in-memory-kache/index.html">V</a><span class="token operator">&gt; </span></div><div class="brief "><p class="paragraph">An in-memory coroutine-safe versatile cache that stores objects by keys.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="13325746%2FClasslikes%2F-998611621" anchor-label="KacheKeys" id="13325746%2FClasslikes%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-kache-keys/index.html"><span>Kache</span><wbr><span><span>Keys</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="13325746%2FClasslikes%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="-kache-keys/index.html">KacheKeys</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-kache-keys/index.html">K</a><span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>keys<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-kache-keys/index.html">K</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>underCreationKeys<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-kache-keys/index.html">K</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">A snapshot of the keys in the cache.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2060247131%2FClasslikes%2F-998611621" anchor-label="ObjectKache" id="-2060247131%2FClasslikes%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-object-kache/index.html"><span>Object</span><wbr><span><span>Kache</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2060247131%2FClasslikes%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="-object-kache/index.html">ObjectKache</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-object-kache/index.html">K</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="-object-kache/index.html">V</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">An interface that represents a cache that stores objects by keys. It is the parent interface for <a href="-in-memory-kache/index.html">InMemoryKache</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1557460305%2FClasslikes%2F-998611621" anchor-label="SizeCalculator" id="-1557460305%2FClasslikes%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-1557460305%2FClasslikes%2F-998611621"><span>Size</span><wbr><span><span>Calculator</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1557460305%2FClasslikes%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">typealias </span><a href="index.html#-1557460305%2FClasslikes%2F-998611621">SizeCalculator</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html#-1557460305%2FClasslikes%2F-998611621">K</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html#-1557460305%2FClasslikes%2F-998611621">V</a><span class="token operator">&gt;</span><span class="token operator"> = </span><span class="token punctuation">(</span><span class="token keyword"></span>key<span class="token operator">: </span><a href="index.html#-1557460305%2FClasslikes%2F-998611621">K</a><span class="token punctuation">, </span><span class="token keyword"></span>value<span class="token operator">: </span><a href="index.html#-1557460305%2FClasslikes%2F-998611621">V</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></div><div class="brief "><p class="paragraph">A typealias that represents a function for calculating the size of a cache entry represented by the provided <code class="lang-kotlin">key</code> and <code class="lang-kotlin">value</code>.</p><p class="paragraph">For example, for <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, you can use:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">{ _, text -&gt; text.length }</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">If the entries have the same size or their size can't be determined, you can just return 1.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>Copyright © 2023 MayakaApps.</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+</body>
+</html>
+
