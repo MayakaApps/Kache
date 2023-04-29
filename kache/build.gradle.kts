@@ -65,7 +65,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":kache-common"))
+                api(project(":kache-core"))
 
                 implementation(project(":internal-collections"))
 
@@ -103,6 +103,6 @@ kotlin {
 
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
     dokkaSourceSets.configureEach {
-        sourceRoot(file("../kache-common/src/$name"))
+        sourceRoot(file("../kache-core/src/$name"))
     }
 }

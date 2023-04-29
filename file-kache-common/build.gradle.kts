@@ -63,7 +63,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":kache-common"))
+                api(project(":kache-core"))
 
                 implementation(project(":kache"))
                 implementation(libs.okio)
