@@ -10,6 +10,3 @@ set -ex
 
 # Generate the API docs
 ./gradlew dokkaHtmlMultiModule
-
-# Copy in special files that GitHub wants in the project root.
-cp README.md docs/index.md
