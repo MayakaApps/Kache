@@ -58,11 +58,11 @@ allprojects {
 
     // Workaround for yarn concurrency (issue: https://youtrack.jetbrains.com/issue/KT-43320)
     tasks.withType<org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask>().configureEach {
-        args.addAll(listOf("--mutex", "file:${file("build/.yarn-mutex")}".toString()))
+        args.addAll(listOf("--mutex", "file:${file("build/.yarn-mutex")}"))
     }
 
     // Workaround for Gradle implicit dependency error on publishing (issue: https://youtrack.jetbrains.com/issue/KT-46466)
-    tasks.withType<org.gradle.api.publish.maven.tasks.AbstractPublishToMaven>().configureEach {
+    tasks.withType<AbstractPublishToMaven>().configureEach {
         dependsOn(tasks.withType<Sign>())
     }
 }
