@@ -27,9 +27,12 @@ internal class JournalReader(
     }
 
     internal fun readEntry(): JournalEntry? {
-        val opcodeId = source.readByte()
-
-        if (opcodeId == JournalEntry.EOJ) return null
+        val opcodeId = try {
+            source.readByte()
+        } catch (ex: EOFException) {
+            // Fine, we've reached the end of the file
+            return null
+        }
 
         val key = source.readByteLengthUtf8()
 

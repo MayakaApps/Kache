@@ -10,13 +10,13 @@ class JournalWriteTests {
     fun testWriteHeader() {
         val buffer = Buffer()
         JournalWriter(buffer).use { it.writeHeader() }
-        buffer.readByteArray() shouldBe headerBytes + JournalEntry.EOJ
+        buffer.readByteArray() shouldBe headerBytes
     }
 
     @Test
     fun testWriteDirty() {
         val bytes = byteArrayOf(
-            JournalEntry.DIRTY, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79, JournalEntry.EOJ,
+            JournalEntry.DIRTY, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
         val buffer = Buffer()
@@ -27,7 +27,7 @@ class JournalWriteTests {
     @Test
     fun testWriteClean() {
         val bytes = byteArrayOf(
-            JournalEntry.CLEAN, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79, JournalEntry.EOJ,
+            JournalEntry.CLEAN, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
         val buffer = Buffer()
@@ -38,7 +38,7 @@ class JournalWriteTests {
     @Test
     fun testWriteRemove() {
         val bytes = byteArrayOf(
-            JournalEntry.REMOVE, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79, JournalEntry.EOJ,
+            JournalEntry.REMOVE, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
         val buffer = Buffer()
@@ -51,7 +51,6 @@ class JournalWriteTests {
         val bytes = byteArrayOf(
             JournalEntry.CLEAN, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
             JournalEntry.DIRTY, 0x0A, 0x41, 0x6C, 0x74, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
-            JournalEntry.EOJ,
         )
 
         val buffer = Buffer()

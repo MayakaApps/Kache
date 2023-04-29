@@ -37,6 +37,5 @@ internal sealed interface JournalEntry {
         const val CANCEL: Byte = 3
         const val REMOVE: Byte = 4
         const val READ: Byte = 5
-        const val EOJ: Byte = -1
     }
 }
