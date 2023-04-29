@@ -67,7 +67,7 @@ kotlin {
             dependencies {
                 api(project(":kache-common"))
 
-                implementation(project(":collections"))
+                implementation(project(":internal-collections"))
 
                 implementation(libs.kotlinx.coroutines.core)
             }

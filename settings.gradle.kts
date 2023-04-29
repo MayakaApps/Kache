@@ -5,7 +5,7 @@ pluginManagement {
 }
 
 rootProject.name = "Kache"
-include("collections")
+include("internal-collections")
 include("kache-common")
 include(":kache")
 include(":file-kache-common")
