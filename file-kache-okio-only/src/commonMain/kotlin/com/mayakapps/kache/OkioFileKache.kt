@@ -4,6 +4,7 @@ import com.mayakapps.kache.journal.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okio.EOFException
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -266,6 +267,10 @@ class OkioFileKache private constructor(
             val journalData = try {
                 fileSystem.readJournalIfExists(directory, cacheVersion)
             } catch (ex: JournalException) {
+                // Journal is corrupted - Clear cache
+                fileSystem.deleteContents(directory)
+                null
+            } catch (ex: EOFException) {
                 // Journal is corrupted - Clear cache
                 fileSystem.deleteContents(directory)
                 null
