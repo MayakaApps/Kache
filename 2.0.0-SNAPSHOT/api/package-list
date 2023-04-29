@@ -3,7 +3,7 @@ $dokka.linkExtension:html
 
 module:file-kache
 com.mayakapps.kache
-module:file-kache-base
+module:file-kache-okio
 com.mayakapps.kache
 module:kache
 com.mayakapps.kache
