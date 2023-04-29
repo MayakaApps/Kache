@@ -65,9 +65,9 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":kache-common"))
+                api(project(":kache-core"))
 
-                implementation(project(":collections"))
+                implementation(project(":internal-collections"))
 
                 implementation(libs.kotlinx.coroutines.core)
             }
@@ -98,11 +98,5 @@ kotlin {
         val jsMain by getting {
             dependsOn(nonJvmMain)
         }
-    }
-}
-
-tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
-    dokkaSourceSets.configureEach {
-        sourceRoot(file("../kache-common/src/$name"))
     }
 }

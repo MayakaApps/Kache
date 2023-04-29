@@ -60,9 +60,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":file-kache-base"))
+                api(project(":file-kache-okio-only"))
                 api(project(":file-kache"))
-                api(project(":file-kache-common"))
 
                 api(libs.okio)
             }
@@ -77,10 +76,7 @@ kotlin {
 }
 
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
-    dokkaSourceSets.configureEach {
-        sourceRoot(file("../kache-common/src/$name"))
-        sourceRoot(file("../file-kache-common/src/$name"))
-        sourceRoot(file("../file-kache-base/src/$name"))
-        sourceRoot(file("../file-kache/src/$name"))
+    dokkaSourceSets.named("commonMain") {
+        skipEmptyPackages.set(false)
     }
 }

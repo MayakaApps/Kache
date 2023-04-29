@@ -1,5 +1,8 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.mavenPublish)
 }
 
 kotlin {
@@ -13,13 +16,8 @@ kotlin {
     }
 
     js(IR) {
-        browser {
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                }
-            }
-        }
+        // Has no FileSystem implementation in Okio
+        // browser()
 
         nodejs()
     }
@@ -63,21 +61,30 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":kache-common"))
-
                 implementation(project(":kache"))
-                implementation(libs.okio)
+                api(project(":file-kache-core"))
 
                 implementation(libs.kotlinx.coroutines.core)
+
+                implementation(libs.okio)
             }
         }
 
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+
                 implementation(libs.kotest.assertions)
 
                 implementation(libs.kotlinx.coroutines.test)
+
+                implementation(libs.okio.fakeFilesystem)
+            }
+        }
+
+        val jsMain by getting {
+            dependencies {
+                implementation(libs.okio.nodeFilesystem)
             }
         }
     }

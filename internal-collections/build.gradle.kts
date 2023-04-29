@@ -1,5 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+
+    alias(libs.plugins.mavenPublish)
 }
 
 kotlin {
@@ -10,6 +12,8 @@ kotlin {
         compilations.configureEach {
             kotlinOptions.jvmTarget = "1.8"
         }
+
+        withJava()
     }
 
     js(IR) {
@@ -50,4 +54,26 @@ kotlin {
     androidNativeArm64()
     androidNativeX86()
     androidNativeX64()
+
+    @Suppress("UNUSED_VARIABLE")
+    sourceSets {
+        val commonMain by getting
+
+        val nativeAndWasmMain by creating {
+            dependsOn(commonMain)
+        }
+
+        val nativeMain by getting {
+            dependsOn(nativeAndWasmMain)
+        }
+
+        val wasmMain by getting {
+            dependsOn(nativeAndWasmMain)
+        }
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }

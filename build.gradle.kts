@@ -11,6 +11,30 @@ allprojects {
     }
 
     afterEvaluate {
+        tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
+            dokkaSourceSets.configureEach {
+                includes.from("module.md")
+            }
+        }
+
+        tasks.withType<org.jetbrains.dokka.gradle.AbstractDokkaTask>().configureEach {
+            pluginsMapConfiguration.set(
+                mapOf(
+                    "org.jetbrains.dokka.base.DokkaBase" to """
+                    {
+                      "customStyleSheets": [
+                        "${rootDir.toString().replace('\\', '/')}/docs/css/kache-dokka.css"
+                      ],
+                      "customAssets" : [
+                        "${rootDir.toString().replace('\\', '/')}/docs/images/kache-logo.png"
+                      ],
+                      "footerMessage": "Copyright &copy; 2023 MayakaApps."
+                    }
+                    """.trimIndent()
+                )
+            )
+        }
+
         extensions.findByType<PublishingExtension>()?.apply {
             val publishApple = when (findProperty("publicationType")) {
                 "appleOnly" -> true
@@ -36,19 +60,4 @@ allprojects {
 tasks.withType<org.jetbrains.dokka.gradle.DokkaMultiModuleTask>().configureEach {
     moduleName.set("Kache")
     outputDirectory.set(file("$rootDir/docs/api"))
-    pluginsMapConfiguration.set(
-        mapOf(
-            "org.jetbrains.dokka.base.DokkaBase" to """
-            {
-              "customStyleSheets": [
-                "${rootDir.toString().replace('\\', '/')}/docs/css/kache-dokka.css"
-              ],
-              "customAssets" : [
-                "${rootDir.toString().replace('\\', '/')}/docs/images/kache-logo.png"
-              ],
-              "footerMessage": "Copyright &copy; 2023 MayakaApps."
-            }
-            """.trimIndent()
-        )
-    )
 }

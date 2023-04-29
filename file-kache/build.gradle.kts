@@ -66,20 +66,13 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":file-kache-base"))
-                api(project(":file-kache-common"))
+                implementation(project(":file-kache-okio-only"))
+                api(project(":file-kache-core"))
 
                 implementation(libs.kotlinx.coroutines.core)
 
                 implementation(libs.okio)
             }
         }
-    }
-}
-
-tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
-    dokkaSourceSets.configureEach {
-        sourceRoot(file("../kache-common/src/$name"))
-        sourceRoot(file("../file-kache-common/src/$name"))
     }
 }

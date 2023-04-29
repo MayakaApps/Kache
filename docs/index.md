@@ -108,10 +108,6 @@ val imageData = cache.getOrPut(uniqueKey) { cacheFilename ->
 }
 ```
 
-## Documentation
-
-See documentation [here](https://mayakaapps.github.io/Kache/)
-
 ## License
 
 This library is distributed under the MIT license. All the code inside this library is licensed under the MIT license
