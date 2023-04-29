@@ -5,6 +5,6 @@ import kotlinx.coroutines.Dispatchers
 import okio.FileSystem
 import okio.NodeJsFileSystem
 
-internal actual val defaultFileSystem: FileSystem = NodeJsFileSystem
+internal actual fun getDefaultFileSystem(): FileSystem = NodeJsFileSystem
 
-internal actual val ioDispatcher: CoroutineDispatcher = Dispatchers.Default
+internal actual fun getIODispatcher(): CoroutineDispatcher = Dispatchers.Default
