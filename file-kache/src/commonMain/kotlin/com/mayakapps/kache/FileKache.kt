@@ -83,7 +83,7 @@ class FileKache private constructor(
         /**
          * The coroutine dispatcher used for executing `creationFunction` of put requests.
          */
-        var creationScope: CoroutineScope = CoroutineScope(ioDispatcher),
+        var creationScope: CoroutineScope = CoroutineScope(getIODispatcher()),
 
         /**
          * The version of the cache. This is useful to invalidate the cache when the format of the data stored in the
