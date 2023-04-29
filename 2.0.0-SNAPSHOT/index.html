@@ -299,13 +299,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#documentation" class="md-nav__link">
-    Documentation
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#license" class="md-nav__link">
     License
   </a>
@@ -395,13 +388,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#documentation" class="md-nav__link">
-    Documentation
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#license" class="md-nav__link">
     License
   </a>
@@ -448,38 +434,10 @@
   
 
 
-<p><br /></p>
-<!--suppress HtmlDeprecatedAttribute -->
-<div align="center">
-    <img src="docs/images/kache-logo.png" alt="Logo"/>
-</div>
-
-<!--suppress HtmlDeprecatedAttribute -->
-<h1 align="center" style="margin-top: 0;">Kache</h1>
-
-<!--suppress HtmlDeprecatedAttribute -->
-<div align="center">
-
-![Kache](https://img.shields.io/badge/ache-blue?logo=kotlin)
-[![GitHub stars](https://img.shields.io/github/stars/MayakaApps/LruKache)](https://github.com/MayakaApps/LruKache/stargazers)
-[![GitHub license](https://img.shields.io/github/license/MayakaApps/LruKache)](https://github.com/MayakaApps/LruKache/blob/main/LICENSE)
-![Maven Central](https://img.shields.io/maven-central/v/com.mayakapps.kache/kache)
-![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/com.mayakapps.kache/kache?server=https%3A%2F%2Fs01.oss.sonatype.org)
-[![Twitter](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2FMayakaApps%2FKache)](https://twitter.com/intent/tweet?text=Kache%20is%20a%20lightweight%20caching%20library%20for%20Kotlin%20Multiplatform.%20Check%20it%20out.&url=https%3A%2F%2Fgithub.com%2FMayakaApps%2FKache)
-
-</div>
+  <h1>Overview</h1>
 
 <p>Kache (previously Kotlinized LRU Cache) is a lightweight Kotlin Multiplatform caching library that supports both
 in-memory and persistent caches and supports different eviction strategies (LRU, FIFO, MRU, FILO).</p>
-<p><strong><em>Supported platforms:</em></strong>
-* <strong>JVM</strong> (and <strong>Android</strong>)
-* <strong>JS</strong> (Browser does not support persistent cache)
-* <strong>macOS</strong> (macosX64, macosArm64)
-* <strong>iOS</strong> (iosArm64, iosX64, iosSimulatorArm64)
-* <strong>watchOS</strong> (watchosArm32, watchosArm64, watchosX64, watchosSimulatorArm64)
-* <strong>tvOS</strong> (tvosArm64, tvosX64, tvosSimulatorArm64)
-* <strong>Linux</strong> (linuxX64)
-* <strong>Windows</strong> (mingwX64)</p>
 <h2 id="why-use-kache">Why use Kache?<a class="headerlink" href="#why-use-kache" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Kotlin Multiplatform.</strong> Use the same code for Android, iOS, and other platforms.</li>
@@ -499,13 +457,13 @@ in-memory and persistent caches and supports different eviction strategies (LRU,
 
 <span class="n">dependencies</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="c1">// For in-memory cache</span>
-<span class="w">    </span><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.mayakapps.kache:kache:&lt;version&gt;&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.mayakapps.kache:kache:2.0.0-SNAPSHOT&quot;</span><span class="p">)</span>
 
 <span class="w">    </span><span class="c1">// For persistent cache (in non-Okio projects)</span>
-<span class="w">    </span><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.mayakapps.kache:file-kache:&lt;version&gt;&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.mayakapps.kache:file-kache:2.0.0-SNAPSHOT&quot;</span><span class="p">)</span>
 
 <span class="w">    </span><span class="c1">// For persistent cache (in Okio projects)</span>
-<span class="w">    </span><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.mayakapps.kache:file-kache-okio:&lt;version&gt;&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.mayakapps.kache:file-kache-okio:2.0.0-SNAPSHOT&quot;</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>Groovy DSL:</p>
@@ -518,16 +476,15 @@ in-memory and persistent caches and supports different eviction strategies (LRU,
 
 <span class="n">dependencies</span><span class="w"> </span><span class="o">{</span>
 <span class="w">    </span><span class="c1">// For in-memory cache</span>
-<span class="w">    </span><span class="n">implementation</span><span class="w"> </span><span class="s2">&quot;com.mayakapps.kache:kache:&lt;version&gt;&quot;</span>
+<span class="w">    </span><span class="n">implementation</span><span class="w"> </span><span class="s2">&quot;com.mayakapps.kache:kache:2.0.0-SNAPSHOT&quot;</span>
 
 <span class="w">    </span><span class="c1">// For persistent cache (in non-Okio projects)</span>
-<span class="w">    </span><span class="n">implementation</span><span class="w"> </span><span class="s2">&quot;com.mayakapps.kache:file-kache:&lt;version&gt;&quot;</span>
+<span class="w">    </span><span class="n">implementation</span><span class="w"> </span><span class="s2">&quot;com.mayakapps.kache:file-kache:2.0.0-SNAPSHOT&quot;</span>
 
 <span class="w">    </span><span class="c1">// For persistent cache (in Okio projects)</span>
-<span class="w">    </span><span class="n">implementation</span><span class="w"> </span><span class="s2">&quot;com.mayakapps.kache:file-kache-okio:&lt;version&gt;&quot;</span>
+<span class="w">    </span><span class="n">implementation</span><span class="w"> </span><span class="s2">&quot;com.mayakapps.kache:file-kache-okio:2.0.0-SNAPSHOT&quot;</span>
 <span class="o">}</span>
 </code></pre></div>
-<p>Don't forget to replace <code>&lt;version&gt;</code> with the latest found on the badges above or the desired version.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <p>You can create your cache using the following builder DSL, then you can use the usual operators of get, put, and remove
 and their different implementations.</p>
@@ -573,8 +530,6 @@ and their different implementations.</p>
 <span class="w">    </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
-<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
-<p>See documentation <a href="https://mayakaapps.github.io/Kache/">here</a></p>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
 <p>This library is distributed under the MIT license. All the code inside this library is licensed under the MIT license
 except for the code inside the module <code>:collections</code> which is licensed under the Apache 2.0 license or GPL 2.0 with
