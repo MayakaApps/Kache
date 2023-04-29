@@ -1,25 +1,45 @@
 <br />
 
+<!--suppress HtmlDeprecatedAttribute -->
 <div align="center">
     <img src="docs/images/kache-logo.png" alt="Logo"/>
 </div>
 
+<!--suppress HtmlDeprecatedAttribute -->
 <h1 align="center" style="margin-top: 0;">Kache</h1>
 
+<!--suppress HtmlDeprecatedAttribute -->
 <div align="center">
 
 ![Kache](https://img.shields.io/badge/ache-blue?logo=kotlin)
 [![GitHub stars](https://img.shields.io/github/stars/MayakaApps/LruKache)](https://github.com/MayakaApps/LruKache/stargazers)
 [![GitHub license](https://img.shields.io/github/license/MayakaApps/LruKache)](https://github.com/MayakaApps/LruKache/blob/main/LICENSE)
-![Maven Central](https://img.shields.io/maven-central/v/com.mayakapps.lrucache/lru-cache)
+![Maven Central](https://img.shields.io/maven-central/v/com.mayakapps.kache/kache)
 ![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/com.mayakapps.kache/kache?server=https%3A%2F%2Fs01.oss.sonatype.org)
-[![Twitter](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2FMayakaApps%2FLruKache)](https://twitter.com/intent/tweet?text=Kache%20is%20a%20lightweight%20caching%20library%20for%20Kotlin%20Multiplatform.%20Check%20it%20out.&url=https%3A%2F%2Fgithub.com%2FMayakaApps%2FKache)
+[![Twitter](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2FMayakaApps%2FKache)](https://twitter.com/intent/tweet?text=Kache%20is%20a%20lightweight%20caching%20library%20for%20Kotlin%20Multiplatform.%20Check%20it%20out.&url=https%3A%2F%2Fgithub.com%2FMayakaApps%2FKache)
 
 </div>
 
-**Kache (previously Kotlinized LRU Cache) is a lightweight Kotlin Multiplatform library for that is inspired by Android's LruCache and [Jake Wharton](https://github.com/JakeWharton)'s DiskLruCache.**
+Kache (previously Kotlinized LRU Cache) is a lightweight Kotlin Multiplatform caching library that supports both
+in-memory and persistent caches and supports different eviction strategies (LRU, FIFO, MRU, FILO).
 
-**Note: This README is for the stable v1 version. Currently, v2 that is compatible with Kotlin Multiplatform is a work-in-progress and once it gets stable, I'll update this file and documentation.**
+***Supported platforms:***
+* **JVM** (and **Android**)
+* **JS** (Browser does not support persistent cache)
+* **macOS** (macosX64, macosArm64)
+* **iOS** (iosArm64, iosX64, iosSimulatorArm64)
+* **watchOS** (watchosArm32, watchosArm64, watchosX64, watchosSimulatorArm64)
+* **tvOS** (tvosArm64, tvosX64, tvosSimulatorArm64)
+* **Linux** (linuxX64)
+* **Windows** (mingwX64)
+
+## Why use Kache?
+
+* **Kotlin Multiplatform.** Use the same code for Android, iOS, and other platforms.
+* **In-memory and persistent caches.** Use the same API for both in-memory and persistent caches.
+* **Different eviction strategies.** Use any common strategy: LRU, FIFO, MRU, or FILO.
+* **Coroutine-friendly.** Get rid of blocking implementations.
+* **Simple and modern API** that helps you do almost whatever you want using a single call.
 
 ## Setup (Gradle)
 
@@ -34,89 +54,103 @@ repositories {
 }
 
 dependencies {
-    implementation("com.mayakapps.lrucache:lru-cache:<version>")
+    // For in-memory cache
+    implementation("com.mayakapps.kache:kache:<version>")
+
+    // For persistent cache (in non-Okio projects)
+    implementation("com.mayakapps.kache:file-kache:<version>")
+
+    // For persistent cache (in Okio projects)
+    implementation("com.mayakapps.kache:file-kache-okio:<version>")
 }
 ```
 
 Groovy DSL:
 
-```gradle
+```groovy
 repositories {
     mavenCentral()
-    
+
     // Add only if you're using snapshot version
     maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
 }
 
 dependencies {
-    implementation "com.mayakapps.lrucache:lru-cache:<version>"
+    // For in-memory cache
+    implementation "com.mayakapps.kache:kache:<version>"
+
+    // For persistent cache (in non-Okio projects)
+    implementation "com.mayakapps.kache:file-kache:<version>"
+
+    // For persistent cache (in Okio projects)
+    implementation "com.mayakapps.kache:file-kache-okio:<version>"
 }
 ```
 
-Don't forget to replace `<version>` with the latest/desired version found on the badges above.
+Don't forget to replace `<version>` with the latest found on the badges above or the desired version.
 
 ## Usage
 
-You can create your cache using `LruCache` constructor or `DiskLruCache.open`, then you can use the usual operators of get, put, and remove and their different implementations.
+You can create your cache using the following builder DSL, then you can use the usual operators of get, put, and remove
+and their different implementations.
 
-Sample Code (`LruCache`):
+Sample Code (`Kache`):
 
 ```kotlin
-val lruCache = LruCache<String, ByteArray>(
-  maxSize = 5 * 1024 * 1024, // 5 MB
-)
+val cache = Kache<String, ByteArray>(maxSize = 5 * 1024 * 1024) {  // 5 MB
+    // Other optional configurations
+    strategy = KacheStrategy.LRU
+    // ...
+}
 
 // ...
 
-val newValue = lruCache.put(uniqueKey) {
+val newValue = cache.put(uniqueKey) {
     try {
         // Some CPU-intensive process - Returning a not null value means success
     } catch (ex: Throwable) {
         // Handle exception
-        null // Caching failed
+        null // returning null means creating the value has failed - The value (null) will not be cached
     }
 }
 
 // ...
 
-val cachedValue = lruCache.get(uniqueKey)
-
+val cachedValue = cache.get(uniqueKey)
 ```
 
-Sample Code (`DiskLruCache`):
+Sample Code (`FileKache`):
 
 ```kotlin
-val lruCache = DiskLruCache.open(
-  directory = cacheDir,
-  maxSize = 10 * 1024 * 1024, // 10 MB
-)
+// Could be OkioFileKache or JavaFileKache
+val cache = FileKache(directoryPath = "cache", maxSize = 10 * 1024 * 1024) {
+    // Other optional configurations
+    strategy = KacheStrategy.MRU
+    // ...
+}
 
 // ...
 
-lruCache.getOrPut(imageFilename) { cacheFile ->
+val imageData = cache.getOrPut(uniqueKey) { cacheFilename ->
     try {
-        // downloadFromInternet(imageUrl)
-        true // Caching succeeded - Save the file
+        // downloadFromInternet(imageUrl, cacheFilename)
+        true // returning true means caching has succeeded - The file will be kept
     } catch (ex: IOException) {
         // Handle exception
-        false // Caching failed - Delete the file
+        false // returning false means caching has failed - The file will be deleted
     }
 }
 ```
 
 ## Documentation
 
-See documentation [here](https://mayakaapps.github.io/Kache/2.0.0-SNAPSHOT/)
-
-## Why use Kache?
-
-* Coroutine-friendly. Get rid of Java's blocking implementation.
-* Much simpler and modern API that helps you do almost whatever you want using a single call.
-* (DiskLruCache) Binary journal instead of text-based journal which consumes less storage.
+See documentation [here](https://mayakaapps.github.io/Kache/)
 
 ## License
 
-This library is distributed under the MIT license.
+This library is distributed under the MIT license. All the code inside this library is licensed under the MIT license
+except for the code inside the module `:collections` which is licensed under the Apache 2.0 license or GPL 2.0 with
+classpath exception.
 
 ## Contributing
 
