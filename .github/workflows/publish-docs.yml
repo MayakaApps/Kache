@@ -68,5 +68,5 @@ jobs:
         run: mike deploy -u --push ${{ env.KACHE_VERSION }} snapshot
 
       - name: Deploy documentation with mike
-        if: ${{ success() && !endsWith(env.KACHE_VERSION, '-SNAPSHOT') }}
+        if: ${{ success() && !endsWith(env.KACHE_VERSION, '-SNAPSHOT') && github.event_name == 'release' }}
         run: mike deploy -u --push ${{ env.KACHE_VERSION }} latest

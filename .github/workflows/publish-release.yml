@@ -60,9 +60,10 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=nonAppleOnly --no-parallel
 
+      # Publish artifacts by name to avoid creating a new staging repository
       - name: Upload Apple artifacts
         if: matrix.os == 'macOS-latest'
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=appleOnly --no-parallel
+        run: ./gradlew publishMacosX64PublicationToMavenCentralRepository publishMacosArm64PublicationToMavenCentralRepository publishIosArm64PublicationToMavenCentralRepository publishIosX64PublicationToMavenCentralRepository publishIosSimulatorArm64PublicationToMavenCentralRepository publishWatchosArm32PublicationToMavenCentralRepository publishWatchosArm64PublicationToMavenCentralRepository publishWatchosX64PublicationToMavenCentralRepository publishWatchosDeviceArm64PublicationToMavenCentralRepository publishWatchosSimulatorArm64PublicationToMavenCentralRepository publishTvosArm64PublicationToMavenCentralRepository publishTvosX64PublicationToMavenCentralRepository publishTvosSimulatorArm64PublicationToMavenCentralRepository --no-parallel
 
       - name: Save Konan cache
         uses: actions/cache/save@v3
