@@ -6,7 +6,7 @@ mavenPublish = "0.26.0"
 
 kotlinx-coroutines = "1.7.3"
 
-stately = "1.2.5"
+stately = "2.0.6"
 
 okio = "3.7.0"
 
