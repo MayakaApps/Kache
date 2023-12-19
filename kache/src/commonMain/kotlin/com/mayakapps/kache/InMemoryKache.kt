@@ -189,9 +189,7 @@ class InMemoryKache<K : Any, V : Any> private constructor(
     }
 
     override suspend fun clear() {
-        for (key in creationMap.keys) {
-            removeCreation(key)
-        }
+        removeAllCreations()
 
         mapMutex.withLock {
             with(map.iterator()) {
@@ -204,9 +202,7 @@ class InMemoryKache<K : Any, V : Any> private constructor(
     }
 
     override suspend fun evictAll() {
-        for (key in creationMap.keys) {
-            removeCreation(key)
-        }
+        removeAllCreations()
 
         mapMutex.withLock {
             with(map.iterator()) {
@@ -220,9 +216,7 @@ class InMemoryKache<K : Any, V : Any> private constructor(
 
     override suspend fun removeAllUnderCreation() {
         mapMutex.withLock {
-            for (key in creationMap.keys) {
-                removeCreation(key)
-            }
+            removeAllCreations()
         }
     }
 
@@ -274,6 +268,13 @@ class InMemoryKache<K : Any, V : Any> private constructor(
                     else -> null
                 }
             } else null
+        }
+    }
+
+    private fun removeAllCreations() {
+        val keys = creationMap.keys.toSet()
+        for (key in keys) {
+            removeCreation(key)
         }
     }
 
