@@ -8,7 +8,7 @@ kotlinx-coroutines = "1.6.4"
 
 stately = "1.2.5"
 
-okio = "3.3.0"
+okio = "3.7.0"
 
 kotest = "5.8.0"
 
