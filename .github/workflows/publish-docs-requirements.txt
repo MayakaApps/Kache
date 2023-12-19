@@ -4,6 +4,7 @@
 #
 #    pip-compile publish-docs-requirements.in
 #
+
 babel==2.14.0
     # via mkdocs-material
 certifi==2023.11.17
