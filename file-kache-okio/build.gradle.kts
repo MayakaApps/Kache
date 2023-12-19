@@ -15,16 +15,25 @@ kotlin {
         }
     }
 
-    js(IR) {
-        // Has no FileSystem implementation in Okio
-        // browser()
+    fun org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsSubTargetDsl.configureTests() {
+        testTask {
+            useMocha {
+                timeout = "30s"
+            }
+        }
+    }
 
-        nodejs()
+    js {
+        // Has no FileSystem implementation in Okio
+        // browser { configureTests() }
+
+        nodejs { configureTests() }
     }
 
     // Still experimental
     // Blocked by Okio (issue: https://github.com/square/okio/issues/1203)
-    // wasm()
+    // wasmJs()
+    // wasmWasi()
 
     macosX64()
     macosArm64()

@@ -15,21 +15,23 @@ kotlin {
         }
     }
 
-    js(IR) {
-        browser {
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                }
+    fun org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsSubTargetDsl.configureTests() {
+        testTask {
+            useMocha {
+                timeout = "30s"
             }
         }
+    }
 
-        nodejs()
+    js {
+        browser { configureTests() }
+        nodejs { configureTests() }
     }
 
     // Still experimental
     // Blocked by coroutines (issue: https://github.com/Kotlin/kotlinx.coroutines/issues/3713), Stately, and Kotest (depends on coroutines)
-    // wasm()
+    // wasmJs()
+    // wasmWasi()
 
     macosX64()
     macosArm64()
