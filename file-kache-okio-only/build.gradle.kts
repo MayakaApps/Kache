@@ -65,9 +65,8 @@ kotlin {
 
     applyDefaultHierarchyTemplate()
 
-    @Suppress("UNUSED_VARIABLE")
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(project(":kache"))
                 api(project(":file-kache-core"))
@@ -78,7 +77,7 @@ kotlin {
             }
         }
 
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 implementation(kotlin("test"))
 
@@ -90,7 +89,7 @@ kotlin {
             }
         }
 
-        val jsMain by getting {
+        jsMain {
             dependencies {
                 implementation(libs.okio.nodeFilesystem)
             }

@@ -67,21 +67,20 @@ kotlin {
 
     applyDefaultHierarchyTemplate()
 
-    @Suppress("UNUSED_VARIABLE")
     sourceSets {
-        val commonMain by getting
-
         val nativeAndWasmMain by creating {
-            dependsOn(commonMain)
+            dependsOn(commonMain.get())
         }
 
-        val nativeMain by getting {
+        nativeMain.get().dependsOn(nativeAndWasmMain)
+
+        val wasmMain by creating {
             dependsOn(nativeAndWasmMain)
         }
 
-        val wasmJsMain by getting {
-            dependsOn(nativeAndWasmMain)
-        }
+        // WASM source sets are not found in the predefined conventions
+        getByName("wasmJsMain").dependsOn(wasmMain)
+        getByName("wasmWasiMain").dependsOn(wasmMain)
     }
 }
 

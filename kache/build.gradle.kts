@@ -62,9 +62,8 @@ kotlin {
 
     applyDefaultHierarchyTemplate()
 
-    @Suppress("UNUSED_VARIABLE")
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 api(project(":kache-core"))
 
@@ -74,7 +73,7 @@ kotlin {
             }
         }
 
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 implementation(kotlin("test"))
 
@@ -85,19 +84,14 @@ kotlin {
         }
 
         val nonJvmMain by creating {
-            dependsOn(commonMain)
+            dependsOn(commonMain.get())
 
             dependencies {
                 implementation(libs.stately.isoCollections)
             }
         }
 
-        val nativeMain by getting {
-            dependsOn(nonJvmMain)
-        }
-
-        val jsMain by getting {
-            dependsOn(nonJvmMain)
-        }
+        nativeMain.get().dependsOn(nonJvmMain)
+        jsMain.get().dependsOn(nonJvmMain)
     }
 }
