@@ -43,7 +43,7 @@ kotlin {
     watchosArm32()
     watchosArm64()
     watchosX64()
-    // Blocked by coroutines (expected in 1.7.0), Okio (issue: https://github.com/square/okio/issues/1242), and Kotest (depends on coroutines)
+    // Blocked by Okio (issue: https://github.com/square/okio/issues/1242) and Kotest (expected in 5.9.0)
     // watchosDeviceArm64()
     watchosSimulatorArm64()
 
@@ -52,12 +52,11 @@ kotlin {
     tvosSimulatorArm64()
 
     linuxX64()
-    // Blocked by coroutines (expected in 1.7.0), Okio (issue: https://github.com/square/okio/issues/1242), and Kotest (depends on coroutines)
-    // linuxArm64()
+    linuxArm64()
 
     mingwX64()
 
-    // Blocked by coroutines (expected in 1.7.0), Okio (issue: https://github.com/square/okio/issues/1242), and Kotest (depends on coroutines)
+    // Blocked by Okio (issue: https://github.com/square/okio/issues/1242) and Kotest (expected in 5.9.0)
     // androidNativeArm32()
     // androidNativeArm64()
     // androidNativeX86()

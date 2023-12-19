@@ -40,7 +40,7 @@ kotlin {
     watchosArm32()
     watchosArm64()
     watchosX64()
-    // Blocked by coroutines (expected in 1.7.0), Stately (expected in 2.0.0), and Kotest (depends on coroutines)
+    // Blocked by Kotest (expected in 5.9.0)
     // watchosDeviceArm64()
     watchosSimulatorArm64()
 
@@ -49,12 +49,11 @@ kotlin {
     tvosSimulatorArm64()
 
     linuxX64()
-    // Blocked by coroutines (expected in 1.7.0), Stately, and Kotest (depends on coroutines)
-    // linuxArm64()
+    linuxArm64()
 
     mingwX64()
 
-    // Blocked by coroutines (expected in 1.7.0), and Kotest (depends on coroutines)
+    // Blocked by Kotest (expected in 5.9.0)
     // androidNativeArm32()
     // androidNativeArm64()
     // androidNativeX86()

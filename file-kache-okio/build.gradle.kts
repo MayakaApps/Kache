@@ -21,7 +21,7 @@ kotlin {
     }
 
     js {
-        // Has no FileSystem implementation in Okio
+        // JS browser target has no FileSystem implementation in Okio
         // browser { configureTests() }
 
         nodejs { configureTests() }
@@ -51,8 +51,7 @@ kotlin {
     tvosSimulatorArm64()
 
     linuxX64()
-    // Blocked by Okio (issue: https://github.com/square/okio/issues/1242)
-    // linuxArm64()
+    linuxArm64()
 
     mingwX64()
 
