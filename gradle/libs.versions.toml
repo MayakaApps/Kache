@@ -4,7 +4,7 @@ kotlin = "1.9.21"
 dokka = "1.9.10"
 mavenPublish = "0.26.0"
 
-kotlinx-coroutines = "1.6.4"
+kotlinx-coroutines = "1.7.3"
 
 stately = "1.2.5"
 
