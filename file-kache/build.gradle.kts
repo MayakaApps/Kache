@@ -6,9 +6,6 @@ plugins {
 }
 
 kotlin {
-    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
-    targetHierarchy.default()
-
     jvm {
         compilations.configureEach {
             kotlinOptions.jvmTarget = "1.8"
@@ -65,6 +62,8 @@ kotlin {
     // androidNativeArm64()
     // androidNativeX86()
     // androidNativeX64()
+
+    applyDefaultHierarchyTemplate()
 
     @Suppress("UNUSED_VARIABLE")
     sourceSets {
