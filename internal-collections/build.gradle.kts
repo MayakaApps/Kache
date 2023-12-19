@@ -5,9 +5,6 @@ plugins {
 }
 
 kotlin {
-    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
-    targetHierarchy.default()
-
     jvm {
         compilations.configureEach {
             kotlinOptions.jvmTarget = "1.8"
@@ -16,16 +13,29 @@ kotlin {
         withJava()
     }
 
-    js(IR) {
-        browser()
-        nodejs()
+    fun org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsSubTargetDsl.configureTests() {
+        testTask {
+            useMocha {
+                timeout = "30s"
+            }
+        }
+    }
+
+    js {
+        browser { configureTests() }
+        nodejs { configureTests() }
     }
 
     @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
-    wasm {
-        browser()
-        nodejs()
-        d8()
+    wasmJs {
+        browser { configureTests() }
+        nodejs { configureTests() }
+        d8 { configureTests() }
+    }
+
+    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+    wasmWasi {
+        nodejs { configureTests() }
     }
 
     macosX64()
@@ -55,21 +65,22 @@ kotlin {
     androidNativeX86()
     androidNativeX64()
 
-    @Suppress("UNUSED_VARIABLE")
+    applyDefaultHierarchyTemplate()
+
     sourceSets {
-        val commonMain by getting
-
         val nativeAndWasmMain by creating {
-            dependsOn(commonMain)
+            dependsOn(commonMain.get())
         }
 
-        val nativeMain by getting {
+        nativeMain.get().dependsOn(nativeAndWasmMain)
+
+        val wasmMain by creating {
             dependsOn(nativeAndWasmMain)
         }
 
-        val wasmMain by getting {
-            dependsOn(nativeAndWasmMain)
-        }
+        // WASM source sets are not found in the predefined conventions
+        getByName("wasmJsMain").dependsOn(wasmMain)
+        getByName("wasmWasiMain").dependsOn(wasmMain)
     }
 }
 

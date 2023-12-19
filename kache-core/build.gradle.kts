@@ -6,25 +6,35 @@ plugins {
 }
 
 kotlin {
-    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
-    targetHierarchy.default()
-
     jvm {
         compilations.configureEach {
             kotlinOptions.jvmTarget = "1.8"
         }
     }
 
-    js(IR) {
-        browser()
-        nodejs()
+    fun org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsSubTargetDsl.configureTests() {
+        testTask {
+            useMocha {
+                timeout = "30s"
+            }
+        }
+    }
+
+    js {
+        browser { configureTests() }
+        nodejs { configureTests() }
     }
 
     @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
-    wasm {
-        browser()
-        nodejs()
-        d8()
+    wasmJs {
+        browser { configureTests() }
+        nodejs { configureTests() }
+        d8 { configureTests() }
+    }
+
+    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+    wasmWasi {
+        nodejs { configureTests() }
     }
 
     macosX64()
@@ -53,4 +63,6 @@ kotlin {
     androidNativeArm64()
     androidNativeX86()
     androidNativeX64()
+
+    applyDefaultHierarchyTemplate()
 }

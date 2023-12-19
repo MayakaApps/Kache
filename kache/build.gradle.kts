@@ -6,30 +6,29 @@ plugins {
 }
 
 kotlin {
-    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
-    targetHierarchy.default()
-
     jvm {
         compilations.configureEach {
             kotlinOptions.jvmTarget = "1.8"
         }
     }
 
-    js(IR) {
-        browser {
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                }
+    fun org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsSubTargetDsl.configureTests() {
+        testTask {
+            useMocha {
+                timeout = "30s"
             }
         }
+    }
 
-        nodejs()
+    js {
+        browser { configureTests() }
+        nodejs { configureTests() }
     }
 
     // Still experimental
     // Blocked by coroutines (issue: https://github.com/Kotlin/kotlinx.coroutines/issues/3713), Stately, and Kotest (depends on coroutines)
-    // wasm()
+    // wasmJs()
+    // wasmWasi()
 
     macosX64()
     macosArm64()
@@ -61,9 +60,10 @@ kotlin {
     // androidNativeX86()
     // androidNativeX64()
 
-    @Suppress("UNUSED_VARIABLE")
+    applyDefaultHierarchyTemplate()
+
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 api(project(":kache-core"))
 
@@ -73,7 +73,7 @@ kotlin {
             }
         }
 
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 implementation(kotlin("test"))
 
@@ -84,19 +84,14 @@ kotlin {
         }
 
         val nonJvmMain by creating {
-            dependsOn(commonMain)
+            dependsOn(commonMain.get())
 
             dependencies {
                 implementation(libs.stately.isoCollections)
             }
         }
 
-        val nativeMain by getting {
-            dependsOn(nonJvmMain)
-        }
-
-        val jsMain by getting {
-            dependsOn(nonJvmMain)
-        }
+        nativeMain.get().dependsOn(nonJvmMain)
+        jsMain.get().dependsOn(nonJvmMain)
     }
 }

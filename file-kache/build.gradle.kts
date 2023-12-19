@@ -6,31 +6,32 @@ plugins {
 }
 
 kotlin {
-    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
-    targetHierarchy.default()
-
     jvm {
         compilations.configureEach {
             kotlinOptions.jvmTarget = "1.8"
         }
     }
 
-    js(IR) {
-        browser {
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                }
+    fun org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsSubTargetDsl.configureTests() {
+        testTask {
+            useMocha {
+                timeout = "30s"
             }
         }
+    }
 
-        nodejs()
+    js {
+        // Has no FileSystem implementation in Okio
+        // browser { configureTests() }
+
+        nodejs { configureTests() }
     }
 
     // Still experimental
     // Blocked by coroutines (issue: https://github.com/Kotlin/kotlinx.coroutines/issues/3713) and
     // Okio (issue: https://github.com/square/okio/issues/1203)
-    // wasm()
+    // wasmJs()
+    // wasmWasi()
 
     macosX64()
     macosArm64()
@@ -62,9 +63,10 @@ kotlin {
     // androidNativeX86()
     // androidNativeX64()
 
-    @Suppress("UNUSED_VARIABLE")
+    applyDefaultHierarchyTemplate()
+
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(project(":file-kache-okio-only"))
                 api(project(":file-kache-core"))

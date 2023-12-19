@@ -5,6 +5,14 @@ plugins {
     alias(libs.plugins.mavenPublish) apply false
 }
 
+subprojects {
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask::class.java) {
+        compilerOptions {
+            freeCompilerArgs.add("-Xexpect-actual-classes")
+        }
+    }
+}
+
 allprojects {
     repositories {
         mavenCentral()
