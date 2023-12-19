@@ -4,6 +4,9 @@
 #
 #    pip-compile publish-docs-requirements.in
 #
+
+babel==2.14.0
+    # via mkdocs-material
 certifi==2023.11.17
     # via requests
 charset-normalizer==3.3.2
@@ -45,16 +48,18 @@ mkdocs==1.5.3
     #   mike
     #   mkdocs-macros-plugin
     #   mkdocs-material
-mkdocs-macros-plugin==0.7.0
+mkdocs-macros-plugin==1.0.5
     # via -r publish-docs-requirements.in
-mkdocs-material==9.1.9
+mkdocs-material==9.5.2
     # via -r publish-docs-requirements.in
-mkdocs-material-extensions==1.1.1
+mkdocs-material-extensions==1.3.1
     # via
     #   -r publish-docs-requirements.in
     #   mkdocs-material
 packaging==23.2
     # via mkdocs
+paginate==0.5.6
+    # via mkdocs-material
 pathspec==0.12.1
     # via mkdocs
 platformdirs==4.1.0
