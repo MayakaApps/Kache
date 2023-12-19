@@ -1,7 +1,7 @@
 [versions]
 kotlin = "1.9.21"
 
-dokka = "1.8.10"
+dokka = "1.9.10"
 mavenPublish = "0.25.2"
 
 kotlinx-coroutines = "1.6.4"
