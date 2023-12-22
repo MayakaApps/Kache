@@ -11,7 +11,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.currentTime
 import kotlin.test.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class InMemoryKachePutTests {
 
     /*
@@ -69,6 +68,7 @@ class InMemoryKachePutTests {
         delay(1)
         put(KEY_2) { VAL_2 }
 
+        @OptIn(ExperimentalCoroutinesApi::class)
         testScope.currentTime shouldBe 1L
     }
 

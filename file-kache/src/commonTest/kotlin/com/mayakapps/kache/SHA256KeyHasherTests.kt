@@ -4,11 +4,9 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class SHA256KeyHasherTests {
 
     @Test

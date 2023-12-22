@@ -1,10 +1,8 @@
 package com.mayakapps.kache
 
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.test.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Suppress("DeferredResultUnused")
 class InMemoryKacheGetTests {
 
