@@ -23,7 +23,7 @@ import okio.Path.Companion.toPath
  * @see Configuration
  * @see invoke
  */
-class FileKache private constructor(
+public class FileKache private constructor(
     private val baseKache: ContainerKache<String, Path>,
     private val creationScope: CoroutineScope,
 ) : ContainerKache<String, String> {
@@ -51,19 +51,19 @@ class FileKache private constructor(
             }.await()?.toString()
         }
 
-    override suspend fun remove(key: String) =
+    override suspend fun remove(key: String): Unit =
         baseKache.remove(key)
 
-    override suspend fun clear() =
+    override suspend fun clear(): Unit =
         baseKache.clear()
 
-    override suspend fun close() =
+    override suspend fun close(): Unit =
         baseKache.close()
 
     /**
      * Configuration for [FileKache]. It is used as a receiver of [FileKache] builder which is [invoke].
      */
-    data class Configuration(
+    public data class Configuration(
 
         /**
          * The path of the directory where the cache files and the journal are stored.
@@ -98,14 +98,14 @@ class FileKache private constructor(
         var keyTransformer: KeyTransformer? = SHA256KeyHasher,
     )
 
-    companion object {
+    public companion object {
         /**
          * Creates a new [FileKache] instance with the given [directoryPath] and [maxSize] and is configured by
          * [configuration].
          *
          * @see Configuration
          */
-        suspend operator fun invoke(
+        public suspend operator fun invoke(
             directoryPath: String,
             maxSize: Long,
             configuration: Configuration.() -> Unit = {},

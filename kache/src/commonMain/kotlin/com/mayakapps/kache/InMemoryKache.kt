@@ -18,7 +18,7 @@ import kotlinx.coroutines.sync.withLock
  *
  * If the entries have the same size or their size can't be determined, you can just return 1.
  */
-typealias SizeCalculator<K, V> = (key: K, value: V) -> Long
+public typealias SizeCalculator<K, V> = (key: K, value: V) -> Long
 
 /**
  * A typealias that represents a listener that is triggered when a cache entry is removed.
@@ -28,7 +28,7 @@ typealias SizeCalculator<K, V> = (key: K, value: V) -> Long
  * was removed as a result of replacing it by one of the put operations, the new value is passed as `newValue`,
  * otherwise, `newValue` is null.
  */
-typealias EntryRemovedListener<K, V> = (evicted: Boolean, key: K, oldValue: V, newValue: V?) -> Unit
+public typealias EntryRemovedListener<K, V> = (evicted: Boolean, key: K, oldValue: V, newValue: V?) -> Unit
 
 /**
  * An in-memory coroutine-safe versatile cache that stores objects by keys.
@@ -44,7 +44,7 @@ typealias EntryRemovedListener<K, V> = (evicted: Boolean, key: K, oldValue: V, n
  * @see Configuration
  * @see invoke
  */
-class InMemoryKache<K : Any, V : Any> private constructor(
+public class InMemoryKache<K : Any, V : Any> private constructor(
     maxSize: Long,
     strategy: KacheStrategy,
     private val creationScope: CoroutineScope,
@@ -58,10 +58,10 @@ class InMemoryKache<K : Any, V : Any> private constructor(
     private val map: MutableLinkedScatterMap<K, V> = strategy.createMap()
     private val mapMutex = Mutex()
 
-    override var maxSize = maxSize
+    override var maxSize: Long = maxSize
         private set
 
-    override var size = 0L
+    override var size: Long = 0L
         private set
 
     override suspend fun getKeys(): Set<K> = mapMutex.withLock { map.keySet.toSet() }
@@ -286,7 +286,7 @@ class InMemoryKache<K : Any, V : Any> private constructor(
      * Configuration for [InMemoryKache]. It is used as a receiver of [InMemoryKache] builder which is
      * [InMemoryKache.invoke].
      */
-    data class Configuration<K, V>(
+    public data class Configuration<K, V>(
         /**
          * The max size of this cache. For more information. See [InMemoryKache.maxSize].
          */
@@ -313,7 +313,7 @@ class InMemoryKache<K : Any, V : Any> private constructor(
         var onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
     )
 
-    companion object {
+    public companion object {
         /**
          * Creates a new instance of [InMemoryKache] with a configuration that is initialized by [maxSize] and
          * [configuration] lambda.
@@ -321,7 +321,7 @@ class InMemoryKache<K : Any, V : Any> private constructor(
          * @see InMemoryKache.maxSize
          * @see Configuration
          */
-        operator fun <K : Any, V : Any> invoke(
+        public operator fun <K : Any, V : Any> invoke(
             maxSize: Long,
             configuration: Configuration<K, V>.() -> Unit = {}
         ): InMemoryKache<K, V> {

@@ -24,7 +24,7 @@ import java.io.File
  * @see Configuration
  * @see invoke
  */
-class JavaFileKache private constructor(
+public class JavaFileKache private constructor(
     private val baseKache: ContainerKache<String, Path>,
     private val creationScope: CoroutineScope,
 ) : ContainerKache<String, File> {
@@ -52,19 +52,19 @@ class JavaFileKache private constructor(
             }.await()?.toFile()
         }
 
-    override suspend fun remove(key: String) =
+    override suspend fun remove(key: String): Unit =
         baseKache.remove(key)
 
-    override suspend fun clear() =
+    override suspend fun clear(): Unit =
         baseKache.clear()
 
-    override suspend fun close() =
+    override suspend fun close(): Unit =
         baseKache.close()
 
     /**
      * Configuration for [JavaFileKache]. It is used as a receiver of [JavaFileKache] builder which is [invoke].
      */
-    data class Configuration(
+    public data class Configuration(
         /**
          * The directory where the cache files and the journal will be stored.
          */
@@ -98,14 +98,14 @@ class JavaFileKache private constructor(
         var keyTransformer: KeyTransformer? = SHA256KeyHasher,
     )
 
-    companion object {
+    public companion object {
         /**
          * Creates a new [JavaFileKache] instance with the given [directory] and [maxSize] and is configured by
          * [configuration].
          *
          * @see Configuration
          */
-        suspend operator fun invoke(
+        public suspend operator fun invoke(
             directory: File,
             maxSize: Long,
             configuration: Configuration.() -> Unit = {},

@@ -4,7 +4,7 @@ package com.mayakapps.kache
  * Specifies the strategy to use when the cache has reached its capacity. The most common strategy is
  * LRU (Least Recently Used).
  */
-enum class KacheStrategy {
+public enum class KacheStrategy {
 
     /**
      * Least Recently Used. Discards the least recently used items first.

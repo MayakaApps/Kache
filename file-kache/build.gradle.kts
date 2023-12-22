@@ -6,6 +6,8 @@ plugins {
 }
 
 kotlin {
+    explicitApi()
+
     jvm {
         compilations.configureEach {
             kotlinOptions.jvmTarget = "1.8"
