@@ -1,5 +1,6 @@
 package com.mayakapps.kache
 
+import com.mayakapps.kache.JavaFileKache.Configuration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -22,9 +23,8 @@ import java.io.File
  * ```
  *
  * @see Configuration
- * @see invoke
  */
-public class JavaFileKache private constructor(
+public class JavaFileKache internal constructor(
     private val baseKache: ContainerKache<String, Path>,
     private val creationScope: CoroutineScope,
 ) : ContainerKache<String, File> {
@@ -64,65 +64,63 @@ public class JavaFileKache private constructor(
     /**
      * Configuration for [JavaFileKache]. It is used as a receiver of [JavaFileKache] builder which is [invoke].
      */
-    public data class Configuration(
+    public class Configuration(
         /**
          * The directory where the cache files and the journal will be stored.
          */
-        var directory: File,
+        public var directory: File,
 
         /**
          * The maximum size of the cache in bytes.
          */
-        var maxSize: Long,
+        public var maxSize: Long,
 
         /**
          * The strategy used to evict entries from the cache.
          */
-        var strategy: KacheStrategy = KacheStrategy.LRU,
+        public var strategy: KacheStrategy = KacheStrategy.LRU,
 
         /**
          * The coroutine dispatcher used for executing `creationFunction` of put requests.
          */
-        var creationScope: CoroutineScope = CoroutineScope(getIODispatcher()),
+        public var creationScope: CoroutineScope = CoroutineScope(getIODispatcher()),
 
         /**
          * The version of the cache. This is useful to invalidate the cache when the format of the data stored in the
          * cache changes.
          */
-        var cacheVersion: Int = 1,
+        public var cacheVersion: Int = 1,
 
         /**
          * The [KeyTransformer] used to transform the keys before they are used to store and retrieve data. It is
          * needed to avoid using invalid characters in the file names.
          */
-        var keyTransformer: KeyTransformer? = SHA256KeyHasher,
+        public var keyTransformer: KeyTransformer? = SHA256KeyHasher,
     )
+}
 
-    public companion object {
-        /**
-         * Creates a new [JavaFileKache] instance with the given [directory] and [maxSize] and is configured by
-         * [configuration].
-         *
-         * @see Configuration
-         */
-        public suspend operator fun invoke(
-            directory: File,
-            maxSize: Long,
-            configuration: Configuration.() -> Unit = {},
-        ): JavaFileKache {
-            val config = Configuration(directory, maxSize).apply(configuration)
+/**
+ * Creates a new [JavaFileKache] instance with the given [directory] and [maxSize] and is configured by
+ * [configuration].
+ *
+ * @see JavaFileKache.Configuration
+ */
+public suspend fun JavaFileKache(
+    directory: File,
+    maxSize: Long,
+    configuration: Configuration.() -> Unit = {},
+): JavaFileKache {
+    val config = Configuration(directory, maxSize).apply(configuration)
 
-            val baseKache = OkioFileKache(
-                directory = config.directory.toOkioPath(),
-                maxSize = config.maxSize,
-            ) {
-                strategy = config.strategy
-                creationScope = config.creationScope
-                cacheVersion = config.cacheVersion
-                keyTransformer = config.keyTransformer
-            }
-
-            return JavaFileKache(baseKache, config.creationScope)
-        }
+    val baseKache = OkioFileKache(
+        directory = config.directory.toOkioPath(),
+        maxSize = config.maxSize,
+    ) {
+        strategy = config.strategy
+        creationScope = config.creationScope
+        cacheVersion = config.cacheVersion
+        keyTransformer = config.keyTransformer
     }
+
+    return JavaFileKache(baseKache, config.creationScope)
 }
