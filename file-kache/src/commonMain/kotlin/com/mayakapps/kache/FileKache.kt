@@ -83,7 +83,7 @@ public class FileKache internal constructor(
         /**
          * The coroutine dispatcher used for executing `creationFunction` of put requests.
          */
-        public var creationScope: CoroutineScope = CoroutineScope(getIODispatcher()),
+        public var creationScope: CoroutineScope = CoroutineScope(FileKacheDefaults.defaultCoroutineDispatcher),
 
         /**
          * The version of the cache. This is useful to invalidate the cache when the format of the data stored in the

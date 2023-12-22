@@ -202,12 +202,12 @@ public class OkioFileKache private constructor(
         /**
          * The file system used for storing the journal and cached files. See [FileSystem]
          */
-        public var fileSystem: FileSystem = getDefaultFileSystem(),
+        public var fileSystem: FileSystem = FileKacheDefaults.defaultFileSystem,
 
         /**
          * The coroutine dispatcher used for executing `creationFunction` of put requests.
          */
-        public var creationScope: CoroutineScope = CoroutineScope(getIODispatcher()),
+        public var creationScope: CoroutineScope = CoroutineScope(FileKacheDefaults.defaultCoroutineDispatcher),
 
         /**
          * The version of the entries in this cache. It is used for invalidating the cache. Update it when you change
