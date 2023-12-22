@@ -69,8 +69,6 @@ kotlin {
 
         commonMain {
             dependencies {
-                api(project(":kache-core"))
-
                 implementation(libs.kotlinx.coroutines.core)
             }
         }
