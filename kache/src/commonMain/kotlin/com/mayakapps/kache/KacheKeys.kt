@@ -6,4 +6,4 @@ package com.mayakapps.kache
  * [keys] are the keys that are currently in the cache. While, [underCreationKeys] are the keys that are currently
  * under creation.
  */
-data class KacheKeys<K>(val keys: Set<K>, val underCreationKeys: Set<K>)
+public data class KacheKeys<K>(val keys: Set<K>, val underCreationKeys: Set<K>)

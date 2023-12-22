@@ -392,7 +392,7 @@ internal sealed class LinkedScatterMap<K, V>(
      * the specified [block] lambda.
      */
     @PublishedApi
-    internal inline fun forEachIndexed(block: (index: Int) -> Unit) =
+    internal inline fun forEachIndexed(block: (index: Int) -> Unit): Unit =
         if (!reverseOrder) {
             chain.forEachIndexed(block)
         } else {
