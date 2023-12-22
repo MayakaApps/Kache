@@ -1,0 +1,150 @@
+public final class com/mayakapps/kache/FileKache : com/mayakapps/kache/ContainerKache {
+	public static final field Companion Lcom/mayakapps/kache/FileKache$Companion;
+	public synthetic fun <init> (Lcom/mayakapps/kache/ContainerKache;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun clear (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getIfAvailable (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getOrPut (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun put (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun putAsync (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun remove (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/mayakapps/kache/FileKache$Companion {
+	public final fun invoke (Ljava/lang/String;JLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun invoke$default (Lcom/mayakapps/kache/FileKache$Companion;Ljava/lang/String;JLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/mayakapps/kache/FileKache$Configuration {
+	public fun <init> (Ljava/lang/String;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;)V
+	public synthetic fun <init> (Ljava/lang/String;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun component3 ()Lcom/mayakapps/kache/KacheStrategy;
+	public final fun component4 ()Lkotlinx/coroutines/CoroutineScope;
+	public final fun component5 ()I
+	public final fun component6 ()Lcom/mayakapps/kache/KeyTransformer;
+	public final fun copy (Ljava/lang/String;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;)Lcom/mayakapps/kache/FileKache$Configuration;
+	public static synthetic fun copy$default (Lcom/mayakapps/kache/FileKache$Configuration;Ljava/lang/String;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;ILjava/lang/Object;)Lcom/mayakapps/kache/FileKache$Configuration;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCacheVersion ()I
+	public final fun getCreationScope ()Lkotlinx/coroutines/CoroutineScope;
+	public final fun getDirectoryPath ()Ljava/lang/String;
+	public final fun getKeyTransformer ()Lcom/mayakapps/kache/KeyTransformer;
+	public final fun getMaxSize ()J
+	public final fun getStrategy ()Lcom/mayakapps/kache/KacheStrategy;
+	public fun hashCode ()I
+	public final fun setCacheVersion (I)V
+	public final fun setCreationScope (Lkotlinx/coroutines/CoroutineScope;)V
+	public final fun setDirectoryPath (Ljava/lang/String;)V
+	public final fun setKeyTransformer (Lcom/mayakapps/kache/KeyTransformer;)V
+	public final fun setMaxSize (J)V
+	public final fun setStrategy (Lcom/mayakapps/kache/KacheStrategy;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/mayakapps/kache/JavaFileKache : com/mayakapps/kache/ContainerKache {
+	public static final field Companion Lcom/mayakapps/kache/JavaFileKache$Companion;
+	public synthetic fun <init> (Lcom/mayakapps/kache/ContainerKache;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun clear (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getIfAvailable (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getOrPut (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun put (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun putAsync (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun remove (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/mayakapps/kache/JavaFileKache$Companion {
+	public final fun invoke (Ljava/io/File;JLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun invoke$default (Lcom/mayakapps/kache/JavaFileKache$Companion;Ljava/io/File;JLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/mayakapps/kache/JavaFileKache$Configuration {
+	public fun <init> (Ljava/io/File;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;)V
+	public synthetic fun <init> (Ljava/io/File;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/io/File;
+	public final fun component2 ()J
+	public final fun component3 ()Lcom/mayakapps/kache/KacheStrategy;
+	public final fun component4 ()Lkotlinx/coroutines/CoroutineScope;
+	public final fun component5 ()I
+	public final fun component6 ()Lcom/mayakapps/kache/KeyTransformer;
+	public final fun copy (Ljava/io/File;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;)Lcom/mayakapps/kache/JavaFileKache$Configuration;
+	public static synthetic fun copy$default (Lcom/mayakapps/kache/JavaFileKache$Configuration;Ljava/io/File;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;ILjava/lang/Object;)Lcom/mayakapps/kache/JavaFileKache$Configuration;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCacheVersion ()I
+	public final fun getCreationScope ()Lkotlinx/coroutines/CoroutineScope;
+	public final fun getDirectory ()Ljava/io/File;
+	public final fun getKeyTransformer ()Lcom/mayakapps/kache/KeyTransformer;
+	public final fun getMaxSize ()J
+	public final fun getStrategy ()Lcom/mayakapps/kache/KacheStrategy;
+	public fun hashCode ()I
+	public final fun setCacheVersion (I)V
+	public final fun setCreationScope (Lkotlinx/coroutines/CoroutineScope;)V
+	public final fun setDirectory (Ljava/io/File;)V
+	public final fun setKeyTransformer (Lcom/mayakapps/kache/KeyTransformer;)V
+	public final fun setMaxSize (J)V
+	public final fun setStrategy (Lcom/mayakapps/kache/KacheStrategy;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/mayakapps/kache/KeyTransformer {
+	public abstract fun transform (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/mayakapps/kache/OkioFileKache : com/mayakapps/kache/ContainerKache {
+	public static final field Companion Lcom/mayakapps/kache/OkioFileKache$Companion;
+	public synthetic fun <init> (Lokio/FileSystem;Lokio/Path;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;Lcom/mayakapps/kache/KeyTransformer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun clear (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getIfAvailable (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getOrPut (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun put (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun putAsync (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun remove (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/mayakapps/kache/OkioFileKache$Companion {
+	public final fun invoke (Lokio/Path;JLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun invoke$default (Lcom/mayakapps/kache/OkioFileKache$Companion;Lokio/Path;JLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/mayakapps/kache/OkioFileKache$Configuration {
+	public fun <init> (Lokio/Path;JLcom/mayakapps/kache/KacheStrategy;Lokio/FileSystem;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;)V
+	public synthetic fun <init> (Lokio/Path;JLcom/mayakapps/kache/KacheStrategy;Lokio/FileSystem;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lokio/Path;
+	public final fun component2 ()J
+	public final fun component3 ()Lcom/mayakapps/kache/KacheStrategy;
+	public final fun component4 ()Lokio/FileSystem;
+	public final fun component5 ()Lkotlinx/coroutines/CoroutineScope;
+	public final fun component6 ()I
+	public final fun component7 ()Lcom/mayakapps/kache/KeyTransformer;
+	public final fun copy (Lokio/Path;JLcom/mayakapps/kache/KacheStrategy;Lokio/FileSystem;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;)Lcom/mayakapps/kache/OkioFileKache$Configuration;
+	public static synthetic fun copy$default (Lcom/mayakapps/kache/OkioFileKache$Configuration;Lokio/Path;JLcom/mayakapps/kache/KacheStrategy;Lokio/FileSystem;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;ILjava/lang/Object;)Lcom/mayakapps/kache/OkioFileKache$Configuration;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCacheVersion ()I
+	public final fun getCreationScope ()Lkotlinx/coroutines/CoroutineScope;
+	public final fun getDirectory ()Lokio/Path;
+	public final fun getFileSystem ()Lokio/FileSystem;
+	public final fun getKeyTransformer ()Lcom/mayakapps/kache/KeyTransformer;
+	public final fun getMaxSize ()J
+	public final fun getStrategy ()Lcom/mayakapps/kache/KacheStrategy;
+	public fun hashCode ()I
+	public final fun setCacheVersion (I)V
+	public final fun setCreationScope (Lkotlinx/coroutines/CoroutineScope;)V
+	public final fun setDirectory (Lokio/Path;)V
+	public final fun setFileSystem (Lokio/FileSystem;)V
+	public final fun setKeyTransformer (Lcom/mayakapps/kache/KeyTransformer;)V
+	public final fun setMaxSize (J)V
+	public final fun setStrategy (Lcom/mayakapps/kache/KacheStrategy;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/mayakapps/kache/SHA256KeyHasher : com/mayakapps/kache/KeyTransformer {
+	public static final field INSTANCE Lcom/mayakapps/kache/SHA256KeyHasher;
+	public fun transform (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
