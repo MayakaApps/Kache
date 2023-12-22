@@ -5,7 +5,6 @@ pluginManagement {
 }
 
 rootProject.name = "Kache"
-include(":kache-core")
 include(":kache")
 include(":file-kache-core")
 include(":file-kache-okio-only")

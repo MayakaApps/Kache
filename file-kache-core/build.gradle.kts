@@ -67,9 +67,8 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(project(":kache-core"))
+                api(project(":kache"))
 
-                implementation(project(":kache"))
                 implementation(libs.okio)
 
                 implementation(libs.kotlinx.coroutines.core)
