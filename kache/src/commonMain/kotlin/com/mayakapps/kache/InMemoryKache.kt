@@ -1,6 +1,8 @@
 package com.mayakapps.kache
 
-import com.mayakapps.kache.collections.createLinkedHashMap
+import com.mayakapps.kache.collection.MutableLinkedScatterMap
+import com.mayakapps.kache.InMemoryKache.Companion.invoke
+import com.mayakapps.kache.InMemoryKache.Configuration
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -53,7 +55,7 @@ class InMemoryKache<K : Any, V : Any> private constructor(
     private val creationMap = ConcurrentMutableMap<K, Deferred<V?>>()
     private val creationMutex = Mutex()
 
-    private val map: MutableMap<K, V> = strategy.createMap()
+    private val map: MutableLinkedScatterMap<K, V> = strategy.createMap()
     private val mapMutex = Mutex()
 
     override var maxSize = maxSize
@@ -62,12 +64,12 @@ class InMemoryKache<K : Any, V : Any> private constructor(
     override var size = 0L
         private set
 
-    override suspend fun getKeys(): Set<K> = mapMutex.withLock { map.keys.toSet() }
+    override suspend fun getKeys(): Set<K> = mapMutex.withLock { map.keySet.toSet() }
 
     override suspend fun getUnderCreationKeys(): Set<K> = mapMutex.withLock { creationMap.keys.toSet() }
 
     override suspend fun getAllKeys(): KacheKeys<K> =
-        mapMutex.withLock { KacheKeys(map.keys.toSet(), creationMap.keys.toSet()) }
+        mapMutex.withLock { KacheKeys(map.keySet.toSet(), creationMap.keys.toSet()) }
 
     override suspend fun getOrDefault(key: K, defaultValue: V): V =
         getFromCreation(key) ?: getIfAvailableOrDefault(key, defaultValue)
@@ -192,11 +194,9 @@ class InMemoryKache<K : Any, V : Any> private constructor(
         removeAllCreations()
 
         mapMutex.withLock {
-            with(map.iterator()) {
-                forEach { (key, value) ->
-                    remove()
-                    onEntryRemoved(false, key, value, null)
-                }
+            map.forEachRemovable { key, value, remove ->
+                remove()
+                onEntryRemoved(false, key, value, null)
             }
         }
     }
@@ -205,11 +205,9 @@ class InMemoryKache<K : Any, V : Any> private constructor(
         removeAllCreations()
 
         mapMutex.withLock {
-            with(map.iterator()) {
-                forEach { (key, value) ->
-                    remove()
-                    onEntryRemoved(true, key, value, null)
-                }
+            map.forEachRemovable { key, value, remove ->
+                remove()
+                onEntryRemoved(true, key, value, null)
             }
         }
     }
@@ -233,13 +231,11 @@ class InMemoryKache<K : Any, V : Any> private constructor(
     }
 
     private fun nonLockedTrimToSize(size: Long) {
-        with(map.iterator()) {
-            forEach { (key, value) ->
-                if (this@InMemoryKache.size <= size) return@forEach
-                remove()
-                this@InMemoryKache.size -= safeSizeOf(key, value)
-                onEntryRemoved(true, key, value, null)
-            }
+        map.forEachRemovable { key, value, remove ->
+            if (this@InMemoryKache.size <= size) return@forEachRemovable
+            remove()
+            this@InMemoryKache.size -= safeSizeOf(key, value)
+            onEntryRemoved(true, key, value, null)
         }
 
         check(this.size >= 0 || (map.isEmpty() && this.size != 0L)) {
@@ -350,8 +346,8 @@ private class DeferredReplacedException(val replacedWith: Int) : CancellationExc
 
 private const val CANCELLATION_MESSAGE = "The cached element was removed before creation"
 
-private fun <K : Any, V : Any> KacheStrategy.createMap(): MutableMap<K, V> =
-    createLinkedHashMap(
+private fun <K : Any, V : Any> KacheStrategy.createMap(): MutableLinkedScatterMap<K, V> =
+    MutableLinkedScatterMap(
         accessOrder = this == KacheStrategy.LRU || this == KacheStrategy.MRU,
         reverseOrder = this == KacheStrategy.MRU || this == KacheStrategy.FILO,
     )
