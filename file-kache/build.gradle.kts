@@ -67,12 +67,28 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":file-kache-okio-only"))
-                api(project(":file-kache-core"))
+                api(project(":kache"))
+                api(libs.okio)
 
                 implementation(libs.kotlinx.coroutines.core)
+            }
+        }
 
-                implementation(libs.okio)
+        commonTest {
+            dependencies {
+                implementation(kotlin("test"))
+
+                implementation(libs.kotest.assertions)
+
+                implementation(libs.kotlinx.coroutines.test)
+
+                implementation(libs.okio.fakeFilesystem)
+            }
+        }
+
+        jsMain {
+            dependencies {
+                implementation(libs.okio.nodeFilesystem)
             }
         }
     }
