@@ -27,7 +27,7 @@ import okio.buffer
  * @see Configuration
  * @see invoke
  */
-class OkioFileKache private constructor(
+public class OkioFileKache private constructor(
     private val fileSystem: FileSystem,
     private val directory: Path,
     maxSize: Long,
@@ -79,10 +79,10 @@ class OkioFileKache private constructor(
         return result
     }
 
-    override suspend fun put(key: String, creationFunction: suspend (Path) -> Boolean) =
+    override suspend fun put(key: String, creationFunction: suspend (Path) -> Boolean): Path? =
         underlyingKache.put(key.transform()) { wrapCreationFunction(it, creationFunction) }
 
-    override suspend fun putAsync(key: String, creationFunction: suspend (Path) -> Boolean) =
+    override suspend fun putAsync(key: String, creationFunction: suspend (Path) -> Boolean): Deferred<Path?> =
         underlyingKache.putAsync(key.transform()) { wrapCreationFunction(it, creationFunction) }
 
     override suspend fun remove(key: String) {
@@ -183,7 +183,7 @@ class OkioFileKache private constructor(
     /**
      * Configuration for [OkioFileKache]. It is used as a receiver of [OkioFileKache] builder which is [invoke].
      */
-    data class Configuration(
+    public data class Configuration(
         /**
          * The directory used for storing the cached files and the journal.
          */
@@ -222,14 +222,14 @@ class OkioFileKache private constructor(
         var keyTransformer: KeyTransformer? = SHA256KeyHasher,
     )
 
-    companion object {
+    public companion object {
 
         /**
          * Creates a new [OkioFileKache] with the given [directory] and [maxSize] and is configured by [configuration].
          *
          * @see Configuration
          */
-        suspend operator fun invoke(
+        public suspend operator fun invoke(
             directory: Path,
             maxSize: Long,
             configuration: Configuration.() -> Unit = {},
@@ -250,7 +250,7 @@ class OkioFileKache private constructor(
             )
         }
 
-        internal suspend fun open(
+        private suspend fun open(
             fileSystem: FileSystem,
             directory: Path,
             maxSize: Long,

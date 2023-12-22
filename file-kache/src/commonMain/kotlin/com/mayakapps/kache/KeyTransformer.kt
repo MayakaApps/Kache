@@ -6,7 +6,7 @@ package com.mayakapps.kache
  * In most cases, you don't need to implement one yourself. You can use [SHA256KeyHasher] instead or `null` if your
  * keys are already safe for filenames.
  */
-fun interface KeyTransformer {
+public fun interface KeyTransformer {
 
     /**
      * Returns a new transformed version of [oldKey]. Please note that the new key must follow filename guidelines.
@@ -15,5 +15,5 @@ fun interface KeyTransformer {
      */
     // Suppress false-positive: https://youtrack.jetbrains.com/issue/KTIJ-7642
     @Suppress("FUN_INTERFACE_WITH_SUSPEND_FUNCTION")
-    suspend fun transform(oldKey: String): String
+    public suspend fun transform(oldKey: String): String
 }

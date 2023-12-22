@@ -7,7 +7,7 @@ import okio.ByteString.Companion.encodeUtf8
  *
  * The last 1000 hashed values are cached in memory. This is used as the default [KeyTransformer] for any `FileKache`.
  */
-object SHA256KeyHasher : KeyTransformer {
+public object SHA256KeyHasher : KeyTransformer {
     private val hashedCache = InMemoryKache<String, String>(maxSize = 1000)
 
     /**
