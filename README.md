@@ -153,8 +153,7 @@ See documentation [here](https://mayakaapps.github.io/Kache/latest/)
 ## License
 
 This library is distributed under the MIT license. All the code inside this library is licensed under the MIT license
-except for the code inside the module `:collections` which is licensed under the Apache 2.0 license or GPL 2.0 with
-classpath exception.
+unless explicitly stated otherwise.
 
 ## Contributing
 

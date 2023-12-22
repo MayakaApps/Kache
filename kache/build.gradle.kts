@@ -62,11 +62,14 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
+        configureEach {
+            languageSettings.optIn("kotlin.RequiresOptIn")
+            languageSettings.optIn("kotlin.contracts.ExperimentalContracts")
+        }
+
         commonMain {
             dependencies {
                 api(project(":kache-core"))
-
-                implementation(project(":internal-collections"))
 
                 implementation(libs.kotlinx.coroutines.core)
             }
