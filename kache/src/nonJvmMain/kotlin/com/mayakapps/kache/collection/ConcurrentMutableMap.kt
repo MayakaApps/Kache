@@ -1,4 +1,4 @@
-package com.mayakapps.kache
+package com.mayakapps.kache.collection
 
 import co.touchlab.stately.collections.IsoMutableMap
 

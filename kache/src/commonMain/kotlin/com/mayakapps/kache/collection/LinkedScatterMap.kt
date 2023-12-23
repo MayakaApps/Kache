@@ -21,7 +21,10 @@
     "PropertyName",
     "ConstPropertyName",
     "PrivatePropertyName",
-    "NOTHING_TO_INLINE"
+    "NOTHING_TO_INLINE",
+
+    // We are not removing unused members to limit the scope of the changes
+    "Unused",
 )
 
 package com.mayakapps.kache.collection
@@ -29,131 +32,6 @@ package com.mayakapps.kache.collection
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.max
-
-// A "flat" hash map based on abseil's flat_hash_map
-// (see https://abseil.io/docs/cpp/guides/container). Unlike its C++
-// equivalent, this hash map doesn't (and cannot) store the keys and values
-// directly inside a table. Instead the references and keys are stored in
-// 2 separate tables. The implementation could be made "flatter" by storing
-// both keys and values in the same array but this yields no improvement.
-//
-// The main design goal of this container is to provide a generic, cache-
-// friendly, *allocation free* hash map, with performance on par with
-// LinkedHashMap to act as a suitable replacement for the common
-// mutableMapOf() in Kotlin.
-//
-// The implementation is very similar, and is based, as the name suggests,
-// on a flat table of values. To understand the implementation, let's first
-// define the terminology used throughout this file:
-//
-// - Slot
-//       An entry in the backing table; in practice a slot is a pair of
-//       (key, value) stored in two separate allocations.
-// - Metadata
-//       Indicates the state of a slot (available, etc. see below) but
-//       can also store part of the slot's hash.
-// - Group
-//       Metadata for multiple slots that can be manipulated as a unit to
-//       speed up processing.
-//
-// To quickly and efficiently find any given slot, the implementation uses
-// groups to compare up to 8 entries at a time. To achieve this, we use
-// open-addressing probing quadratic probing
-// (https://en.wikipedia.org/wiki/Quadratic_probing). See "A note on
-// probing" down below for more information.
-//
-// The table's memory layout is organized around 3 arrays:
-//
-// - metadata
-//       An array of metadata bytes, encoded as a LongArray (see below).
-//       The size of this array depends on capacity, but is smaller since
-//       the array encodes 8 metadata per Long. There is also padding at
-//       the end to permit branchless probing.
-// - keys
-//       Holds references to the key stored in the map. An index i in
-//       this array maps to the corresponding values in the values array.
-//       This array always has the same size as the capacity of the map.
-// - values
-//       Holds references to the key stored in the map. An index i in
-//       this array maps to the corresponding values in the keys array
-//       This array always has the same size as the capacity of the map.
-//
-// A key's hash code is separated into two distinct hashes:
-//
-// - H1: the hash code's 25 most significant bits
-// - H2: the hash code's 7 least significant bits
-//
-// H1 is used as an index into the slots, and a starting point for a probe
-// whenever we need to seek an entry in the table. H2 is used to quickly
-// filter out slots when looking for a specific key in the table.
-//
-// While H1 is used to initiate a probing sequence, it is never stored in
-// the table. H2 is however stored in the metadata of a slot. The metadata
-// for any given slot is a single byte, which can have one of four states:
-//
-// - Empty: unused slot
-// - Deleted: previously used slot
-// - Full: used slot
-// - Sentinel: marker to avoid branching, used to stop iterations
-//
-// They have the following bit patterns:
-//
-//      Empty: 1 0 0 0 0 0 0 0
-//    Deleted: 1 1 1 1 1 1 1 0
-//       Full: 0 h h h h h h h  // h represents the lower 7 hash bits
-//   Sentinel: 1 1 1 1 1 1 1 1
-//
-// Insertions, reads, removals, and replacements all need to perform the
-// same basic operation: finding a specific slot in the table. This `find`
-// operation works like this:
-//
-// - Compute H1 from the key's hash code
-// - Initialize a probe sequence from H1, which will potentially visit
-//   every group in the map (but usually stops at the first one)
-// - For each probe offset, select an entire group (8 entries) and find
-//   candidate slots in that group. This means finding slots with a
-//   matching H2 hash. We then iterate over the matching slots and compare
-//   the slot's key to the find's key. If we have a final match, we know
-//   the index of the key/value pair in the table. If there is no match
-//   and the entire group is empty, the key does not exist in the table.
-//
-// Matching a Group with H2 ensures that one of the matching slots is
-// likely to hold the same key as the one we are looking for. It also lets
-// us quickly skip entire chunks of the map (for instance during iteration
-// if a Group contains only empty slots, we can ignore it entirely).
-//
-// Since the metadata of a slot is made of a single byte, we could use
-// a ByteArray instead of a LongArray. However, using a LongArray makes
-// constructing a group cheaper and guarantees aligned reads. As a result
-// we use a form of virtual addressing: when looking for a group starting
-// at index 3 for instance, we do not fetch the 4th entry in the array of
-// metadata, but instead find the Long that holds the 4th byte and create
-// a Group of 8 bytes starting from that byte. The details are explained
-// below in the group() function.
-//
-// ** A note on probing **
-//
-// A probe is a virtual construct used to iterate over the groups in the
-// hash table in some interesting order. To probe the tables, we must
-// initiate probing using the hash at which we want to start, using a
-// suitable mask, in our case the table's capacity.
-//
-// The sequence is a triangular progression of the form:
-//
-// `p(i) = GroupWidth * (i ^ 2 + i) / 2 + hash (mod mask + 1)`
-//
-// The first few entries in the metadata table are mirrored at the end of
-// the table so when we inspect those candidates we must make sure to not
-// use their offset directly but instead the "wrap around" values, hence
-// the `mask + 1` modulo.
-//
-// This probe sequence visits every group exactly once if the number of
-// groups is a power of two, since `(i ^ 2 + i) / 2` is a bijection in
-// `Z / (2 ^ m)`. See https://en.wikipedia.org/wiki/Quadratic_probing
-//
-// Reference:
-//    Designing a Fast, Efficient, Cache-friendly Hash Table, Step by Step
-//    2017, Matt Kulukundis, https://www.youtube.com/watch?v=ncHmEUmJZf4
 
 // Indicates that all the slot in a [Group] are empty
 // 0x8080808080808080UL, see explanation in [BitmaskMsb]
@@ -189,38 +67,13 @@ internal const val GroupWidth = 8
 internal typealias Group = Long
 
 // Number of metadata present both at the beginning and at the end of
-// the metadata array so we can use a [GroupWidth] probing window from
+// the metadata array, so we can use a [GroupWidth] probing window from
 // any index in the table.
 internal const val ClonedMetadataCount = GroupWidth - 1
 
 // Capacity to use as the first bump when capacity is initially 0
 // We choose 6 so that the "unloaded" capacity maps to 7
 internal const val DefaultScatterCapacity = 6
-
-// Default empty map to avoid allocations
-private val EmptyScatterMap = MutableLinkedScatterMap<Any?, Nothing>(0)
-
-/**
- * Returns an empty, read-only [LinkedScatterMap].
- */
-@Suppress("UNCHECKED_CAST")
-internal fun <K, V> emptyScatterMap(): LinkedScatterMap<K, V> = EmptyScatterMap as LinkedScatterMap<K, V>
-
-/**
- * Returns a new [MutableLinkedScatterMap].
- */
-internal fun <K, V> mutableScatterMapOf(): MutableLinkedScatterMap<K, V> = MutableLinkedScatterMap()
-
-/**
- * Returns a new [MutableLinkedScatterMap] with the specified contents, given as
- * a list of pairs where the first component is the key and the second
- * is the value. If multiple pairs have the same key, the resulting map
- * will contain the value from the last of those pairs.
- */
-internal fun <K, V> mutableScatterMapOf(vararg pairs: Pair<K, V>): MutableLinkedScatterMap<K, V> =
-    MutableLinkedScatterMap<K, V>(pairs.size).apply {
-        putAll(pairs)
-    }
 
 /**
  * [LinkedScatterMap] is a container with a [Map]-like interface based on a flat
@@ -232,9 +85,10 @@ internal fun <K, V> mutableScatterMapOf(vararg pairs: Pair<K, V>): MutableLinked
  * minimizes memory usage by avoiding the use of separate objects to hold
  * key/value pairs.
  *
- * This implementation makes no guarantee as to the order of the keys and
- * values stored, nor does it make guarantees that the order remains constant
- * over time.
+ * This implementation guarantees that the order of the keys and values
+ * stored in the map is the same as the insertion or access order, depending
+ * on [accessOrder]. The order can be reversed by setting [reverseOrder] to
+ * `true`.
  *
  * This implementation is not thread-safe: if multiple threads access this
  * container concurrently, and one or more threads modify the structure of
@@ -244,20 +98,6 @@ internal fun <K, V> mutableScatterMapOf(vararg pairs: Pair<K, V>): MutableLinked
  *
  * This implementation is read-only and only allows data to be queried. A
  * mutable implementation is provided by [MutableLinkedScatterMap].
- *
- * **Note**: when a [Map] is absolutely necessary, you can use the method
- * [asMap] to create a thin wrapper around a [LinkedScatterMap]. Please refer to
- * [asMap] for more details and caveats.
- *
- * **ScatterMap and SimpleArrayMap**: like [SimpleArrayMap],
- * [LinkedScatterMap]/[MutableLinkedScatterMap] is designed to avoid the allocation of
- * extra objects when inserting new entries in the map. However, the
- * implementation of [LinkedScatterMap]/[MutableLinkedScatterMap] offers better performance
- * characteristics compared to [SimpleArrayMap] and is thus generally
- * preferable. If memory usage is a concern, [SimpleArrayMap] automatically
- * shrinks its storage to avoid using more memory than necessary. You can
- * also control memory usage with [MutableLinkedScatterMap] by manually calling
- * [MutableLinkedScatterMap.trim].
  *
  * @see [MutableLinkedScatterMap]
  */
@@ -307,6 +147,9 @@ internal sealed class LinkedScatterMap<K, V>(
     public val size: Int
         get() = _size
 
+    /**
+     * Returns the keys stored in this map.
+     */
     val keySet: Set<K>
         get() = object : Set<K> {
             override val size: Int get() = this@LinkedScatterMap._size
@@ -393,11 +236,7 @@ internal sealed class LinkedScatterMap<K, V>(
      */
     @PublishedApi
     internal inline fun forEachIndexed(block: (index: Int) -> Unit): Unit =
-        if (!reverseOrder) {
-            chain.forEachIndexed(block)
-        } else {
-            chain.reversedForEachIndexed(block)
-        }
+        chain.forEachIndexed(reverseOrder, block)
 
     /**
      * Iterates over every key/value pair stored in this map by invoking
@@ -674,110 +513,6 @@ internal sealed class LinkedScatterMap<K, V>(
 
         return -1
     }
-
-    /**
-     * Wraps this [LinkedScatterMap] with a [Map] interface. The [Map] is backed
-     * by the [LinkedScatterMap], so changes to the [LinkedScatterMap] are reflected
-     * in the [Map]. If the [LinkedScatterMap] is modified while an iteration over
-     * the [Map] is in progress, the results of the iteration are undefined.
-     *
-     * **Note**: while this method is useful to use this [LinkedScatterMap] with APIs
-     * accepting [Map] interfaces, it is less efficient to do so than to use
-     * [LinkedScatterMap]'s APIs directly. While the [Map] implementation returned by
-     * this method tries to be as efficient as possible, the semantics of [Map]
-     * may require the allocation of temporary objects for access and iteration.
-     */
-    public fun asMap(): Map<K, V> = MapWrapper()
-
-    // TODO: While not mandatory, it would be pertinent to throw a
-    //       ConcurrentModificationException when the underlying ScatterMap
-    //       is modified while iterating over keys/values/entries. To do
-    //       this we should probably have some kind of generation ID in
-    //       ScatterMap that would be incremented on any add/remove/clear
-    //       or rehash.
-    //
-    // TODO: the proliferation of inner classes causes unnecessary code to be
-    //       created. For instance, `entries.size` below requires a total of
-    //       3 `getfield` to resolve the chain of `this` before getting the
-    //       `_size` field. This is likely bad in the various loops like
-    //       `containsAll()` etc. We should probably instead create named
-    //       classes that take a `ScatterMap` as a parameter to refer to it
-    //       directly.
-    internal open inner class MapWrapper : Map<K, V> {
-        override val entries: Set<Map.Entry<K, V>>
-            get() = object : Set<Map.Entry<K, V>> {
-                override val size: Int get() = this@LinkedScatterMap._size
-
-                override fun isEmpty(): Boolean = this@LinkedScatterMap.isEmpty()
-
-                override fun iterator(): Iterator<Map.Entry<K, V>> {
-                    return iterator {
-                        this@LinkedScatterMap.forEachIndexed { index ->
-                            @Suppress("UNCHECKED_CAST")
-                            yield(
-                                MapEntry(
-                                    this@LinkedScatterMap.keys[index] as K,
-                                    this@LinkedScatterMap.values[index] as V
-                                )
-                            )
-                        }
-                    }
-                }
-
-                override fun containsAll(elements: Collection<Map.Entry<K, V>>): Boolean =
-                    elements.all { this@LinkedScatterMap[it.key] == it.value }
-
-                override fun contains(element: Map.Entry<K, V>): Boolean =
-                    this@LinkedScatterMap[element.key] == element.value
-            }
-
-        override val keys: Set<K>
-            get() = object : Set<K> {
-                override val size: Int get() = this@LinkedScatterMap._size
-
-                override fun isEmpty(): Boolean = this@LinkedScatterMap.isEmpty()
-
-                override fun iterator(): Iterator<K> = iterator {
-                    this@LinkedScatterMap.forEachKey { key ->
-                        yield(key)
-                    }
-                }
-
-                override fun containsAll(elements: Collection<K>): Boolean =
-                    elements.all { this@LinkedScatterMap.containsKey(it) }
-
-                override fun contains(element: K): Boolean = this@LinkedScatterMap.containsKey(element)
-            }
-
-        override val values: Collection<V>
-            get() = object : Collection<V> {
-                override val size: Int get() = this@LinkedScatterMap._size
-
-                override fun isEmpty(): Boolean = this@LinkedScatterMap.isEmpty()
-
-                override fun iterator(): Iterator<V> = iterator {
-                    this@LinkedScatterMap.forEachValue { value ->
-                        yield(value)
-                    }
-                }
-
-                override fun containsAll(elements: Collection<V>): Boolean =
-                    elements.all { this@LinkedScatterMap.containsValue(it) }
-
-                override fun contains(element: V): Boolean = this@LinkedScatterMap.containsValue(element)
-            }
-
-        override val size: Int get() = this@LinkedScatterMap._size
-
-        override fun isEmpty(): Boolean = this@LinkedScatterMap.isEmpty()
-
-        // TODO: @Suppress required because of a lint check issue (b/294130025)
-        override fun get(@Suppress("MissingNullability") key: K): V? = this@LinkedScatterMap[key]
-
-        override fun containsValue(value: V): Boolean = this@LinkedScatterMap.containsValue(value)
-
-        override fun containsKey(key: K): Boolean = this@LinkedScatterMap.containsKey(key)
-    }
 }
 
 /**
@@ -790,33 +525,16 @@ internal sealed class LinkedScatterMap<K, V>(
  * minimizes memory usage by avoiding the use of separate objects to hold
  * key/value pairs.
  *
- * This implementation makes no guarantee as to the order of the keys and
- * values stored, nor does it make guarantees that the order remains constant
- * over time.
+ * This implementation guarantees that the order of the keys and values
+ * stored in the map is the same as the insertion or access order, depending
+ * on [accessOrder]. The order can be reversed by setting [reverseOrder] to
+ * `true`.
  *
  * This implementation is not thread-safe: if multiple threads access this
  * container concurrently, and one or more threads modify the structure of
  * the map (insertion or removal for instance), the calling code must provide
  * the appropriate synchronization. Multiple threads are safe to read from this
  * map concurrently if no write is happening.
- *
- * **Note**: when a [Map] is absolutely necessary, you can use the method
- * [asMap] to create a thin wrapper around a [MutableLinkedScatterMap]. Please refer
- * to [asMap] for more details and caveats.
- *
- * **Note**: when a [MutableMap] is absolutely necessary, you can use the
- * method [asMutableMap] to create a thin wrapper around a [MutableLinkedScatterMap].
- * Please refer to [asMutableMap] for more details and caveats.
- *
- * **MutableScatterMap and SimpleArrayMap**: like [SimpleArrayMap],
- * [MutableLinkedScatterMap] is designed to avoid the allocation of
- * extra objects when inserting new entries in the map. However, the
- * implementation of [MutableLinkedScatterMap] offers better performance
- * characteristics compared to [SimpleArrayMap] and is thus generally
- * preferable. If memory usage is a concern, [SimpleArrayMap] automatically
- * shrinks its storage to avoid using more memory than necessary. You can
- * also control memory usage with [MutableLinkedScatterMap] by manually calling
- * [MutableLinkedScatterMap.trim].
  *
  * @constructor Creates a new [MutableLinkedScatterMap]
  * @param initialCapacity The initial desired capacity for this container.
@@ -1265,7 +983,6 @@ internal class MutableLinkedScatterMap<K, V>(
         val previousKeys = keys
         val previousValues = values
         val previousChain = chain
-        val previousCapacity = _capacity
 
         initializeStorage(newCapacity)
 
@@ -1315,307 +1032,70 @@ internal class MutableLinkedScatterMap<K, V>(
     }
 
     /**
-     * Wraps this [LinkedScatterMap] with a [MutableMap] interface. The [MutableMap]
-     * is backed by the [LinkedScatterMap], so changes to the [LinkedScatterMap] are
-     * reflected in the [MutableMap] and vice-versa. If the [LinkedScatterMap] is
-     * modified while an iteration over the [MutableMap] is in progress (and vice-
-     * versa), the results of the iteration are undefined.
-     *
-     * **Note**: while this method is useful to use this [MutableLinkedScatterMap]
-     * with APIs accepting [MutableMap] interfaces, it is less efficient to do
-     * so than to use [MutableLinkedScatterMap]'s APIs directly. While the [MutableMap]
-     * implementation returned by this method tries to be as efficient as possible,
-     * the semantics of [MutableMap] may require the allocation of temporary
-     * objects for access and iteration.
+     * Returns an iterator over the keys stored in this map with function
+     * to retrieve the value for the key.
      */
-    public fun asMutableMap(): MutableMap<K, V> = MutableMapWrapper()
+    internal fun keyIterator(): KeyIterator<K, V> =
+        if (reverseOrder) BackwardKeyIterator() else ForwardKeyIterator()
 
-    // TODO: See TODO on `MapWrapper`
-    private inner class MutableMapWrapper : MapWrapper(), MutableMap<K, V> {
-        override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
-            get() = object : MutableSet<MutableMap.MutableEntry<K, V>> {
-                override val size: Int get() = this@MutableLinkedScatterMap._size
+    internal interface KeyIterator<K, V> : MutableIterator<K> {
+        fun currentValue(): V
+    }
 
-                override fun isEmpty(): Boolean = this@MutableLinkedScatterMap.isEmpty()
+    private inner class ForwardKeyIterator : KeyIterator<K, V> {
+        private var index = -1
+        private var nextIndex = chain.head
 
-                override fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> =
-                    object : MutableIterator<MutableMap.MutableEntry<K, V>> {
+        @Suppress("UNCHECKED_CAST")
+        override fun currentValue(): V = values[index] as V
 
-                        var iterator: Iterator<MutableMap.MutableEntry<K, V>>
-                        var current = -1
+        override fun hasNext(): Boolean = nextIndex != -1
 
-                        init {
-                            iterator = iterator {
-                                this@MutableLinkedScatterMap.forEachIndexed { index ->
-                                    current = index
-                                    yield(
-                                        MutableMapEntry(
-                                            this@MutableLinkedScatterMap.keys,
-                                            this@MutableLinkedScatterMap.values,
-                                            current
-                                        )
-                                    )
-                                }
-                            }
-                        }
-
-                        override fun hasNext(): Boolean = iterator.hasNext()
-
-                        override fun next(): MutableMap.MutableEntry<K, V> = iterator.next()
-
-                        override fun remove() {
-                            if (current != -1) {
-                                this@MutableLinkedScatterMap.removeValueAt(current)
-                                current = -1
-                            }
-                        }
-                    }
-
-                override fun clear() {
-                    this@MutableLinkedScatterMap.clear()
-                }
-
-                override fun containsAll(
-                    elements: Collection<MutableMap.MutableEntry<K, V>>
-                ): Boolean {
-                    return elements.all { this@MutableLinkedScatterMap[it.key] == it.value }
-                }
-
-                override fun contains(element: MutableMap.MutableEntry<K, V>): Boolean =
-                    this@MutableLinkedScatterMap[element.key] == element.value
-
-                override fun addAll(elements: Collection<MutableMap.MutableEntry<K, V>>): Boolean {
-                    throw UnsupportedOperationException()
-                }
-
-                override fun add(element: MutableMap.MutableEntry<K, V>): Boolean {
-                    throw UnsupportedOperationException()
-                }
-
-                override fun retainAll(
-                    elements: Collection<MutableMap.MutableEntry<K, V>>
-                ): Boolean {
-                    var changed = false
-                    this@MutableLinkedScatterMap.forEachIndexed { index ->
-                        var found = false
-                        for (entry in elements) {
-                            if (entry.key == this@MutableLinkedScatterMap.keys[index] &&
-                                entry.value == this@MutableLinkedScatterMap.values[index]
-                            ) {
-                                found = true
-                                break
-                            }
-                        }
-                        if (!found) {
-                            removeValueAt(index)
-                            changed = true
-                        }
-                    }
-                    return changed
-                }
-
-                override fun removeAll(
-                    elements: Collection<MutableMap.MutableEntry<K, V>>
-                ): Boolean {
-                    var changed = false
-                    this@MutableLinkedScatterMap.forEachIndexed { index ->
-                        for (entry in elements) {
-                            if (entry.key == this@MutableLinkedScatterMap.keys[index] &&
-                                entry.value == this@MutableLinkedScatterMap.values[index]
-                            ) {
-                                removeValueAt(index)
-                                changed = true
-                                break
-                            }
-                        }
-                    }
-                    return changed
-                }
-
-                override fun remove(element: MutableMap.MutableEntry<K, V>): Boolean {
-                    val index = findKeyIndex(element.key)
-                    if (index >= 0 && this@MutableLinkedScatterMap.values[index] == element.value) {
-                        removeValueAt(index)
-                        return true
-                    }
-                    return false
-                }
+        override fun next(): K {
+            if (!hasNext()) {
+                throw NoSuchElementException()
             }
-
-        override val keys: MutableSet<K>
-            get() = object : MutableSet<K> {
-                override val size: Int get() = this@MutableLinkedScatterMap._size
-
-                override fun isEmpty(): Boolean = this@MutableLinkedScatterMap.isEmpty()
-
-                override fun iterator(): MutableIterator<K> = object : MutableIterator<K> {
-                    private val iterator = iterator {
-                        this@MutableLinkedScatterMap.forEachIndexed { index ->
-                            yield(index)
-                        }
-                    }
-                    private var current: Int = -1
-
-                    override fun hasNext(): Boolean = iterator.hasNext()
-
-                    override fun next(): K {
-                        current = iterator.next()
-                        @Suppress("UNCHECKED_CAST")
-                        return this@MutableLinkedScatterMap.keys[current] as K
-                    }
-
-                    override fun remove() {
-                        if (current >= 0) {
-                            this@MutableLinkedScatterMap.removeValueAt(current)
-                            current = -1
-                        }
-                    }
-                }
-
-                override fun clear() {
-                    this@MutableLinkedScatterMap.clear()
-                }
-
-                override fun addAll(elements: Collection<K>): Boolean {
-                    throw UnsupportedOperationException()
-                }
-
-                override fun add(element: K): Boolean {
-                    throw UnsupportedOperationException()
-                }
-
-                override fun retainAll(elements: Collection<K>): Boolean {
-                    var changed = false
-                    this@MutableLinkedScatterMap.forEachIndexed { index ->
-                        if (this@MutableLinkedScatterMap.keys[index] !in elements) {
-                            removeValueAt(index)
-                            changed = true
-                        }
-                    }
-                    return changed
-                }
-
-                override fun removeAll(elements: Collection<K>): Boolean {
-                    var changed = false
-                    this@MutableLinkedScatterMap.forEachIndexed { index ->
-                        if (this@MutableLinkedScatterMap.keys[index] in elements) {
-                            removeValueAt(index)
-                            changed = true
-                        }
-                    }
-                    return changed
-                }
-
-                override fun remove(element: K): Boolean {
-                    val index = findKeyIndex(element)
-                    if (index >= 0) {
-                        removeValueAt(index)
-                        return true
-                    }
-                    return false
-                }
-
-                override fun containsAll(elements: Collection<K>): Boolean =
-                    elements.all { this@MutableLinkedScatterMap.containsKey(it) }
-
-                override fun contains(element: K): Boolean =
-                    this@MutableLinkedScatterMap.containsKey(element)
-            }
-
-        override val values: MutableCollection<V>
-            get() = object : MutableCollection<V> {
-                override val size: Int get() = this@MutableLinkedScatterMap._size
-
-                override fun isEmpty(): Boolean = this@MutableLinkedScatterMap.isEmpty()
-
-                override fun iterator(): MutableIterator<V> = object : MutableIterator<V> {
-                    private val iterator = iterator {
-                        this@MutableLinkedScatterMap.forEachIndexed { index ->
-                            yield(index)
-                        }
-                    }
-                    private var current: Int = -1
-
-                    override fun hasNext(): Boolean = iterator.hasNext()
-
-                    override fun next(): V {
-                        current = iterator.next()
-                        @Suppress("UNCHECKED_CAST")
-                        return this@MutableLinkedScatterMap.values[current] as V
-                    }
-
-                    override fun remove() {
-                        if (current >= 0) {
-                            this@MutableLinkedScatterMap.removeValueAt(current)
-                            current = -1
-                        }
-                    }
-                }
-
-                override fun clear() {
-                    this@MutableLinkedScatterMap.clear()
-                }
-
-                override fun addAll(elements: Collection<V>): Boolean {
-                    throw UnsupportedOperationException()
-                }
-
-                override fun add(element: V): Boolean {
-                    throw UnsupportedOperationException()
-                }
-
-                override fun retainAll(elements: Collection<V>): Boolean {
-                    var changed = false
-                    this@MutableLinkedScatterMap.forEachIndexed { index ->
-                        if (this@MutableLinkedScatterMap.values[index] !in elements) {
-                            removeValueAt(index)
-                            changed = true
-                        }
-                    }
-                    return changed
-                }
-
-                override fun removeAll(elements: Collection<V>): Boolean {
-                    var changed = false
-                    this@MutableLinkedScatterMap.forEachIndexed { index ->
-                        if (this@MutableLinkedScatterMap.values[index] in elements) {
-                            removeValueAt(index)
-                            changed = true
-                        }
-                    }
-                    return changed
-                }
-
-                override fun remove(element: V): Boolean {
-                    this@MutableLinkedScatterMap.forEachIndexed { index ->
-                        if (this@MutableLinkedScatterMap.values[index] == element) {
-                            removeValueAt(index)
-                            return true
-                        }
-                    }
-                    return false
-                }
-
-                override fun containsAll(elements: Collection<V>): Boolean =
-                    elements.all { this@MutableLinkedScatterMap.containsValue(it) }
-
-                override fun contains(element: V): Boolean =
-                    this@MutableLinkedScatterMap.containsValue(element)
-            }
-
-        override fun clear() {
-            this@MutableLinkedScatterMap.clear()
+            index = nextIndex
+            nextIndex = chain.next[index]
+            @Suppress("UNCHECKED_CAST")
+            return keys[index] as K
         }
 
-        override fun remove(key: K): V? = this@MutableLinkedScatterMap.remove(key)
-
-        override fun putAll(from: Map<out K, V>) {
-            from.forEach { (key, value) ->
-                this[key] = value
+        override fun remove() {
+            if (index < 0) {
+                throw IllegalStateException()
             }
+            removeValueAt(index)
+            index = -1
+        }
+    }
+
+    private inner class BackwardKeyIterator : KeyIterator<K, V> {
+        private var index = -1
+        private var nextIndex = chain.tail
+
+        @Suppress("UNCHECKED_CAST")
+        override fun currentValue(): V = values[index] as V
+
+        override fun hasNext(): Boolean = nextIndex != -1
+
+        override fun next(): K {
+            if (!hasNext()) {
+                throw NoSuchElementException()
+            }
+            index = nextIndex
+            nextIndex = chain.prev[index]
+            @Suppress("UNCHECKED_CAST")
+            return keys[index] as K
         }
 
-        override fun put(key: K, value: V): V? = this@MutableLinkedScatterMap.put(key, value)
+        override fun remove() {
+            if (index < 0) {
+                throw IllegalStateException()
+            }
+            removeValueAt(index)
+            index = -1
+        }
     }
 }
 

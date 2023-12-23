@@ -1,7 +1,8 @@
 package com.mayakapps.kache
 
-import com.mayakapps.kache.collection.MutableLinkedScatterMap
 import com.mayakapps.kache.InMemoryKache.Configuration
+import com.mayakapps.kache.collection.ConcurrentMutableMap
+import com.mayakapps.kache.collection.MutableLinkedScatterMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -192,9 +193,12 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
         removeAllCreations()
 
         mapMutex.withLock {
-            map.forEachRemovable { key, value, remove ->
-                remove()
-                onEntryRemoved(false, key, value, null)
+            with(map.keyIterator()) {
+                forEach { key ->
+                    val value = currentValue()
+                    remove()
+                    onEntryRemoved(false, key, value, null)
+                }
             }
         }
     }
@@ -203,9 +207,12 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
         removeAllCreations()
 
         mapMutex.withLock {
-            map.forEachRemovable { key, value, remove ->
-                remove()
-                onEntryRemoved(true, key, value, null)
+            with(map.keyIterator()) {
+                forEach { key ->
+                    val value = currentValue()
+                    remove()
+                    onEntryRemoved(true, key, value, null)
+                }
             }
         }
     }
@@ -229,11 +236,14 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     }
 
     private fun nonLockedTrimToSize(size: Long) {
-        map.forEachRemovable { key, value, remove ->
-            if (this@InMemoryKache.size <= size) return@forEachRemovable
-            remove()
-            this@InMemoryKache.size -= safeSizeOf(key, value)
-            onEntryRemoved(true, key, value, null)
+        with(map.keyIterator()) {
+            forEach { key ->
+                val value = currentValue()
+                if (this@InMemoryKache.size <= size) return@forEach
+                remove()
+                this@InMemoryKache.size -= safeSizeOf(key, value)
+                onEntryRemoved(true, key, value, null)
+            }
         }
 
         check(this.size >= 0 || (map.isEmpty() && this.size != 0L)) {

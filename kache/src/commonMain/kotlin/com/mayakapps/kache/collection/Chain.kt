@@ -4,18 +4,18 @@ import kotlin.jvm.JvmField
 
 internal class Chain(capacity: Int) {
     @JvmField
-    var head = -1
+    internal var head = -1
 
     @JvmField
-    var tail = -1
+    internal var tail = -1
 
     @JvmField
-    val next = IntArray(capacity) { -1 }
+    internal val next = IntArray(capacity) { -1 }
 
     @JvmField
-    val prev = IntArray(capacity) { -1 }
+    internal val prev = IntArray(capacity) { -1 }
 
-    fun addToEnd(index: Int) {
+    internal fun addToEnd(index: Int) {
         if (head == -1) {
             head = index
             tail = index
@@ -27,7 +27,7 @@ internal class Chain(capacity: Int) {
         tail = index
     }
 
-    fun moveToEnd(index: Int) {
+    internal fun moveToEnd(index: Int) {
         if (index == tail) {
             return
         }
@@ -53,7 +53,7 @@ internal class Chain(capacity: Int) {
         tail = index
     }
 
-    fun remove(index: Int) {
+    internal fun remove(index: Int) {
         if (index == head) {
             head = next[index]
         }
@@ -77,14 +77,22 @@ internal class Chain(capacity: Int) {
         prev[index] = -1
     }
 
-    fun clear() {
+    internal fun clear() {
         head = -1
         tail = -1
         next.fill(-1)
         prev.fill(-1)
     }
 
-    inline fun forEachIndexed(action: (index: Int) -> Unit) {
+    internal inline fun forEachIndexed(reverseOrder: Boolean = false, action: (index: Int) -> Unit) {
+        if (reverseOrder) {
+            reversedForEachIndexed(action)
+        } else {
+            forEachIndexed(action)
+        }
+    }
+
+    private inline fun forEachIndexed(action: (index: Int) -> Unit) {
         var index = head
         while (index != -1) {
             val nextIndex = next[index]
@@ -93,7 +101,7 @@ internal class Chain(capacity: Int) {
         }
     }
 
-    inline fun reversedForEachIndexed(action: (index: Int) -> Unit) {
+    private inline fun reversedForEachIndexed(action: (index: Int) -> Unit) {
         var index = tail
         while (index != -1) {
             val prevIndex = prev[index]
