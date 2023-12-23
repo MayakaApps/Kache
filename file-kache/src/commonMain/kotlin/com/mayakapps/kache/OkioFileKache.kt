@@ -1,5 +1,6 @@
 package com.mayakapps.kache
 
+import com.mayakapps.kache.OkioFileKache.Configuration
 import com.mayakapps.kache.journal.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -25,7 +26,6 @@ import okio.buffer
  * ```
  *
  * @see Configuration
- * @see invoke
  */
 public class OkioFileKache private constructor(
     private val fileSystem: FileSystem,
@@ -183,74 +183,48 @@ public class OkioFileKache private constructor(
     /**
      * Configuration for [OkioFileKache]. It is used as a receiver of [OkioFileKache] builder which is [invoke].
      */
-    public data class Configuration(
+    public class Configuration(
         /**
          * The directory used for storing the cached files and the journal.
          */
-        var directory: Path,
+        public var directory: Path,
 
         /**
          * The max size of this cache ib bytes.
          */
-        var maxSize: Long,
+        public var maxSize: Long,
 
         /**
          * The strategy used for evicting elements. See [KacheStrategy]
          */
-        var strategy: KacheStrategy = KacheStrategy.LRU,
+        public var strategy: KacheStrategy = KacheStrategy.LRU,
 
         /**
          * The file system used for storing the journal and cached files. See [FileSystem]
          */
-        var fileSystem: FileSystem = getDefaultFileSystem(),
+        public var fileSystem: FileSystem = FileKacheDefaults.defaultFileSystem,
 
         /**
          * The coroutine dispatcher used for executing `creationFunction` of put requests.
          */
-        var creationScope: CoroutineScope = CoroutineScope(getIODispatcher()),
+        public var creationScope: CoroutineScope = CoroutineScope(FileKacheDefaults.defaultCoroutineDispatcher),
 
         /**
          * The version of the entries in this cache. It is used for invalidating the cache. Update it when you change
          * the format of the entries in this cache.
          */
-        var cacheVersion: Int = 1,
+        public var cacheVersion: Int = 1,
 
         /**
          * The [KeyTransformer] used to transform the keys before they are used to store and retrieve data. It is
          * needed to avoid using invalid characters in the file names.
          */
-        var keyTransformer: KeyTransformer? = SHA256KeyHasher,
+        public var keyTransformer: KeyTransformer? = SHA256KeyHasher,
     )
 
     public companion object {
 
-        /**
-         * Creates a new [OkioFileKache] with the given [directory] and [maxSize] and is configured by [configuration].
-         *
-         * @see Configuration
-         */
-        public suspend operator fun invoke(
-            directory: Path,
-            maxSize: Long,
-            configuration: Configuration.() -> Unit = {},
-        ): OkioFileKache {
-            val config = Configuration(
-                directory = directory,
-                maxSize = maxSize,
-            ).apply(configuration)
-
-            return open(
-                fileSystem = config.fileSystem,
-                directory = config.directory,
-                maxSize = config.maxSize,
-                strategy = config.strategy,
-                creationScope = config.creationScope,
-                cacheVersion = config.cacheVersion,
-                keyTransformer = config.keyTransformer,
-            )
-        }
-
-        private suspend fun open(
+        internal suspend fun open(
             fileSystem: FileSystem,
             directory: Path,
             maxSize: Long,
@@ -317,4 +291,30 @@ public class OkioFileKache private constructor(
         private const val TEMP_EXT = ".tmp"
         private const val REDUNDANT_ENTRIES_THRESHOLD = 2000
     }
+}
+
+/**
+ * Creates a new [OkioFileKache] with the given [directory] and [maxSize] and is configured by [configuration].
+ *
+ * @see OkioFileKache.Configuration
+ */
+public suspend fun OkioFileKache(
+    directory: Path,
+    maxSize: Long,
+    configuration: Configuration.() -> Unit = {},
+): OkioFileKache {
+    val config = Configuration(
+        directory = directory,
+        maxSize = maxSize,
+    ).apply(configuration)
+
+    return OkioFileKache.open(
+        fileSystem = config.fileSystem,
+        directory = config.directory,
+        maxSize = config.maxSize,
+        strategy = config.strategy,
+        creationScope = config.creationScope,
+        cacheVersion = config.cacheVersion,
+        keyTransformer = config.keyTransformer,
+    )
 }

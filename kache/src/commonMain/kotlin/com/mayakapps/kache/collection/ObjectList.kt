@@ -13,7 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("NOTHING_TO_INLINE", "RedundantVisibilityModifier", "UNCHECKED_CAST")
+@file:Suppress(
+    "RedundantVisibilityModifier",
+    "UNCHECKED_CAST",
+
+    // We are not removing unused members to limit the scope of the changes
+    "Unused",
+)
 @file:OptIn(ExperimentalContracts::class)
 
 package com.mayakapps.kache.collection
@@ -43,8 +49,6 @@ import kotlin.jvm.JvmOverloads
  * for interacting with public APIs.
  *
  * @see MutableObjectList
- * @see FloatList
- * @see IntList
  * @eee LongList
  */
 internal sealed class ObjectList<E>(initialCapacity: Int) {
@@ -631,8 +635,6 @@ internal sealed class ObjectList<E>(initialCapacity: Int) {
  * to get a [MutableList] or [List] interface for interacting with public APIs.
  *
  * @see ObjectList
- * @see MutableFloatList
- * @see MutableIntList
  * @eee MutableLongList
  */
 internal class MutableObjectList<E>(
@@ -1473,16 +1475,20 @@ internal class MutableObjectList<E>(
 private fun List<*>.checkIndex(index: Int) {
     val size = size
     if (index < 0 || index >= size) {
-        throw IndexOutOfBoundsException("Index $index is out of bounds. " +
-                "The list has $size elements.")
+        throw IndexOutOfBoundsException(
+            "Index $index is out of bounds. " +
+                    "The list has $size elements."
+        )
     }
 }
 
 private fun List<*>.checkSubIndex(fromIndex: Int, toIndex: Int) {
     val size = size
     if (fromIndex > toIndex) {
-        throw IllegalArgumentException("Indices are out of order. fromIndex ($fromIndex) is " +
-                "greater than toIndex ($toIndex).")
+        throw IllegalArgumentException(
+            "Indices are out of order. fromIndex ($fromIndex) is " +
+                    "greater than toIndex ($toIndex)."
+        )
     }
     if (fromIndex < 0) {
         throw IndexOutOfBoundsException("fromIndex ($fromIndex) is less than 0.")

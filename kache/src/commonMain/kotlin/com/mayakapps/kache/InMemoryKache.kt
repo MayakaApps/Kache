@@ -1,8 +1,8 @@
 package com.mayakapps.kache
 
-import com.mayakapps.kache.collection.MutableLinkedScatterMap
-import com.mayakapps.kache.InMemoryKache.Companion.invoke
 import com.mayakapps.kache.InMemoryKache.Configuration
+import com.mayakapps.kache.collection.ConcurrentMutableMap
+import com.mayakapps.kache.collection.MutableLinkedScatterMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -42,9 +42,8 @@ public typealias EntryRemovedListener<K, V> = (evicted: Boolean, key: K, oldValu
  * ```
  *
  * @see Configuration
- * @see invoke
  */
-public class InMemoryKache<K : Any, V : Any> private constructor(
+public class InMemoryKache<K : Any, V : Any> internal constructor(
     maxSize: Long,
     strategy: KacheStrategy,
     private val creationScope: CoroutineScope,
@@ -194,9 +193,12 @@ public class InMemoryKache<K : Any, V : Any> private constructor(
         removeAllCreations()
 
         mapMutex.withLock {
-            map.forEachRemovable { key, value, remove ->
-                remove()
-                onEntryRemoved(false, key, value, null)
+            with(map.keyIterator()) {
+                forEach { key ->
+                    val value = currentValue()
+                    remove()
+                    onEntryRemoved(false, key, value, null)
+                }
             }
         }
     }
@@ -205,9 +207,12 @@ public class InMemoryKache<K : Any, V : Any> private constructor(
         removeAllCreations()
 
         mapMutex.withLock {
-            map.forEachRemovable { key, value, remove ->
-                remove()
-                onEntryRemoved(true, key, value, null)
+            with(map.keyIterator()) {
+                forEach { key ->
+                    val value = currentValue()
+                    remove()
+                    onEntryRemoved(true, key, value, null)
+                }
             }
         }
     }
@@ -231,11 +236,14 @@ public class InMemoryKache<K : Any, V : Any> private constructor(
     }
 
     private fun nonLockedTrimToSize(size: Long) {
-        map.forEachRemovable { key, value, remove ->
-            if (this@InMemoryKache.size <= size) return@forEachRemovable
-            remove()
-            this@InMemoryKache.size -= safeSizeOf(key, value)
-            onEntryRemoved(true, key, value, null)
+        with(map.keyIterator()) {
+            forEach { key ->
+                val value = currentValue()
+                if (this@InMemoryKache.size <= size) return@forEach
+                remove()
+                this@InMemoryKache.size -= safeSizeOf(key, value)
+                onEntryRemoved(true, key, value, null)
+            }
         }
 
         check(this.size >= 0 || (map.isEmpty() && this.size != 0L)) {
@@ -283,60 +291,57 @@ public class InMemoryKache<K : Any, V : Any> private constructor(
     }
 
     /**
-     * Configuration for [InMemoryKache]. It is used as a receiver of [InMemoryKache] builder which is
-     * [InMemoryKache.invoke].
+     * Configuration for [InMemoryKache]. It is used as a receiver of [InMemoryKache] builder
      */
-    public data class Configuration<K, V>(
+    public class Configuration<K, V>(
         /**
          * The max size of this cache. For more information. See [InMemoryKache.maxSize].
          */
-        var maxSize: Long,
+        public var maxSize: Long,
 
         /**
          * The strategy used for evicting elements. See [KacheStrategy]
          */
-        var strategy: KacheStrategy = KacheStrategy.LRU,
+        public var strategy: KacheStrategy = KacheStrategy.LRU,
 
         /**
          * The coroutine scope used for executing `creationFunction` of put requests.
          */
-        var creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
+        public var creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
 
         /**
          * function used for calculating the size of the elements. See [SizeCalculator]
          */
-        var sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
+        public var sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
 
         /**
          * listener called when an entry is removed for any reason. See [EntryRemovedListener]
          */
-        var onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
+        public var onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
     )
+}
 
-    public companion object {
-        /**
-         * Creates a new instance of [InMemoryKache] with a configuration that is initialized by [maxSize] and
-         * [configuration] lambda.
-         *
-         * @see InMemoryKache.maxSize
-         * @see Configuration
-         */
-        public operator fun <K : Any, V : Any> invoke(
-            maxSize: Long,
-            configuration: Configuration<K, V>.() -> Unit = {}
-        ): InMemoryKache<K, V> {
-            require(maxSize > 0) { "maxSize must be positive value" }
+/**
+ * Creates a new instance of [InMemoryKache] with a configuration that is initialized by [maxSize] and
+ * [configuration] lambda.
+ *
+ * @see InMemoryKache.maxSize
+ * @see InMemoryKache.Configuration
+ */
+public fun <K : Any, V : Any> InMemoryKache(
+    maxSize: Long,
+    configuration: Configuration<K, V>.() -> Unit = {}
+): InMemoryKache<K, V> {
+    require(maxSize > 0) { "maxSize must be positive value" }
 
-            val config = Configuration<K, V>(maxSize).apply(configuration)
-            return InMemoryKache(
-                config.maxSize,
-                config.strategy,
-                config.creationScope,
-                config.sizeCalculator,
-                config.onEntryRemoved
-            )
-        }
-    }
+    val config = Configuration<K, V>(maxSize).apply(configuration)
+    return InMemoryKache(
+        config.maxSize,
+        config.strategy,
+        config.creationScope,
+        config.sizeCalculator,
+        config.onEntryRemoved,
+    )
 }
 
 private const val CODE_CREATION = 1

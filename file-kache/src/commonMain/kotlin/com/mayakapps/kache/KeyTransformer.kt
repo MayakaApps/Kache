@@ -13,7 +13,5 @@ public fun interface KeyTransformer {
      * To be safe, just limit yourself to characters, numbers, and underscores when possible. For more information,
      * see [this Wikipedia page](https://en.wikipedia.org/wiki/Filename#Comparison_of_filename_limitations).
      */
-    // Suppress false-positive: https://youtrack.jetbrains.com/issue/KTIJ-7642
-    @Suppress("FUN_INTERFACE_WITH_SUSPEND_FUNCTION")
     public suspend fun transform(oldKey: String): String
 }

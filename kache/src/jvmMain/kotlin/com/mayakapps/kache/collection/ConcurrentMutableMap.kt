@@ -1,4 +1,4 @@
-package com.mayakapps.kache
+package com.mayakapps.kache.collection
 
 import java.util.concurrent.ConcurrentHashMap
 

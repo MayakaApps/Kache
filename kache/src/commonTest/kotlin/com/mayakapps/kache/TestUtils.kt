@@ -3,14 +3,14 @@ package com.mayakapps.kache
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal fun runBasicInMemoryKacheRemoveListenerTest(
     maxSize: Long = MAX_SIZE,
     strategy: KacheStrategy = KacheStrategy.LRU,
@@ -33,7 +33,6 @@ internal fun runBasicInMemoryKacheRemoveListenerTest(
 
 internal data class RemovedEntry<K, V>(val evicted: Boolean, val key: K, val oldValue: V, val newValue: V?)
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal fun runBasicInMemoryKacheTest(
     maxSize: Long = MAX_SIZE,
     strategy: KacheStrategy = KacheStrategy.LRU,
@@ -41,7 +40,6 @@ internal fun runBasicInMemoryKacheTest(
     testBody: suspend InMemoryKache<String, Int>.(TestScope) -> Unit,
 ) = runInMemoryKacheTest(maxSize, strategy, sizeCalculator, testBody = testBody)
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal inline fun <K : Any, V : Any> runInMemoryKacheTest(
     maxSize: Long = MAX_SIZE,
     strategy: KacheStrategy = KacheStrategy.LRU,
@@ -60,12 +58,11 @@ internal inline fun <K : Any, V : Any> runInMemoryKacheTest(
     )
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal inline fun runTestSoftly(
     context: CoroutineContext = EmptyCoroutineContext,
-    dispatchTimeoutMs: Long = 60_000L,
+    timeout: Duration = 30.seconds,
     crossinline testBody: suspend TestScope.() -> Unit,
-) = runTest(context, dispatchTimeoutMs) { assertSoftly { withTimeout(100L) { testBody() } } }
+) = runTest(context, timeout) { assertSoftly { withTimeout(100L) { testBody() } } }
 
 internal fun <T> T.asOldValue() = named("Old value")
 internal fun <T> T.asPutResult() = named("Put result")

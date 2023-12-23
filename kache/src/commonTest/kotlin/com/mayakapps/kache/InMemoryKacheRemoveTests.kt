@@ -4,10 +4,8 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.test.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class InMemoryKacheRemoveTests {
 
     /*
