@@ -1,10 +1,7 @@
 package com.mayakapps.kache
 
-import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CancellationException
-import kotlin.test.Test
+import kotlin.test.*
 
 class InMemoryKacheRemoveTests {
 
@@ -14,22 +11,22 @@ class InMemoryKacheRemoveTests {
 
     @Test
     fun testRemoveNonExisting() = runBasicInMemoryKacheTest {
-        remove(KEY_1) shouldBe null.asOldValue()
+        assertNull(remove(KEY_1))
     }
 
     @Test
     fun testRemoveExisting() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_1)
-        remove(KEY_1) shouldBe VAL_1.asOldValue()
-        getIfAvailable(KEY_1) shouldBe null.asValue()
+        assertEquals(VAL_1, remove(KEY_1))
+        assertNull(getIfAvailable(KEY_1))
     }
 
     @Test
     fun testRemoveCreating() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY_1) { VAL_1 }
-        remove(KEY_1) shouldBe null.asOldValue()
-        shouldThrow<CancellationException> { deferred.await() }
-        get(KEY_1) shouldBe null.asValue()
+        assertNull(remove(KEY_1))
+        assertFailsWith<CancellationException> { deferred.await() }
+        assertNull(get(KEY_1))
     }
 
     @Test
@@ -37,12 +34,12 @@ class InMemoryKacheRemoveTests {
         put(KEY_1, VAL_1)
         remove(KEY_1)
 
-        removedEntries shouldHaveSize 1
+        assertEquals(1, removedEntries.size)
         removedEntries.firstOrNull()?.run {
-            evicted shouldBe false.asEvicted()
-            key shouldBe KEY_1.asKey()
-            oldValue shouldBe VAL_1.asOldValue()
-            newValue shouldBe null.asValue()
+            assertFalse(evicted)
+            assertEquals(KEY_1, key)
+            assertEquals(VAL_1, oldValue)
+            assertNull(newValue)
         }
     }
 
@@ -52,7 +49,7 @@ class InMemoryKacheRemoveTests {
         putAsync(KEY_1) { VAL_1 }
         remove(KEY_1)
 
-        removedEntries shouldHaveSize 0
+        assertEquals(0, removedEntries.size)
     }
 
     /*
@@ -63,7 +60,7 @@ class InMemoryKacheRemoveTests {
     fun testClearExisting() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_1)
         clear()
-        getIfAvailable(KEY_1) shouldBe null.asValue()
+        assertNull(getIfAvailable(KEY_1))
     }
 
     @Test
@@ -71,10 +68,10 @@ class InMemoryKacheRemoveTests {
         val deferred1 = putAsync(KEY_1) { VAL_1 }
         val deferred2 = putAsync(KEY_2) { VAL_2 }
         clear()
-        shouldThrow<CancellationException> { deferred1.await() }
-        shouldThrow<CancellationException> { deferred2.await() }
-        get(KEY_1) shouldBe null.asValue()
-        get(KEY_2) shouldBe null.asValue()
+        assertFailsWith<CancellationException> { deferred1.await() }
+        assertFailsWith<CancellationException> { deferred2.await() }
+        assertNull(get(KEY_1))
+        assertNull(get(KEY_2))
     }
 
     @Test
@@ -83,19 +80,19 @@ class InMemoryKacheRemoveTests {
         put(KEY_2, VAL_2)
         clear()
 
-        removedEntries shouldHaveSize 2
+        assertEquals(2, removedEntries.size)
         removedEntries.getOrNull(0)?.run {
-            evicted shouldBe false.asEvicted()
-            key shouldBe KEY_1.asKey()
-            oldValue shouldBe VAL_1.asOldValue()
-            newValue shouldBe null.asValue()
+            assertFalse(evicted)
+            assertEquals(KEY_1, key)
+            assertEquals(VAL_1, oldValue)
+            assertNull(newValue)
         }
 
         removedEntries.getOrNull(1)?.run {
-            evicted shouldBe false.asEvicted()
-            key shouldBe KEY_2.asKey()
-            oldValue shouldBe VAL_2.asOldValue()
-            newValue shouldBe null.asValue()
+            assertFalse(evicted)
+            assertEquals(KEY_2, key)
+            assertEquals(VAL_2, oldValue)
+            assertNull(newValue)
         }
     }
 
@@ -106,7 +103,7 @@ class InMemoryKacheRemoveTests {
         putAsync(KEY_2) { VAL_2 }
         clear()
 
-        removedEntries shouldHaveSize 0
+        assertEquals(0, removedEntries.size)
     }
 
     /*
@@ -118,9 +115,10 @@ class InMemoryKacheRemoveTests {
         put(KEY_1, VAL_1)
         val deferred = putAsync(KEY_2) { VAL_2 }
         removeAllUnderCreation()
-        shouldThrow<CancellationException> { deferred.await() }
-        get(KEY_1) shouldBe VAL_1.asValue()
-        get(KEY_2) shouldBe null.asValue()
+
+        assertFailsWith<CancellationException> { deferred.await() }
+        assertEquals(VAL_1, get(KEY_1))
+        assertNull(get(KEY_2))
     }
 
     @Test
@@ -130,6 +128,6 @@ class InMemoryKacheRemoveTests {
         putAsync(KEY_2) { VAL_2 }
         removeAllUnderCreation()
 
-        removedEntries shouldHaveSize 0
+        assertEquals(0, removedEntries.size)
     }
 }
