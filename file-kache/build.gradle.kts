@@ -29,9 +29,7 @@ kotlin {
         nodejs { configureTests() }
     }
 
-    // Still experimental
-    // Blocked by coroutines (issue: https://github.com/Kotlin/kotlinx.coroutines/issues/3713) and
-    // Okio (issue: https://github.com/square/okio/issues/1203)
+    // Still experimental - blocked by coroutines
     // wasmJs()
     // wasmWasi()
 
@@ -45,8 +43,7 @@ kotlin {
     watchosArm32()
     watchosArm64()
     watchosX64()
-    // Blocked by coroutines (expected in 1.7.0) and Okio (issue: https://github.com/square/okio/issues/1242)
-    // watchosDeviceArm64()
+    watchosDeviceArm64()
     watchosSimulatorArm64()
 
     tvosArm64()
@@ -58,7 +55,7 @@ kotlin {
 
     mingwX64()
 
-    // Blocked by coroutines (expected in 1.7.0) and Okio (issue: https://github.com/square/okio/issues/1242)
+    // Blocked by Okio
     // androidNativeArm32()
     // androidNativeArm64()
     // androidNativeX86()
@@ -79,8 +76,6 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
-
-                implementation(libs.kotest.assertions)
 
                 implementation(libs.kotlinx.coroutines.test)
 
