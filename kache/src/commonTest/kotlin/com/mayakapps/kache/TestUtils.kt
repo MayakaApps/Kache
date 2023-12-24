@@ -1,27 +1,19 @@
 package com.mayakapps.kache
 
-import io.kotest.assertions.assertSoftly
-import io.kotest.matchers.Matcher
-import io.kotest.matchers.MatcherResult
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withTimeout
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 internal fun runBasicInMemoryKacheRemoveListenerTest(
     maxSize: Long = MAX_SIZE,
     strategy: KacheStrategy = KacheStrategy.LRU,
     sizeCalculator: SizeCalculator<String, Int> = { _, _ -> 1 },
     testBody: suspend InMemoryKache<String, Int>.(MutableList<RemovedEntry<String, Int>>) -> Unit,
-) = runTestSoftly {
+) = runTest {
     val removedEntries = mutableListOf<RemovedEntry<String, Int>>()
     // Explicit type parameter is a workaround for https://youtrack.jetbrains.com/issue/KT-53109
     val cache = InMemoryKache<String, Int>(maxSize) {
         this.strategy = strategy
-        this.creationScope = this@runTestSoftly
+        this.creationScope = this@runTest
         this.sizeCalculator = sizeCalculator
         this.onEntryRemoved = { evicted, key, oldValue, newValue ->
             removedEntries += RemovedEntry(evicted, key, oldValue, newValue)
@@ -46,38 +38,15 @@ internal inline fun <K : Any, V : Any> runInMemoryKacheTest(
     noinline sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
     noinline onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
     crossinline testBody: suspend InMemoryKache<K, V>.(TestScope) -> Unit,
-) = runTestSoftly {
+) = runTest {
     testBody(
         InMemoryKache(maxSize) {
             this.strategy = strategy
-            this.creationScope = this@runTestSoftly
+            this.creationScope = this@runTest
             this.sizeCalculator = sizeCalculator
             this.onEntryRemoved = onEntryRemoved
         },
         this,
-    )
-}
-
-internal inline fun runTestSoftly(
-    context: CoroutineContext = EmptyCoroutineContext,
-    timeout: Duration = 30.seconds,
-    crossinline testBody: suspend TestScope.() -> Unit,
-) = runTest(context, timeout) { assertSoftly { withTimeout(100L) { testBody() } } }
-
-internal fun <T> T.asOldValue() = named("Old value")
-internal fun <T> T.asPutResult() = named("Put result")
-internal fun <T> T.asValue() = named("Value")
-internal fun Boolean.asEvicted() = named("Evicted")
-internal fun <T> T.asKey() = named("Key")
-internal fun Number.asSize() = toLong().named("Size")
-internal fun Number.asMaxSize() = toLong().named("Max size")
-internal fun <T> T.named(name: String) = genericMatcher(name, this)
-
-private fun <T> genericMatcher(name: String, expected: T) = Matcher<T> { value ->
-    MatcherResult(
-        passed = value == expected,
-        failureMessageFn = { "$name ($value) should be ($expected)" },
-        negatedFailureMessageFn = { "$name ($value) should not be ($expected)" },
     )
 }
 

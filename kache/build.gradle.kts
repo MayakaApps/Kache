@@ -27,8 +27,7 @@ kotlin {
         nodejs { configureTests() }
     }
 
-    // Still experimental
-    // Blocked by coroutines (issue: https://github.com/Kotlin/kotlinx.coroutines/issues/3713), Stately, and Kotest (depends on coroutines)
+    // Still experimental - blocked by coroutines
     // wasmJs()
     // wasmWasi()
 
@@ -42,8 +41,7 @@ kotlin {
     watchosArm32()
     watchosArm64()
     watchosX64()
-    // Blocked by Kotest (expected in 5.9.0)
-    // watchosDeviceArm64()
+    watchosDeviceArm64()
     watchosSimulatorArm64()
 
     tvosArm64()
@@ -55,11 +53,10 @@ kotlin {
 
     mingwX64()
 
-    // Blocked by Kotest (expected in 5.9.0)
-    // androidNativeArm32()
-    // androidNativeArm64()
-    // androidNativeX86()
-    // androidNativeX64()
+    androidNativeArm32()
+    androidNativeArm64()
+    androidNativeX86()
+    androidNativeX64()
 
     applyDefaultHierarchyTemplate()
 
@@ -78,8 +75,6 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
-
-                implementation(libs.kotest.assertions)
 
                 implementation(libs.kotlinx.coroutines.test)
             }

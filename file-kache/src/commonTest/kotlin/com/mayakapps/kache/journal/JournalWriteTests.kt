@@ -1,8 +1,9 @@
 package com.mayakapps.kache.journal
 
-import io.kotest.matchers.shouldBe
 import okio.*
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertTrue
 
 class JournalWriteTests {
 
@@ -10,7 +11,7 @@ class JournalWriteTests {
     fun testWriteHeader() {
         val buffer = Buffer()
         JournalWriter(buffer).use { it.writeHeader() }
-        buffer.readByteArray() shouldBe headerBytes
+        assertContentEquals(headerBytes, buffer.readByteArray())
     }
 
     @Test
@@ -21,7 +22,7 @@ class JournalWriteTests {
 
         val buffer = Buffer()
         JournalWriter(buffer).use { it.writeDirty(KEY) }
-        buffer.readByteArray() shouldBe bytes
+        assertContentEquals(bytes, buffer.readByteArray())
     }
 
     @Test
@@ -32,7 +33,7 @@ class JournalWriteTests {
 
         val buffer = Buffer()
         JournalWriter(buffer).use { it.writeClean(KEY) }
-        buffer.readByteArray() shouldBe bytes
+        assertContentEquals(bytes, buffer.readByteArray())
     }
 
     @Test
@@ -43,7 +44,7 @@ class JournalWriteTests {
 
         val buffer = Buffer()
         JournalWriter(buffer).use { it.writeRemove(KEY) }
-        buffer.readByteArray() shouldBe bytes
+        assertContentEquals(bytes, buffer.readByteArray())
     }
 
     @Test
@@ -55,7 +56,7 @@ class JournalWriteTests {
 
         val buffer = Buffer()
         JournalWriter(buffer).use { it.writeAll(listOf(KEY), listOf(ALT_KEY)) }
-        buffer.readByteArray() shouldBe bytes
+        assertContentEquals(bytes, buffer.readByteArray())
     }
 
     @Test
@@ -73,7 +74,7 @@ class JournalWriteTests {
         }
 
         JournalWriter(sink.buffer()).close()
-        sink.wasClosed shouldBe true
+        assertTrue(sink.wasClosed)
     }
 
     companion object {

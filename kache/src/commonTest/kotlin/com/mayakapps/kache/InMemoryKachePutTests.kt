@@ -1,15 +1,11 @@
 package com.mayakapps.kache
 
-import io.kotest.assertions.throwables.shouldNotThrow
-import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.currentTime
-import kotlin.test.Test
+import kotlin.test.*
 
 class InMemoryKachePutTests {
 
@@ -19,40 +15,48 @@ class InMemoryKachePutTests {
 
     @Test
     fun testGetOrPutNewCreatedSuccessfully() = runBasicInMemoryKacheTest {
-        getOrPut(KEY_1) { VAL_1 } shouldBe VAL_1.asPutResult()
+        assertEquals(VAL_1, getOrPut(KEY_1) { VAL_1 })
     }
 
     @Test
     fun testGetOrPutNewFailedCreating() = runBasicInMemoryKacheTest {
-        getOrPut(KEY_1) { null } shouldBe null.asPutResult()
+        assertNull(getOrPut(KEY_1) { null })
     }
 
     @Test
     fun testGetOrPutExistingCreatedSuccessfully() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_1)
-        getOrPut(KEY_1) { VAL_2 } shouldBe VAL_1.asPutResult()
+        assertEquals(VAL_1, getOrPut(KEY_1) { VAL_2 })
     }
 
     @Test
     fun testGetOrPutExistingFailedCreating() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_1)
-        getOrPut(KEY_1) { null } shouldBe VAL_1.asPutResult()
+        assertEquals(VAL_1, getOrPut(KEY_1) { null })
     }
 
     @Test
     fun testGetOrPutCreatingCreatedSuccessfully() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY_1) { VAL_1 }
-        getOrPut(KEY_1) { VAL_2 } shouldBe VAL_1.asPutResult()
-        shouldNotThrow<CancellationException> { deferred.await() }
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertEquals(VAL_1, getOrPut(KEY_1) { VAL_2 })
+        try {
+            deferred.await()
+        } catch (e: CancellationException) {
+            fail("Deferred should not be cancelled")
+        }
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     @Test
     fun testGetOrPutCreatingFailedCreating() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY_1) { VAL_1 }
-        getOrPut(KEY_1) { null } shouldBe VAL_1.asPutResult()
-        shouldNotThrow<CancellationException> { deferred.await() }
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertEquals(VAL_1, getOrPut(KEY_1) { null })
+        try {
+            deferred.await()
+        } catch (e: CancellationException) {
+            fail("Deferred should not be cancelled")
+        }
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     // See issue #50 (https://github.com/MayakaApps/Kache/issues/50) for more details
@@ -69,7 +73,7 @@ class InMemoryKachePutTests {
         put(KEY_2) { VAL_2 }
 
         @OptIn(ExperimentalCoroutinesApi::class)
-        testScope.currentTime shouldBe 1L
+        assertEquals(1L, testScope.currentTime)
     }
 
     /*
@@ -78,36 +82,36 @@ class InMemoryKachePutTests {
 
     @Test
     fun testPutNew() = runBasicInMemoryKacheTest {
-        put(KEY_1, VAL_1) shouldBe null.asOldValue()
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertNull(put(KEY_1, VAL_1))
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     @Test
     fun testPutExisting() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_1)
-        put(KEY_1, VAL_2) shouldBe VAL_1.asOldValue()
-        getIfAvailable(KEY_1) shouldBe VAL_2.asValue()
+        assertEquals(VAL_1, put(KEY_1, VAL_2))
+        assertEquals(VAL_2, getIfAvailable(KEY_1))
     }
 
     @Test
     fun testPutExistingTrigger() = runBasicInMemoryKacheRemoveListenerTest { removedEntries ->
         put(KEY_1, VAL_1)
         put(KEY_1, VAL_2)
-        removedEntries shouldHaveSize 1
+        assertEquals(1, removedEntries.size)
         removedEntries.firstOrNull()?.run {
-            evicted shouldBe false.asEvicted()
-            key shouldBe KEY_1.asKey()
-            oldValue shouldBe VAL_1.asOldValue()
-            newValue shouldBe VAL_2.asValue()
+            assertEquals(false, evicted)
+            assertEquals(KEY_1, key)
+            assertEquals(VAL_1, oldValue)
+            assertEquals(VAL_2, newValue)
         }
     }
 
     @Test
     fun testPutCreating() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY_1) { VAL_2 }
-        put(KEY_1, VAL_1) shouldBe null.asOldValue()
-        shouldThrow<CancellationException> { deferred.await() }
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertNull(put(KEY_1, VAL_1))
+        assertFailsWith<CancellationException> { deferred.await() }
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     /*
@@ -116,21 +120,21 @@ class InMemoryKachePutTests {
 
     @Test
     fun testPutNewCreatedSuccessfully() = runBasicInMemoryKacheTest {
-        put(KEY_1) { VAL_1 } shouldBe VAL_1.asPutResult()
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertEquals(VAL_1, put(KEY_1) { VAL_1 })
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     @Test
     fun testPutNewFailedCreating() = runBasicInMemoryKacheTest {
-        put(KEY_1) { null } shouldBe null.asPutResult()
-        getIfAvailable(KEY_1) shouldBe null.asValue()
+        assertNull(put(KEY_1) { null })
+        assertNull(getIfAvailable(KEY_1))
     }
 
     @Test
     fun testPutExistingCreatedSuccessfully() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_2)
-        put(KEY_1) { VAL_1 } shouldBe VAL_1.asPutResult()
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertEquals(VAL_1, put(KEY_1) { VAL_1 })
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     @Test
@@ -138,20 +142,20 @@ class InMemoryKachePutTests {
         put(KEY_1, VAL_2)
         put(KEY_1) { VAL_1 }
 
-        removedEntries shouldHaveSize 1
+        assertEquals(1, removedEntries.size)
         removedEntries.firstOrNull()?.run {
-            evicted shouldBe false.asEvicted()
-            key shouldBe KEY_1.asKey()
-            oldValue shouldBe VAL_2.asOldValue()
-            newValue shouldBe VAL_1.asValue()
+            assertEquals(false, evicted)
+            assertEquals(KEY_1, key)
+            assertEquals(VAL_2, oldValue)
+            assertEquals(VAL_1, newValue)
         }
     }
 
     @Test
     fun testPutExistingFailedCreating() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_1)
-        put(KEY_1) { null } shouldBe null.asPutResult()
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertNull(put(KEY_1) { null })
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     @Test
@@ -159,23 +163,23 @@ class InMemoryKachePutTests {
         put(KEY_1, VAL_1)
         put(KEY_1) { null }
 
-        removedEntries shouldHaveSize 0
+        assertEquals(0, removedEntries.size)
     }
 
     @Test
     fun testPutCreatingCreatedSuccessfully() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY_1) { VAL_2 }
-        put(KEY_1) { VAL_1 } shouldBe VAL_1.asPutResult()
-        shouldThrow<CancellationException> { deferred.await() }
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertEquals(VAL_1, put(KEY_1) { VAL_1 })
+        assertFailsWith<CancellationException> { deferred.await() }
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     @Test
     fun testPutCreatingCreationFailed() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY_1) { VAL_1 }
-        put(KEY_1) { null } shouldBe null.asPutResult()
-        shouldThrow<CancellationException> { deferred.await() }
-        getIfAvailable(KEY_1) shouldBe null.asValue()
+        assertNull(put(KEY_1) { null })
+        assertFailsWith<CancellationException> { deferred.await() }
+        assertNull(getIfAvailable(KEY_1))
     }
 
     /*
@@ -185,26 +189,26 @@ class InMemoryKachePutTests {
     @Test
     fun testPutAsyncNewCreatedSuccessfully() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY_1) { VAL_1 }
-        getIfAvailable(KEY_1) shouldBe null.asOldValue()
-        deferred.await() shouldBe VAL_1.asPutResult()
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertNull(getIfAvailable(KEY_1))
+        assertEquals(VAL_1, deferred.await())
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     @Test
     fun testPutAsyncNewFailedCreating() = runBasicInMemoryKacheTest {
         val deferred = putAsync(KEY_1) { null }
-        getIfAvailable(KEY_1) shouldBe null.asOldValue()
-        deferred.await() shouldBe null.asPutResult()
-        getIfAvailable(KEY_1) shouldBe null.asValue()
+        assertNull(getIfAvailable(KEY_1))
+        assertNull(deferred.await())
+        assertNull(getIfAvailable(KEY_1))
     }
 
     @Test
     fun testPutAsyncExistingCreatedSuccessfully() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_2)
         val deferred = putAsync(KEY_1) { VAL_1 }
-        getIfAvailable(KEY_1) shouldBe VAL_2.asOldValue()
-        deferred.await() shouldBe VAL_1.asPutResult()
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertEquals(VAL_2, getIfAvailable(KEY_1))
+        assertEquals(VAL_1, deferred.await())
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     @Test
@@ -212,12 +216,12 @@ class InMemoryKachePutTests {
         put(KEY_1, VAL_2)
         putAsync(KEY_1) { VAL_1 }.await()
 
-        removedEntries shouldHaveSize 1
+        assertEquals(1, removedEntries.size)
         removedEntries.firstOrNull()?.run {
-            evicted shouldBe false.asEvicted()
-            key shouldBe KEY_1.asKey()
-            oldValue shouldBe VAL_2.asOldValue()
-            newValue shouldBe VAL_1.asValue()
+            assertEquals(false, evicted)
+            assertEquals(KEY_1, key)
+            assertEquals(VAL_2, oldValue)
+            assertEquals(VAL_1, newValue)
         }
     }
 
@@ -225,9 +229,9 @@ class InMemoryKachePutTests {
     fun testPutAsyncExistingFailedCreating() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_1)
         val deferred = putAsync(KEY_1) { null }
-        getIfAvailable(KEY_1) shouldBe VAL_1.asOldValue()
-        deferred.await() shouldBe null.asPutResult()
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
+        assertNull(deferred.await())
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     @Test
@@ -235,25 +239,25 @@ class InMemoryKachePutTests {
         put(KEY_1, VAL_1)
         putAsync(KEY_1) { null }.await()
 
-        removedEntries shouldHaveSize 0
+        assertEquals(0, removedEntries.size)
     }
 
     @Test
     fun testPutAsyncCreatingCreatedSuccessfully() = runBasicInMemoryKacheTest {
         val oldDeferred = putAsync(KEY_1) { VAL_2 }
         val deferred = putAsync(KEY_1) { VAL_1 }
-        shouldThrow<CancellationException> { oldDeferred.await() }
-        deferred.await() shouldBe VAL_1.asPutResult()
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertFailsWith<CancellationException> { oldDeferred.await() }
+        assertEquals(VAL_1, deferred.await())
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     @Test
     fun testPutAsyncCreatingCreationFailed() = runBasicInMemoryKacheTest {
         val oldDeferred = putAsync(KEY_1) { VAL_1 }
         val deferred = putAsync(KEY_1) { null }
-        shouldThrow<CancellationException> { oldDeferred.await() }
-        deferred.await() shouldBe null.asPutResult()
-        getIfAvailable(KEY_1) shouldBe null.asValue()
+        assertFailsWith<CancellationException> { oldDeferred.await() }
+        assertNull(deferred.await())
+        assertNull(getIfAvailable(KEY_1))
     }
 
     /*
@@ -264,7 +268,7 @@ class InMemoryKachePutTests {
     fun testGetIfAvailableSameKeyInsidePut() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_1)
         put(KEY_1) {
-            getIfAvailable(KEY_1) shouldBe VAL_1
+            assertEquals(VAL_1, getIfAvailable(KEY_1))
             VAL_2
         }
     }
@@ -273,7 +277,7 @@ class InMemoryKachePutTests {
     fun testGetIfAvailableDifferentKeyInsidePut() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_1)
         put(KEY_2) {
-            getIfAvailable(KEY_1) shouldBe VAL_1
+            assertEquals(VAL_1, getIfAvailable(KEY_1))
             VAL_2
         }
     }
@@ -282,7 +286,7 @@ class InMemoryKachePutTests {
     fun testGetDifferentKeyInsidePut() = runBasicInMemoryKacheTest {
         put(KEY_1, VAL_1)
         put(KEY_2) {
-            get(KEY_1) shouldBe VAL_1
+            assertEquals(VAL_1, get(KEY_1))
             VAL_2
         }
     }
@@ -290,7 +294,7 @@ class InMemoryKachePutTests {
     @Test
     fun testGetOrPutDifferentKeyInsidePut() = runBasicInMemoryKacheTest {
         put(KEY_2) {
-            getOrPut(KEY_1) { VAL_1 } shouldBe VAL_1
+            assertEquals(VAL_1, getOrPut(KEY_1) { VAL_1 })
             VAL_2
         }
     }
@@ -302,7 +306,7 @@ class InMemoryKachePutTests {
             VAL_1
         }
 
-        getIfAvailable(KEY_1) shouldBe VAL_1.asValue()
+        assertEquals(VAL_1, getIfAvailable(KEY_1))
     }
 
     @Test
@@ -341,7 +345,6 @@ class InMemoryKachePutTests {
         sizeCalculator = { _, _ -> 20 },
     ) {
         put(KEY_1, VAL_1)
-        size shouldBe 0.asSize()
-
+        assertEquals(0, size)
     }
 }

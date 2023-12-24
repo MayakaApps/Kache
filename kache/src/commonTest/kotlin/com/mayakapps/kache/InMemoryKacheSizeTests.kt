@@ -1,8 +1,9 @@
 package com.mayakapps.kache
 
-import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.shouldBe
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class InMemoryKacheSizeTests {
 
@@ -15,48 +16,49 @@ class InMemoryKacheSizeTests {
         put(KEY_1, VAL_1)
         put(KEY_2, VAL_2)
         trimToSize(1)
-        size shouldBe 1.asSize()
-        maxSize shouldBe MAX_SIZE.asMaxSize()
+        assertEquals(1, size)
+        assertEquals(MAX_SIZE, maxSize)
     }
 
     @Test
     fun testTrimToSizeElementsForLRU() = runBasicInMemoryKacheTest(strategy = KacheStrategy.LRU) {
         prepareKache()
         trimToSize(3)
-        get(KEY_1) shouldBe VAL_1.asValue()
-        get(KEY_2) shouldBe VAL_2.asValue()
-        get(KEY_3) shouldBe null.asValue()
-        get(KEY_4) shouldBe VAL_4.asValue()
+
+        assertEquals(VAL_1, get(KEY_1))
+        assertEquals(VAL_2, get(KEY_2))
+        assertNull(get(KEY_3))
+        assertEquals(VAL_4, get(KEY_4))
     }
 
     @Test
     fun testTrimToSizeElementsForMRU() = runBasicInMemoryKacheTest(strategy = KacheStrategy.MRU) {
         prepareKache()
         trimToSize(3)
-        get(KEY_1) shouldBe VAL_1.asValue()
-        get(KEY_2) shouldBe null.asValue()
-        get(KEY_3) shouldBe VAL_3.asValue()
-        get(KEY_4) shouldBe VAL_4.asValue()
+        assertEquals(VAL_1, get(KEY_1))
+        assertNull(get(KEY_2))
+        assertEquals(VAL_3, get(KEY_3))
+        assertEquals(VAL_4, get(KEY_4))
     }
 
     @Test
     fun testTrimToSizeElementsForFIFO() = runBasicInMemoryKacheTest(strategy = KacheStrategy.FIFO) {
         prepareKache()
         trimToSize(3)
-        get(KEY_1) shouldBe null.asValue()
-        get(KEY_2) shouldBe VAL_2.asValue()
-        get(KEY_3) shouldBe VAL_3.asValue()
-        get(KEY_4) shouldBe VAL_4.asValue()
+        assertNull(get(KEY_1))
+        assertEquals(VAL_2, get(KEY_2))
+        assertEquals(VAL_3, get(KEY_3))
+        assertEquals(VAL_4, get(KEY_4))
     }
 
     @Test
     fun testTrimToSizeElementsForFILO() = runBasicInMemoryKacheTest(strategy = KacheStrategy.FILO) {
         prepareKache()
         trimToSize(3)
-        get(KEY_1) shouldBe VAL_1.asValue()
-        get(KEY_2) shouldBe VAL_2.asValue()
-        get(KEY_3) shouldBe VAL_3.asValue()
-        get(KEY_4) shouldBe null.asValue()
+        assertEquals(VAL_1, get(KEY_1))
+        assertEquals(VAL_2, get(KEY_2))
+        assertEquals(VAL_3, get(KEY_3))
+        assertNull(get(KEY_4))
     }
 
     @Test
@@ -64,12 +66,12 @@ class InMemoryKacheSizeTests {
         prepareKache()
         trimToSize(3)
 
-        removedEntries shouldHaveSize 1
+        assertEquals(1, removedEntries.size)
         removedEntries.firstOrNull()?.run {
-            evicted shouldBe true.asEvicted()
-            key shouldBe KEY_3.asKey()
-            oldValue shouldBe VAL_3.asOldValue()
-            newValue shouldBe null.asValue()
+            assertTrue(evicted)
+            assertEquals(KEY_3, key)
+            assertEquals(VAL_3, oldValue)
+            assertNull(newValue)
         }
     }
 
@@ -82,8 +84,8 @@ class InMemoryKacheSizeTests {
         put(KEY_1, VAL_1)
         put(KEY_2, VAL_2)
         resize(1)
-        size shouldBe 1.asSize()
-        maxSize shouldBe 1.asMaxSize()
+        assertEquals(1, size)
+        assertEquals(1, maxSize)
     }
 
     @Test
@@ -91,8 +93,8 @@ class InMemoryKacheSizeTests {
         put(KEY_1, VAL_1)
         put(KEY_2, VAL_2)
         resize(1)
-        get(KEY_1) shouldBe null.asValue()
-        get(KEY_2) shouldBe VAL_2.asValue()
+        assertNull(get(KEY_1))
+        assertEquals(VAL_2, get(KEY_2))
     }
 
     @Test
@@ -101,12 +103,12 @@ class InMemoryKacheSizeTests {
         put(KEY_2, VAL_2)
         resize(1)
 
-        removedEntries shouldHaveSize 1
+        assertEquals(1, removedEntries.size)
         removedEntries.firstOrNull()?.run {
-            evicted shouldBe true.asEvicted()
-            key shouldBe KEY_1.asKey()
-            oldValue shouldBe VAL_1.asOldValue()
-            newValue shouldBe null.asValue()
+            assertTrue(evicted)
+            assertEquals(KEY_1, key)
+            assertEquals(VAL_1, oldValue)
+            assertNull(newValue)
         }
     }
 
@@ -119,13 +121,12 @@ class InMemoryKacheSizeTests {
         put(KEY_1, VAL_1)
         put(KEY_2, VAL_2)
 
-        size shouldBe 1L.asSize()
-        removedEntries shouldHaveSize 1
+        assertEquals(1, removedEntries.size)
         removedEntries.firstOrNull()?.run {
-            evicted shouldBe true.asEvicted()
-            key shouldBe KEY_1.asKey()
-            oldValue shouldBe VAL_1.asOldValue()
-            newValue shouldBe null.asValue()
+            assertTrue(evicted)
+            assertEquals(KEY_1, key)
+            assertEquals(VAL_1, oldValue)
+            assertNull(newValue)
         }
     }
 
@@ -134,8 +135,8 @@ class InMemoryKacheSizeTests {
         put(KEY_1, VAL_1)
         put(KEY_2, VAL_2)
 
-        size shouldBe 2.asSize()
-        removedEntries shouldHaveSize 0
+        assertEquals(2, size)
+        assertEquals(0, removedEntries.size)
     }
 
     /*
@@ -150,7 +151,7 @@ class InMemoryKacheSizeTests {
         put(KEY_1, VAL_1)
         put(KEY_2, VAL_2)
 
-        size shouldBe (VAL_1 + VAL_2).asSize()
+        assertEquals((VAL_1 + VAL_2).toLong(), size)
     }
 
 
