@@ -1,25 +1,16 @@
 package com.mayakapps.kache.journal
 
-import com.mayakapps.kache.combineResults
-import com.mayakapps.kache.named
 import com.mayakapps.kache.nullableUse
-import io.kotest.assertions.assertSoftly
-import io.kotest.assertions.throwables.shouldNotThrow
-import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.matchers.Matcher
-import io.kotest.matchers.nulls.beNull
-import io.kotest.matchers.should
-import io.kotest.matchers.shouldBe
 import okio.*
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
-import kotlin.test.Test
+import kotlin.test.*
 
 class JournalReadTests {
 
     @Test
     fun testValidateHeaderEmptyStream() {
-        shouldThrow<JournalInvalidHeaderException> {
+        assertFailsWith<JournalInvalidHeaderException> {
             JournalReader(Buffer()).use { it.validateHeader() }
         }
     }
@@ -28,7 +19,7 @@ class JournalReadTests {
     fun testValidateHeaderIncorrectFile() {
         // Text file containing "Text File"
         val bytes = byteArrayOf(0x54, 0x65, 0x78, 0x74, 0x20, 0x46, 0x69, 0x6C, 0x65)
-        shouldThrow<JournalInvalidHeaderException> {
+        assertFailsWith<JournalInvalidHeaderException> {
             JournalReader(Buffer().apply { write(bytes) }).use { it.validateHeader() }
         }
     }
@@ -40,7 +31,7 @@ class JournalReadTests {
             0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        shouldThrow<JournalInvalidHeaderException> {
+        assertFailsWith<JournalInvalidHeaderException> {
             JournalReader(Buffer().apply { write(bytes) }).use { it.validateHeader() }
         }
     }
@@ -52,7 +43,7 @@ class JournalReadTests {
             0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        shouldThrow<JournalInvalidHeaderException> {
+        assertFailsWith<JournalInvalidHeaderException> {
             JournalReader(Buffer().apply { write(bytes) }).use { it.validateHeader() }
         }
     }
@@ -63,17 +54,21 @@ class JournalReadTests {
             0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, JOURNAL_VERSION, 0x00, 0x00, 0x00, 0x01,
         )
 
-        shouldNotThrow<JournalInvalidHeaderException> {
+        try {
             JournalReader(Buffer().apply { write(bytes) }).use { it.validateHeader() }
+        } catch (e: JournalInvalidHeaderException) {
+            fail("Header should be detected as valid")
         }
     }
 
     @Test
     fun testReadEntryEmptyJournal() {
-        JournalReader(Buffer().apply { write(journalHeader) }).nullableUse {
+        val entry = JournalReader(Buffer().apply { write(journalHeader) }).nullableUse {
             it.validateHeader()
             it.readEntry()
-        } shouldBe null
+        }
+
+        assertNull(entry)
     }
 
     @Test
@@ -83,7 +78,7 @@ class JournalReadTests {
         )
 
         val readResult = JournalReader(Buffer().apply { write(bytes) }).use { it.readEntry() }
-        readResult shouldMatch JournalEntry.Dirty("TestKey")
+        assertEquals(JournalEntry.Dirty("TestKey"), readResult)
     }
 
     @Test
@@ -93,7 +88,7 @@ class JournalReadTests {
         )
 
         val readResult = JournalReader(Buffer().apply { write(bytes) }).use { it.readEntry() }
-        readResult shouldMatch JournalEntry.Clean("TestKey")
+        assertEquals(JournalEntry.Clean("TestKey"), readResult)
     }
 
     @Test
@@ -103,7 +98,7 @@ class JournalReadTests {
         )
 
         val readResult = JournalReader(Buffer().apply { write(bytes) }).use { it.readEntry() }
-        readResult shouldMatch JournalEntry.Remove("TestKey")
+        assertEquals(JournalEntry.Remove("TestKey"), readResult)
     }
 
     @Test
@@ -112,7 +107,7 @@ class JournalReadTests {
             (0xFE).toByte(), 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
-        shouldThrow<JournalInvalidOpcodeException> {
+        assertFailsWith<JournalInvalidOpcodeException> {
             JournalReader(Buffer().apply { write(bytes) }).use { it.readEntry() }
         }
     }
@@ -121,7 +116,7 @@ class JournalReadTests {
     fun testReadOperationWithoutKey() {
         val bytes = byteArrayOf(0x04)
 
-        shouldThrow<EOFException> {
+        assertFailsWith<EOFException> {
             JournalReader(Buffer().apply { write(bytes) }).use { it.readEntry() }
         }
     }
@@ -132,7 +127,7 @@ class JournalReadTests {
             0x04, 0x07, 0x54, 0x65, 0x73, 0x74,
         )
 
-        shouldThrow<EOFException> {
+        assertFailsWith<EOFException> {
             JournalReader(Buffer().apply { write(bytes) }).use { it.readEntry() }
         }
     }
@@ -151,14 +146,14 @@ class JournalReadTests {
         }
 
         JournalReader(source.buffer()).close()
-        source.wasClosed shouldBe true
+        assertTrue(source.wasClosed)
     }
 
     @Test
     fun testReadNonExistingJournal() {
         val fileSystem = FakeFileSystem()
 
-        fileSystem.readJournalIfExists(directory) shouldBe null
+        assertNull(fileSystem.readJournalIfExists(directory))
     }
 
     @Test
@@ -167,7 +162,7 @@ class JournalReadTests {
         fileSystem.createDirectories(directory)
         fileSystem.sink(journalFile).buffer().use { it.write(journalWithAdd) }
 
-        fileSystem.readJournalIfExists(directory) shouldMatch journalWithAddData
+        assertEquals(journalWithAddData, fileSystem.readJournalIfExists(directory))
     }
 
     @Test
@@ -176,11 +171,9 @@ class JournalReadTests {
         fileSystem.createDirectories(directory)
         fileSystem.sink(backupJournalFile).buffer().use { it.write(journalWithAdd) }
 
-        assertSoftly {
-            fileSystem.readJournalIfExists(directory) shouldMatch journalWithAddData
-            fileSystem.exists(journalFile) shouldBe true
-            fileSystem.exists(backupJournalFile) shouldBe false
-        }
+        assertEquals(journalWithAddData, fileSystem.readJournalIfExists(directory))
+        assertTrue(fileSystem.exists(journalFile))
+        assertFalse(fileSystem.exists(backupJournalFile))
     }
 
     @Test
@@ -191,12 +184,10 @@ class JournalReadTests {
         fileSystem.sink(tempJournalFile).buffer().use { it.write(emptyJournal) }
         fileSystem.sink(backupJournalFile).buffer().use { it.write(emptyJournal) }
 
-        assertSoftly {
-            fileSystem.readJournalIfExists(directory) shouldMatch journalWithAddData
-            fileSystem.exists(journalFile) shouldBe true
-            fileSystem.exists(tempJournalFile) shouldBe false
-            fileSystem.exists(backupJournalFile) shouldBe false
-        }
+        assertEquals(journalWithAddData, fileSystem.readJournalIfExists(directory))
+        assertTrue(fileSystem.exists(journalFile))
+        assertFalse(fileSystem.exists(tempJournalFile))
+        assertFalse(fileSystem.exists(backupJournalFile))
     }
 
     @Test
@@ -205,7 +196,7 @@ class JournalReadTests {
         fileSystem.createDirectories(directory)
         fileSystem.sink(journalFile).buffer().use { it.write(journalWithDirty) }
 
-        fileSystem.readJournalIfExists(directory) shouldMatch journalWithDirtyData
+        assertEquals(journalWithDirtyData, fileSystem.readJournalIfExists(directory))
     }
 
     @Test
@@ -214,7 +205,7 @@ class JournalReadTests {
         fileSystem.createDirectories(directory)
         fileSystem.sink(journalFile).buffer().use { it.write(journalWithAddAndRemove) }
 
-        fileSystem.readJournalIfExists(directory) shouldMatch journalWithAddAndRemoveData
+        assertEquals(journalWithAddAndRemoveData, fileSystem.readJournalIfExists(directory))
     }
 
     @Test
@@ -223,7 +214,7 @@ class JournalReadTests {
         fileSystem.createDirectories(directory)
         fileSystem.sink(journalFile).buffer().use { it.write(journalWithMixedAdd) }
 
-        fileSystem.readJournalIfExists(directory) shouldMatch journalWithMixedAddData
+        assertEquals(journalWithMixedAddData, fileSystem.readJournalIfExists(directory))
     }
 
     @Test
@@ -232,7 +223,7 @@ class JournalReadTests {
         fileSystem.createDirectories(directory)
         fileSystem.sink(journalFile).buffer().use { it.write(journalWithAddAndReAdd) }
 
-        fileSystem.readJournalIfExists(directory) shouldMatch journalWithAddAndReAddData
+        assertEquals(journalWithAddAndReAddData, fileSystem.readJournalIfExists(directory))
     }
 
     @Test
@@ -241,7 +232,7 @@ class JournalReadTests {
         fileSystem.createDirectories(directory)
         fileSystem.sink(journalFile).buffer().use { it.write(journalWithAddAndDirtyAdd) }
 
-        fileSystem.readJournalIfExists(directory) shouldMatch journalWithAddAndDirtyAddData
+        assertEquals(journalWithAddAndDirtyAddData, fileSystem.readJournalIfExists(directory))
     }
 
     @Test
@@ -250,36 +241,7 @@ class JournalReadTests {
         fileSystem.createDirectories(directory)
         fileSystem.sink(journalFile).buffer().use { it.write(journalWithAddAndCancelledAdd) }
 
-        fileSystem.readJournalIfExists(directory) shouldMatch journalWithAddAndCancelledAddData
-    }
-
-    // Matchers
-
-    private infix fun JournalData?.shouldMatch(reference: JournalData?) =
-        this should matchData(reference)
-
-    private fun matchData(reference: JournalData?) = Matcher<JournalData?> { value ->
-        combineResults(
-            "Journal data should match reference",
-            "Journal data shouldn't match reference",
-            beNull().invert().test(value),
-            reference!!.cleanEntriesKeys.named("cleanEntriesKeys").test(value!!.cleanEntriesKeys),
-            reference.dirtyEntriesKeys.named("dirtyEntriesKeys").test(value.dirtyEntriesKeys),
-            reference.redundantEntriesCount.named("redundantEntriesCount").test(value.redundantEntriesCount),
-        )
-    }
-
-    private infix fun JournalEntry?.shouldMatch(reference: JournalEntry?) =
-        this should matchEntry(reference)
-
-    private fun matchEntry(reference: JournalEntry?) = Matcher<JournalEntry?> { value ->
-        combineResults(
-            "Read result should match reference",
-            "Read result shouldn't match reference",
-            beNull().invert().test(value),
-            reference!!.opcode.named("opcode").test(value!!.opcode),
-            reference.key.named("key").test(value.key),
-        )
+        assertEquals(journalWithAddAndCancelledAddData, fileSystem.readJournalIfExists(directory))
     }
 
     // Test Data
