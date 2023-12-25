@@ -1,6 +1,7 @@
 # IDEA
 .idea/*
 !.idea/codeStyles
+!.idea/copyright
 
 # Gradle files
 .gradle/
