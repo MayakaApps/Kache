@@ -14,16 +14,25 @@
  * limitations under the License.
  */
 
-@file:Suppress(
-    "RedundantVisibilityModifier",
-    "UNCHECKED_CAST",
+/*
+ * This file is copied from the AndroidX library with minor modifications to keep support for targets not supported by
+ * AndroidX. It should be removed when AndroidX supports all targets.
+ *
+ * The original file can be found here:
+ * https://android.googlesource.com/platform/frameworks/support/+/androidx-main/collection/collection/src/commonMain/kotlin/androidx/collection/ObjectList.kt
+ *
+ * Modifications:
+ * - Change top-level declarations visibility to internal.
+ * - Comment out @PublishedApi annotations.
+ * - Comment out functions depending on ScatterSet as it is not needed.
+ *
+ * The file is up-to-date as of commit d076a38 on Oct 26, 2023.
+ */
 
-    // We are not removing unused members to limit the scope of the changes
-    "Unused",
-)
+@file:Suppress("NOTHING_TO_INLINE", "RedundantVisibilityModifier", "UNCHECKED_CAST")
 @file:OptIn(ExperimentalContracts::class)
 
-package com.mayakapps.kache.collection
+package androidx.collection
 
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -50,11 +59,13 @@ import kotlin.jvm.JvmOverloads
  * for interacting with public APIs.
  *
  * @see MutableObjectList
+ * @see FloatList
+ * @see IntList
  * @eee LongList
  */
 internal sealed class ObjectList<E>(initialCapacity: Int) {
     @JvmField
-    @PublishedApi
+    //@PublishedApi
     internal var content: Array<Any?> = if (initialCapacity == 0) {
         EmptyArray
     } else {
@@ -63,18 +74,20 @@ internal sealed class ObjectList<E>(initialCapacity: Int) {
 
     @Suppress("PropertyName")
     @JvmField
-    @PublishedApi
+    //@PublishedApi
     internal var _size: Int = 0
 
     /**
      * The number of elements in the [ObjectList].
      */
+    @get:androidx.annotation.IntRange(from = 0)
     public val size: Int
         get() = _size
 
     /**
      * Returns the last valid index in the [ObjectList]. This can be `-1` when the list is empty.
      */
+    @get:androidx.annotation.IntRange(from = -1)
     public inline val lastIndex: Int get() = _size - 1
 
     /**
@@ -356,7 +369,7 @@ internal sealed class ObjectList<E>(initialCapacity: Int) {
      * Returns the element at the given [index] or throws [IndexOutOfBoundsException] if
      * the [index] is out of bounds of this collection.
      */
-    public operator fun get(index: Int): E {
+    public operator fun get(@androidx.annotation.IntRange(from = 0) index: Int): E {
         if (index !in 0 until _size) {
             throw IndexOutOfBoundsException("Index $index must be in 0..$lastIndex")
         }
@@ -367,7 +380,7 @@ internal sealed class ObjectList<E>(initialCapacity: Int) {
      * Returns the element at the given [index] or throws [IndexOutOfBoundsException] if
      * the [index] is out of bounds of this collection.
      */
-    public fun elementAt(index: Int): E {
+    public fun elementAt(@androidx.annotation.IntRange(from = 0) index: Int): E {
         if (index !in 0 until _size) {
             throw IndexOutOfBoundsException("Index $index must be in 0..$lastIndex")
         }
@@ -382,7 +395,7 @@ internal sealed class ObjectList<E>(initialCapacity: Int) {
      * an index not in the list.
      */
     public inline fun elementAtOrElse(
-        index: Int,
+        @androidx.annotation.IntRange(from = 0) index: Int,
         defaultValue: (index: Int) -> E
     ): E {
         if (index !in 0 until _size) {
@@ -636,6 +649,8 @@ internal sealed class ObjectList<E>(initialCapacity: Int) {
  * to get a [MutableList] or [List] interface for interacting with public APIs.
  *
  * @see ObjectList
+ * @see MutableFloatList
+ * @see MutableIntList
  * @eee MutableLongList
  */
 internal class MutableObjectList<E>(
@@ -667,7 +682,7 @@ internal class MutableObjectList<E>(
      * elements at [index] and after, if any.
      * @throws IndexOutOfBoundsException if [index] isn't between 0 and [size], inclusive
      */
-    public fun add(index: Int, element: E) {
+    public fun add(@androidx.annotation.IntRange(from = 0) index: Int, element: E) {
         if (index !in 0.._size) {
             throw IndexOutOfBoundsException("Index $index must be in 0..$_size")
         }
@@ -692,7 +707,7 @@ internal class MutableObjectList<E>(
      * @throws IndexOutOfBoundsException if [index] isn't between 0 and [size], inclusive.
      */
     public fun addAll(
-        index: Int,
+        @androidx.annotation.IntRange(from = 0) index: Int,
         @Suppress("ArrayReturn") elements: Array<E>
     ): Boolean {
         if (index !in 0.._size) {
@@ -721,7 +736,7 @@ internal class MutableObjectList<E>(
      * @throws IndexOutOfBoundsException if [index] isn't between 0 and [size], inclusive.
      */
     public fun addAll(
-        index: Int,
+        @androidx.annotation.IntRange(from = 0) index: Int,
         elements: Collection<E>
     ): Boolean {
         if (index !in 0.._size) {
@@ -752,7 +767,7 @@ internal class MutableObjectList<E>(
      * @throws IndexOutOfBoundsException if [index] isn't between 0 and [size], inclusive
      */
     public fun addAll(
-        index: Int,
+        @androidx.annotation.IntRange(from = 0) index: Int,
         elements: ObjectList<E>
     ): Boolean {
         if (index !in 0.._size) {
@@ -788,6 +803,16 @@ internal class MutableObjectList<E>(
         plusAssign(elements)
         return oldSize != _size
     }
+
+//    /**
+//     * Adds all [elements] to the end of the [MutableObjectList] and returns `true` if the
+//     * [MutableObjectList] was changed or `false` if [elements] was empty.
+//     */
+//    public fun addAll(elements: ScatterSet<E>): Boolean {
+//        val oldSize = _size
+//        plusAssign(elements)
+//        return oldSize != _size
+//    }
 
     /**
      * Adds all [elements] to the end of the [MutableObjectList] and returns `true` if the
@@ -844,6 +869,17 @@ internal class MutableObjectList<E>(
         )
         _size += elements._size
     }
+
+//    /**
+//     * Adds all [elements] to the end of the [MutableObjectList].
+//     */
+//    public operator fun plusAssign(elements: ScatterSet<E>) {
+//        if (elements.isEmpty()) return
+//        ensureCapacity(_size + elements.size)
+//        elements.forEach { element ->
+//            plusAssign(element)
+//        }
+//    }
 
     /**
      * Adds all [elements] to the end of the [MutableObjectList].
@@ -986,6 +1022,15 @@ internal class MutableObjectList<E>(
         return initialSize != _size
     }
 
+//    /**
+//     * Removes all [elements] from the [MutableObjectList] and returns `true` if anything was removed.
+//     */
+//    public fun removeAll(elements: ScatterSet<E>): Boolean {
+//        val initialSize = _size
+//        minusAssign(elements)
+//        return initialSize != _size
+//    }
+
     /**
      * Removes all [elements] from the [MutableObjectList] and returns `true` if anything was removed.
      */
@@ -1031,6 +1076,15 @@ internal class MutableObjectList<E>(
         }
     }
 
+//    /**
+//     * Removes all [elements] from the [MutableObjectList].
+//     */
+//    public operator fun minusAssign(elements: ScatterSet<E>) {
+//        elements.forEach { element ->
+//            minusAssign(element)
+//        }
+//    }
+
     /**
      * Removes all [elements] from the [MutableObjectList].
      */
@@ -1062,7 +1116,7 @@ internal class MutableObjectList<E>(
      * Removes the element at the given [index] and returns it.
      * @throws IndexOutOfBoundsException if [index] isn't between 0 and [lastIndex], inclusive
      */
-    public fun removeAt(index: Int): E {
+    public fun removeAt(@androidx.annotation.IntRange(from = 0) index: Int): E {
         if (index !in 0 until _size) {
             throw IndexOutOfBoundsException("Index $index must be in 0..$lastIndex")
         }
@@ -1087,8 +1141,8 @@ internal class MutableObjectList<E>(
      * @throws IllegalArgumentException if [start] is greater than [end]
      */
     public fun removeRange(
-        start: Int,
-        end: Int
+        @androidx.annotation.IntRange(from = 0) start: Int,
+        @androidx.annotation.IntRange(from = 0) end: Int
     ) {
         if (start !in 0.._size || end !in 0.._size) {
             throw IndexOutOfBoundsException("Start ($start) and end ($end) must be in 0..$_size")
@@ -1197,7 +1251,7 @@ internal class MutableObjectList<E>(
      * @throws IndexOutOfBoundsException if [index] isn't between 0 and [lastIndex], inclusive
      */
     public operator fun set(
-        index: Int,
+        @androidx.annotation.IntRange(from = 0) index: Int,
         element: E
     ): E {
         if (index !in 0 until _size) {
@@ -1476,20 +1530,16 @@ internal class MutableObjectList<E>(
 private fun List<*>.checkIndex(index: Int) {
     val size = size
     if (index < 0 || index >= size) {
-        throw IndexOutOfBoundsException(
-            "Index $index is out of bounds. " +
-                    "The list has $size elements."
-        )
+        throw IndexOutOfBoundsException("Index $index is out of bounds. " +
+            "The list has $size elements.")
     }
 }
 
 private fun List<*>.checkSubIndex(fromIndex: Int, toIndex: Int) {
     val size = size
     if (fromIndex > toIndex) {
-        throw IllegalArgumentException(
-            "Indices are out of order. fromIndex ($fromIndex) is " +
-                    "greater than toIndex ($toIndex)."
-        )
+        throw IllegalArgumentException("Indices are out of order. fromIndex ($fromIndex) is " +
+            "greater than toIndex ($toIndex).")
     }
     if (fromIndex < 0) {
         throw IndexOutOfBoundsException("fromIndex ($fromIndex) is less than 0.")

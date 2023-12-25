@@ -16,6 +16,7 @@
 
 package com.mayakapps.kache.collection
 
+import androidx.collection.objectListOf
 import kotlin.test.*
 
 class LinkedScatterMapTest {

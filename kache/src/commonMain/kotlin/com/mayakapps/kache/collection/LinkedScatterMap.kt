@@ -29,6 +29,7 @@
 
 package com.mayakapps.kache.collection
 
+import androidx.collection.ObjectList
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.max
