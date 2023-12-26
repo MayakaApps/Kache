@@ -15,7 +15,7 @@
  */
 
 /*
- * This file is copied from the AndroidX library with minor modifications.
+ * This file is copied from the AndroidX library with necessary modifications for MutableChainedScatterMap.
  *
  * The original file can be found here:
  * https://android.googlesource.com/platform/frameworks/support/+/androidx-main/collection/collection/src/commonMain/kotlin/androidx/collection/ScatterMap.kt
@@ -24,6 +24,16 @@
  * - Change top-level declarations visibility to internal.
  * - Comment out @PublishedApi annotations.
  * - Comment out functions depending on ScatterSet as it is not needed.
+ * - Make MutableScatterMap open to allow inheritance.
+ * - Add afterAccess() function to ScatterMap and call it from get() and getOrDefault().
+ * - Make forEachIndexed() use chain if the map is MutableChainedScatterMap.
+ * - Add afterInsertion() and afterReplacement() functions to MutableScatterMap and call them from compute(), set(),
+ *   and put().
+ * - Add afterRemoval() function to MutableScatterMap and call it from removeValueAt().
+ * - Make clear() open to allow overriding it in MutableChainedScatterMap.
+ * - Make resizeStorage() protected and open to allow overriding it in MutableChainedScatterMap.
+ * - Make initializeStorage(), findFirstAvailableSlot(), and writeMetadata() protected to allow calling them from
+ *   MutableChainedScatterMap.resizeStorage().
  *
  * The file is up-to-date as of commit 3b4832a on Nov 15, 2023.
  */
@@ -41,6 +51,7 @@
 package androidx.collection
 
 import androidx.collection.internal.EMPTY_OBJECTS
+import com.mayakapps.kache.collection.MutableChainedScatterMap
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.max
@@ -316,6 +327,9 @@ internal sealed class ScatterMap<K, V> {
     public val size: Int
         get() = _size
 
+    // Callback to be used by MutableChainedScatterMap
+    protected open fun afterAccess(index: Int) {}
+
     /**
      * Returns `true` if this map has at least one entry.
      */
@@ -343,7 +357,12 @@ internal sealed class ScatterMap<K, V> {
     public operator fun get(key: K): V? {
         val index = findKeyIndex(key)
         @Suppress("UNCHECKED_CAST")
-        return if (index >= 0) values[index] as V? else null
+        return if (index >= 0) {
+            @Suppress("UNCHECKED_CAST")
+            val value = values[index] as V?
+            afterAccess(index)
+            value
+        } else null
     }
 
     /**
@@ -354,7 +373,9 @@ internal sealed class ScatterMap<K, V> {
         val index = findKeyIndex(key)
         if (index >= 0) {
             @Suppress("UNCHECKED_CAST")
-            return values[index] as V
+            val value = values[index] as V
+            afterAccess(index)
+            return value
         }
         return defaultValue
     }
@@ -374,6 +395,11 @@ internal sealed class ScatterMap<K, V> {
      */
     //@PublishedApi
     internal inline fun forEachIndexed(block: (index: Int) -> Unit) {
+        if (this is MutableChainedScatterMap) {
+            mainChain.forEachIndexed { index -> block(index) }
+            return
+        }
+
         val m = metadata
         val lastIndex = m.size - 2 // We always have 0 or at least 2 entries
 
@@ -435,6 +461,26 @@ internal sealed class ScatterMap<K, V> {
             @Suppress("UNCHECKED_CAST")
             block(v[index] as V)
         }
+    }
+
+    /**
+     * A [Set] of all keys in this map.
+     */
+    public val keySet: Set<K> = object : Set<K> {
+        override val size: Int get() = this@ScatterMap._size
+
+        override fun isEmpty(): Boolean = this@ScatterMap.isEmpty()
+
+        override fun iterator(): Iterator<K> = iterator {
+            this@ScatterMap.forEachKey { key ->
+                yield(key)
+            }
+        }
+
+        override fun containsAll(elements: Collection<K>): Boolean =
+            elements.all { this@ScatterMap.containsKey(it) }
+
+        override fun contains(element: K): Boolean = this@ScatterMap.containsKey(element)
     }
 
     /**
@@ -824,7 +870,7 @@ internal sealed class ScatterMap<K, V> {
  *
  * @see Map
  */
-internal class MutableScatterMap<K, V>(
+internal open class MutableScatterMap<K, V>(
     initialCapacity: Int = DefaultScatterCapacity
 ) : ScatterMap<K, V>() {
     // Number of entries we can add before we need to grow
@@ -835,7 +881,12 @@ internal class MutableScatterMap<K, V>(
         initializeStorage(unloadedCapacity(initialCapacity))
     }
 
-    private fun initializeStorage(initialCapacity: Int) {
+    // Callbacks to be used by MutableChainedScatterMap
+    protected open fun afterInsertion(index: Int) {}
+    protected open fun afterReplacement(index: Int) {}
+    protected open fun afterRemoval(index: Int) {}
+
+    protected fun initializeStorage(initialCapacity: Int) {
         val newCapacity = if (initialCapacity > 0) {
             // Since we use longs for storage, our capacity is never < 7, enforce
             // it here. We do have a special case for 0 to create small empty maps
@@ -899,8 +950,10 @@ internal class MutableScatterMap<K, V>(
             val insertionIndex = index.inv()
             keys[insertionIndex] = key
             values[insertionIndex] = computedValue
+            afterInsertion(insertionIndex)
         } else {
             values[index] = computedValue
+            afterReplacement(index)
         }
         return computedValue
     }
@@ -913,11 +966,16 @@ internal class MutableScatterMap<K, V>(
      * and cause allocations.
      */
     public operator fun set(key: K, value: V) {
-        val index = findInsertIndex(key).let { index ->
-            if (index < 0) index.inv() else index
-        }
+        val signedIndex = findInsertIndex(key)
+        val inserting = signedIndex < 0
+        val index = if (inserting) signedIndex.inv() else signedIndex
         keys[index] = key
         values[index] = value
+        if (inserting) {
+            afterInsertion(index)
+        } else {
+            afterReplacement(index)
+        }
     }
 
     /**
@@ -929,12 +987,17 @@ internal class MutableScatterMap<K, V>(
      * or `null` if the key was not present in the map.
      */
     public fun put(key: K, value: V): V? {
-        val index = findInsertIndex(key).let { index ->
-            if (index < 0) index.inv() else index
-        }
+        val signedIndex = findInsertIndex(key)
+        val inserting = signedIndex < 0
+        val index = if (inserting) signedIndex.inv() else signedIndex
         val oldValue = values[index]
         keys[index] = key
         values[index] = value
+        if (inserting) {
+            afterInsertion(index)
+        } else {
+            afterReplacement(index)
+        }
 
         @Suppress("UNCHECKED_CAST")
         return oldValue as V?
@@ -1129,6 +1192,8 @@ internal class MutableScatterMap<K, V>(
         val oldValue = values[index]
         values[index] = null
 
+        afterRemoval(index)
+
         @Suppress("UNCHECKED_CAST")
         return oldValue as V?
     }
@@ -1136,7 +1201,7 @@ internal class MutableScatterMap<K, V>(
     /**
      * Removes all mappings from this map.
      */
-    public fun clear() {
+    public open fun clear() {
         _size = 0
         if (metadata !== EmptyGroup) {
             metadata.fill(AllEmpty)
@@ -1200,7 +1265,7 @@ internal class MutableScatterMap<K, V>(
      * Finds the first empty or deleted slot in the table in which we can
      * store a value without resizing the internal storage.
      */
-    private fun findFirstAvailableSlot(hash1: Int): Int {
+    protected fun findFirstAvailableSlot(hash1: Int): Int {
         val probeMask = _capacity
         var probeOffset = hash1 and probeMask
         var probeIndex = 0
@@ -1249,7 +1314,7 @@ internal class MutableScatterMap<K, V>(
         }
     }
 
-    private fun resizeStorage(newCapacity: Int) {
+    protected open fun resizeStorage(newCapacity: Int) {
         val previousMetadata = metadata
         val previousKeys = keys
         val previousValues = values
@@ -1278,14 +1343,14 @@ internal class MutableScatterMap<K, V>(
      * [index]. The index must be a valid index. This function ensures the
      * metadata is also written in the clone area at the end.
      */
-    private inline fun writeMetadata(index: Int, value: Long) {
+    protected inline fun writeMetadata(index: Int, value: Long) {
         val m = metadata
         writeRawMetadata(m, index, value)
 
         // Mirroring
         val c = _capacity
         val cloneIndex = ((index - ClonedMetadataCount) and c) +
-            (ClonedMetadataCount and c)
+                (ClonedMetadataCount and c)
         writeRawMetadata(m, cloneIndex, value)
     }
 
@@ -1676,6 +1741,7 @@ internal inline fun writeRawMetadata(data: LongArray, offset: Int, value: Long) 
 
 internal inline fun isEmpty(metadata: LongArray, index: Int) =
     readRawMetadata(metadata, index) == Empty
+
 internal inline fun isDeleted(metadata: LongArray, index: Int) =
     readRawMetadata(metadata, index) == Deleted
 

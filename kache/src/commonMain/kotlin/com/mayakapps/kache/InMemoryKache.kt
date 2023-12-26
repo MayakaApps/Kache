@@ -18,7 +18,8 @@ package com.mayakapps.kache
 
 import com.mayakapps.kache.InMemoryKache.Configuration
 import com.mayakapps.kache.collection.ConcurrentMutableMap
-import com.mayakapps.kache.collection.MutableLinkedScatterMap
+import com.mayakapps.kache.collection.MutableChain
+import com.mayakapps.kache.collection.MutableChainedScatterMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -70,7 +71,7 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     private val creationMap = ConcurrentMutableMap<K, Deferred<V?>>()
     private val creationMutex = Mutex()
 
-    private val map: MutableLinkedScatterMap<K, V> = strategy.createMap()
+    private val map: MutableChainedScatterMap<K, V> = strategy.createMap()
     private val mapMutex = Mutex()
 
     override var maxSize: Long = maxSize
@@ -79,9 +80,11 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     override var size: Long = 0L
         private set
 
-    override suspend fun getKeys(): Set<K> = mapMutex.withLock { map.keySet.toSet() }
+    private val reversed = strategy == KacheStrategy.MRU || strategy == KacheStrategy.FILO
 
-    override suspend fun getUnderCreationKeys(): Set<K> = mapMutex.withLock { creationMap.keys.toSet() }
+    override suspend fun getKeys(): Set<K> = mapMutex.withLock { map.keySet }
+
+    override suspend fun getUnderCreationKeys(): Set<K> = mapMutex.withLock { creationMap.keys }
 
     override suspend fun getAllKeys(): KacheKeys<K> =
         mapMutex.withLock { KacheKeys(map.keySet.toSet(), creationMap.keys.toSet()) }
@@ -209,12 +212,9 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
         removeAllCreations()
 
         mapMutex.withLock {
-            with(map.keyIterator()) {
-                forEach { key ->
-                    val value = currentValue()
-                    remove()
-                    onEntryRemoved(false, key, value, null)
-                }
+            map.removeAllWithCallback(reversed = reversed) { key, value ->
+                onEntryRemoved(false, key, value, null)
+                false // Continue removing
             }
         }
     }
@@ -223,12 +223,9 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
         removeAllCreations()
 
         mapMutex.withLock {
-            with(map.keyIterator()) {
-                forEach { key ->
-                    val value = currentValue()
-                    remove()
-                    onEntryRemoved(true, key, value, null)
-                }
+            map.removeAllWithCallback(reversed = reversed) { key, value ->
+                onEntryRemoved(true, key, value, null)
+                false // Continue removing
             }
         }
     }
@@ -252,14 +249,12 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     }
 
     private fun nonLockedTrimToSize(size: Long) {
-        with(map.keyIterator()) {
-            forEach { key ->
-                val value = currentValue()
-                if (this@InMemoryKache.size <= size) return@forEach
-                remove()
-                this@InMemoryKache.size -= safeSizeOf(key, value)
-                onEntryRemoved(true, key, value, null)
-            }
+        if (this@InMemoryKache.size <= size) return
+
+        map.removeAllWithCallback(reversed = reversed) { key, value ->
+            this@InMemoryKache.size -= safeSizeOf(key, value)
+            onEntryRemoved(true, key, value, null)
+            this@InMemoryKache.size <= size
         }
 
         check(this.size >= 0 || (map.isEmpty() && this.size != 0L)) {
@@ -367,8 +362,12 @@ private class DeferredReplacedException(val replacedWith: Int) : CancellationExc
 
 private const val CANCELLATION_MESSAGE = "The cached element was removed before creation"
 
-private fun <K : Any, V : Any> KacheStrategy.createMap(): MutableLinkedScatterMap<K, V> =
-    MutableLinkedScatterMap(
-        accessOrder = this == KacheStrategy.LRU || this == KacheStrategy.MRU,
-        reverseOrder = this == KacheStrategy.MRU || this == KacheStrategy.FILO,
+private fun <K : Any, V : Any> KacheStrategy.createMap(): MutableChainedScatterMap<K, V> {
+    val accessOrder = this == KacheStrategy.LRU || this == KacheStrategy.MRU
+
+    return MutableChainedScatterMap(
+        accessChain = if (accessOrder) MutableChain(0) else null,
+        insertionChain = if (accessOrder) null else MutableChain(0),
+        accessOrder = accessOrder,
     )
+}

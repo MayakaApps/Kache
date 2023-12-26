@@ -16,9 +16,10 @@
 
 package com.mayakapps.kache.collection
 
+import androidx.collection.internal.EMPTY_INTS
 import kotlin.jvm.JvmField
 
-internal class Chain(capacity: Int) {
+internal sealed class Chain {
     @JvmField
     internal var head = -1
 
@@ -26,10 +27,52 @@ internal class Chain(capacity: Int) {
     internal var tail = -1
 
     @JvmField
-    internal val next = IntArray(capacity) { -1 }
+    internal var next = EMPTY_INTS
 
     @JvmField
-    internal val prev = IntArray(capacity) { -1 }
+    internal var prev = EMPTY_INTS
+
+    internal inline fun forEachIndexed(reversed: Boolean = false, action: (index: Int) -> Unit) {
+        if (reversed) {
+            var index = tail
+            while (index != -1) {
+                val prevIndex = prev[index]
+                action(index)
+                index = prevIndex
+            }
+        } else {
+            var index = head
+            while (index != -1) {
+                val nextIndex = next[index]
+                action(index)
+                index = nextIndex
+            }
+        }
+    }
+
+    internal fun shallowCopy(): Chain {
+        val copy = MutableChain(0)
+        copy.head = head
+        copy.tail = tail
+        copy.next = next
+        copy.prev = prev
+        return copy
+    }
+}
+
+internal class MutableChain(initialCapacity: Int) : Chain() {
+
+    init {
+        require(initialCapacity >= 0) { "Capacity must be a positive value." }
+        if (initialCapacity > 0) {
+            initializeStorage(initialCapacity)
+        }
+    }
+
+    internal fun initializeStorage(capacity: Int) {
+        next = IntArray(capacity) { -1 }
+        prev = IntArray(capacity) { -1 }
+    }
 
     internal fun addToEnd(index: Int) {
         if (head == -1) {
@@ -98,31 +141,5 @@ internal class Chain(capacity: Int) {
         tail = -1
         next.fill(-1)
         prev.fill(-1)
-    }
-
-    internal inline fun forEachIndexed(reverseOrder: Boolean = false, action: (index: Int) -> Unit) {
-        if (reverseOrder) {
-            reversedForEachIndexed(action)
-        } else {
-            forEachIndexed(action)
-        }
-    }
-
-    private inline fun forEachIndexed(action: (index: Int) -> Unit) {
-        var index = head
-        while (index != -1) {
-            val nextIndex = next[index]
-            action(index)
-            index = nextIndex
-        }
-    }
-
-    private inline fun reversedForEachIndexed(action: (index: Int) -> Unit) {
-        var index = tail
-        while (index != -1) {
-            val prevIndex = prev[index]
-            action(index)
-            index = prevIndex
-        }
     }
 }

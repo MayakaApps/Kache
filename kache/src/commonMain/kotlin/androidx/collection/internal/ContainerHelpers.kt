@@ -19,4 +19,7 @@ package androidx.collection.internal
 import kotlin.jvm.JvmField
 
 @JvmField
+internal val EMPTY_INTS = IntArray(0)
+
+@JvmField
 internal val EMPTY_OBJECTS = arrayOfNulls<Any>(0)
