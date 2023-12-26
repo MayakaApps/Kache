@@ -16,8 +16,8 @@
 
 package com.mayakapps.kache
 
+import androidx.collection.mutableScatterMapOf
 import com.mayakapps.kache.InMemoryKache.Configuration
-import com.mayakapps.kache.collection.ConcurrentMutableMap
 import com.mayakapps.kache.collection.MutableChain
 import com.mayakapps.kache.collection.MutableChainedScatterMap
 import kotlinx.coroutines.*
@@ -68,7 +68,7 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     private val onEntryRemoved: EntryRemovedListener<K, V>,
 ) : ObjectKache<K, V> {
 
-    private val creationMap = ConcurrentMutableMap<K, Deferred<V?>>()
+    private val creationMap = mutableScatterMapOf<K, Deferred<V?>>()
     private val creationMutex = Mutex()
 
     private val map: MutableChainedScatterMap<K, V> = strategy.createMap()
@@ -84,10 +84,10 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
 
     override suspend fun getKeys(): Set<K> = mapMutex.withLock { map.keySet }
 
-    override suspend fun getUnderCreationKeys(): Set<K> = mapMutex.withLock { creationMap.keys }
+    override suspend fun getUnderCreationKeys(): Set<K> = mapMutex.withLock { creationMap.keySet }
 
     override suspend fun getAllKeys(): KacheKeys<K> =
-        mapMutex.withLock { KacheKeys(map.keySet.toSet(), creationMap.keys.toSet()) }
+        mapMutex.withLock { KacheKeys(map.keySet, creationMap.keySet) }
 
     override suspend fun getOrDefault(key: K, defaultValue: V): V =
         getFromCreation(key) ?: getIfAvailableOrDefault(key, defaultValue)
@@ -287,8 +287,7 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     }
 
     private fun removeAllCreations() {
-        val keys = creationMap.keys.toSet()
-        for (key in keys) {
+        creationMap.forEachKey { key ->
             removeCreation(key)
         }
     }

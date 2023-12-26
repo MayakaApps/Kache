@@ -8,11 +8,7 @@ kotlinx-binaryCompatibilityValidator = "0.13.2"
 
 kotlinx-coroutines = "1.7.3"
 
-stately = "2.0.6"
-
 okio = "3.7.0"
-
-kotest = "5.8.0"
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -26,10 +22,6 @@ kotlinx-binaryCompatibilityValidator = { id = "org.jetbrains.kotlinx.binary-comp
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 
-stately-isoCollections = { module = "co.touchlab:stately-iso-collections", version.ref = "stately" }
-
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 okio-nodeFilesystem = { module = "com.squareup.okio:okio-nodefilesystem", version.ref = "okio" }
 okio-fakeFilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "okio" }
-
-kotest-assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
