@@ -466,7 +466,7 @@ internal sealed class ScatterMap<K, V> {
     /**
      * A [Set] of all keys in this map.
      */
-    public val keySet: Set<K> = object : Set<K> {
+    public val keySet: Set<K> = object : AbstractSet<K>() {
         override val size: Int get() = this@ScatterMap._size
 
         override fun isEmpty(): Boolean = this@ScatterMap.isEmpty()

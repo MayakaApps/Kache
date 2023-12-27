@@ -17,10 +17,6 @@
 package com.mayakapps.kache.collection
 
 import androidx.collection.*
-import androidx.collection.DefaultScatterCapacity
-import androidx.collection.MutableScatterMap
-import androidx.collection.hash
-import androidx.collection.isFull
 import kotlin.jvm.JvmField
 
 internal class MutableChainedScatterMap<K, V>(
@@ -104,7 +100,10 @@ internal class MutableChainedScatterMap<K, V>(
         }
     }
 
-    fun getKeySet(accessOrder: Boolean = this.accessOrder, reversed: Boolean = false): Set<K> = object : Set<K> {
+    fun getKeySet(
+        reversed: Boolean = false,
+        accessOrder: Boolean = this.accessOrder,
+    ): Set<K> = object : AbstractSet<K>() {
         override val size: Int get() = this@MutableChainedScatterMap._size
 
         override fun isEmpty(): Boolean = this@MutableChainedScatterMap.isEmpty()

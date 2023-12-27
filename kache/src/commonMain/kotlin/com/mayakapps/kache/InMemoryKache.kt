@@ -82,12 +82,12 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
 
     private val reversed = strategy == KacheStrategy.MRU || strategy == KacheStrategy.FILO
 
-    override suspend fun getKeys(): Set<K> = mapMutex.withLock { map.keySet }
+    override suspend fun getKeys(): Set<K> = mapMutex.withLock { map.getKeySet(reversed = reversed) }
 
     override suspend fun getUnderCreationKeys(): Set<K> = mapMutex.withLock { creationMap.keySet }
 
     override suspend fun getAllKeys(): KacheKeys<K> =
-        mapMutex.withLock { KacheKeys(map.keySet, creationMap.keySet) }
+        mapMutex.withLock { KacheKeys(map.getKeySet(reversed = reversed), creationMap.keySet) }
 
     override suspend fun getOrDefault(key: K, defaultValue: V): V =
         getFromCreation(key) ?: getIfAvailableOrDefault(key, defaultValue)
