@@ -98,14 +98,3 @@ public abstract interface class com/mayakapps/kache/ObjectKache {
 	public abstract fun trimToSize (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class com/mayakapps/kache/collection/LinkedScatterMapKt {
-	public static final field BitmaskLsb J
-	public static final field BitmaskMsb J
-	public static final field Sentinel J
-	public static final fun isFull (J)Z
-	public static final fun lowestBitSet (J)I
-	public static final fun maskEmptyOrDeleted (J)J
-	public static final fun match (JI)J
-	public static final fun readRawMetadata ([JI)J
-}
-

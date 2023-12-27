@@ -79,16 +79,5 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.test)
             }
         }
-
-        val nonJvmMain by creating {
-            dependsOn(commonMain.get())
-
-            dependencies {
-                implementation(libs.stately.isoCollections)
-            }
-        }
-
-        nativeMain.get().dependsOn(nonJvmMain)
-        jsMain.get().dependsOn(nonJvmMain)
     }
 }

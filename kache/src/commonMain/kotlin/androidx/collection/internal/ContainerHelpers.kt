@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 MayakaApps
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
-package com.mayakapps.kache.collection
+package androidx.collection.internal
 
-internal expect class ConcurrentMutableMap<K : Any, V : Any>() : MutableMap<K, V>
+import kotlin.jvm.JvmField
+
+@JvmField
+internal val EMPTY_INTS = IntArray(0)
+
+@JvmField
+internal val EMPTY_OBJECTS = arrayOfNulls<Any>(0)
