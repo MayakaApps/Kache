@@ -92,6 +92,8 @@ internal class MutableChain(initialCapacity: Int) : Chain() {
     }
 
     internal fun initializeStorage(capacity: Int) {
+        head = -1
+        tail = -1
         next = IntArray(capacity) { -1 }
         prev = IntArray(capacity) { -1 }
     }
