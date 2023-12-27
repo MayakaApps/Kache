@@ -58,6 +58,28 @@ internal sealed class Chain {
         copy.prev = prev
         return copy
     }
+
+    internal abstract class AbstractIterator<T>(
+        private val parent: Chain,
+        private val reversed: Boolean,
+    ) : Iterator<T> {
+
+        private var nextIndex = if (reversed) parent.tail else parent.head
+
+        override fun hasNext(): Boolean = nextIndex != -1
+
+        override fun next(): T {
+            if (nextIndex == -1) {
+                throw NoSuchElementException()
+            }
+
+            val index = nextIndex
+            nextIndex = if (reversed) parent.prev[index] else parent.next[index]
+            return getElement(index)
+        }
+
+        protected abstract fun getElement(index: Int): T
+    }
 }
 
 internal class MutableChain(initialCapacity: Int) : Chain() {
@@ -70,6 +92,8 @@ internal class MutableChain(initialCapacity: Int) : Chain() {
     }
 
     internal fun initializeStorage(capacity: Int) {
+        head = -1
+        tail = -1
         next = IntArray(capacity) { -1 }
         prev = IntArray(capacity) { -1 }
     }
