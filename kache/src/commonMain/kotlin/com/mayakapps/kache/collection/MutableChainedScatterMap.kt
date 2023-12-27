@@ -108,31 +108,16 @@ internal class MutableChainedScatterMap<K, V>(
 
         override fun isEmpty(): Boolean = this@MutableChainedScatterMap.isEmpty()
 
-        override fun iterator(): Iterator<K> = object : Iterator<K> {
-            private val chain: MutableChain = if (accessOrder) {
+        override fun iterator(): Iterator<K> = object : Chain.AbstractIterator<K>(
+            parent = if (accessOrder) {
                 accessChain ?: insertionChain!!
             } else {
                 insertionChain ?: accessChain!!
-            }
-
-            private var nextIndex = if (reversed) {
-                chain.tail
-            } else {
-                chain.head
-            }
-
-            override fun hasNext(): Boolean = nextIndex != -1
-
-            override fun next(): K {
-                val index = nextIndex
-                nextIndex = if (reversed) {
-                    chain.prev[nextIndex]
-                } else {
-                    chain.next[nextIndex]
-                }
-                @Suppress("UNCHECKED_CAST")
-                return keys[index] as K
-            }
+            },
+            reversed = reversed,
+        ) {
+            @Suppress("UNCHECKED_CAST")
+            override fun getElement(index: Int): K = keys[index] as K
         }
 
         override fun containsAll(elements: Collection<K>): Boolean =
