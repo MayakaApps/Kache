@@ -34,6 +34,7 @@
  * - Make resizeStorage() protected and open to allow overriding it in MutableChainedScatterMap.
  * - Make initializeStorage(), findFirstAvailableSlot(), and writeMetadata() protected to allow calling them from
  *   MutableChainedScatterMap.resizeStorage().
+ * - Add keySet property to ScatterMap.
  *
  * The file is up-to-date as of commit 3b4832a on Nov 15, 2023.
  */

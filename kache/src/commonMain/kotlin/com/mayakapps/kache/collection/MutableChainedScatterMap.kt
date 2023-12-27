@@ -131,7 +131,7 @@ internal class MutableChainedScatterMap<K, V>(
                     chain.next[nextIndex]
                 }
                 @Suppress("UNCHECKED_CAST")
-                return values[index] as K
+                return keys[index] as K
             }
         }
 
