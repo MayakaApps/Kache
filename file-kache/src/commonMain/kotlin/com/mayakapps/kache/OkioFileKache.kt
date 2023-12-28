@@ -61,9 +61,11 @@ public class OkioFileKache private constructor(
     private val underlyingKache = InMemoryKache<String, Path>(maxSize = maxSize) {
         this.strategy = strategy
         this.sizeCalculator = { _, file -> fileSystem.metadata(file).size ?: 0 }
-        this.onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) }
+        this.onEntryRemoved = { _, key, oldValue, newValue -> onEntryRemoved(key, oldValue, newValue) }
         this.creationScope = this@OkioFileKache.creationScope
     }
+
+    private val filesDirectory = directory.resolve(FILES_DIR)
 
     private val journalMutex = Mutex()
     private val journalFile = directory.resolve(JOURNAL_FILE)
@@ -112,9 +114,8 @@ public class OkioFileKache private constructor(
     }
 
     override suspend fun clear() {
-        close()
-        if (fileSystem.metadata(directory).isDirectory) fileSystem.deleteRecursively(directory)
-        fileSystem.createDirectories(directory)
+        underlyingKache.getKeys().forEach { writeDirty(it) }
+        underlyingKache.clear()
     }
 
     override suspend fun close() {
@@ -129,8 +130,8 @@ public class OkioFileKache private constructor(
         key: String,
         creationFunction: suspend (Path) -> Boolean,
     ): Path? {
-        val tempFile = directory.resolve(key + TEMP_EXT)
-        val cleanFile = directory.resolve(key)
+        val tempFile = filesDirectory.resolve(key + TEMP_EXT)
+        val cleanFile = filesDirectory.resolve(key)
 
         writeDirty(key)
         return if (creationFunction(tempFile) && fileSystem.exists(tempFile)) {
@@ -147,11 +148,13 @@ public class OkioFileKache private constructor(
         }
     }
 
-    private fun onEntryRemoved(key: String, oldValue: Path) {
-        creationScope.launch {
-            fileSystem.delete(oldValue)
-            fileSystem.delete((oldValue.toString() + TEMP_EXT).toPath())
+    private fun onEntryRemoved(key: String, oldValue: Path, newValue: Path?) {
+        if (newValue != null) return
 
+        fileSystem.delete(oldValue)
+        fileSystem.delete((oldValue.toString() + TEMP_EXT).toPath())
+
+        creationScope.launch {
             writeRemove(key)
             rebuildJournalIfRequired()
         }
@@ -255,25 +258,29 @@ public class OkioFileKache private constructor(
         ): OkioFileKache {
             require(maxSize > 0) { "maxSize must be positive value" }
 
-            // Make sure that journal directory exists
+            // Make sure that directories exist
+            val filesDirectory = directory.resolve(FILES_DIR)
             fileSystem.createDirectories(directory)
+            fileSystem.createDirectories(filesDirectory)
 
             val journalData = try {
                 fileSystem.readJournalIfExists(directory, cacheVersion)
             } catch (ex: JournalException) {
                 // Journal is corrupted - Clear cache
                 fileSystem.deleteContents(directory)
+                fileSystem.createDirectories(filesDirectory)
                 null
             } catch (ex: EOFException) {
                 // Journal is corrupted - Clear cache
                 fileSystem.deleteContents(directory)
+                fileSystem.createDirectories(filesDirectory)
                 null
             }
 
             // Delete dirty entries
             if (journalData != null) {
                 for (key in journalData.dirtyEntriesKeys) {
-                    fileSystem.delete(directory.resolve(key + TEMP_EXT))
+                    fileSystem.delete(filesDirectory.resolve(key + TEMP_EXT))
                 }
             }
 
@@ -302,14 +309,14 @@ public class OkioFileKache private constructor(
             )
 
             if (journalData != null) {
-                cache.underlyingKache.putAll(journalData.cleanEntriesKeys.associateWith { directory.resolve(it) })
+                cache.underlyingKache.putAll(journalData.cleanEntriesKeys.associateWith { filesDirectory.resolve(it) })
             }
 
             return cache
         }
 
         private const val TEMP_EXT = ".tmp"
-        private const val REDUNDANT_ENTRIES_THRESHOLD = 2000
+        internal const val REDUNDANT_ENTRIES_THRESHOLD = 2000
     }
 }
 
