@@ -34,8 +34,7 @@ public final class com/mayakapps/kache/InMemoryKache : com/mayakapps/kache/Objec
 }
 
 public final class com/mayakapps/kache/InMemoryKache$Configuration {
-	public synthetic fun <init> (JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function4;Lkotlin/time/TimeSource;JJILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function4;Lkotlin/time/TimeSource;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (J)V
 	public final fun getCreationScope ()Lkotlinx/coroutines/CoroutineScope;
 	public final fun getExpireAfterAccessDuration-UwyO8pc ()J
 	public final fun getExpireAfterWriteDuration-UwyO8pc ()J

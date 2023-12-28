@@ -10,8 +10,7 @@ public final class com/mayakapps/kache/FileKache : com/mayakapps/kache/Container
 }
 
 public final class com/mayakapps/kache/FileKache$Configuration {
-	public fun <init> (Ljava/lang/String;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;)V
-	public synthetic fun <init> (Ljava/lang/String;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;J)V
 	public final fun getCacheVersion ()I
 	public final fun getCreationScope ()Lkotlinx/coroutines/CoroutineScope;
 	public final fun getDirectoryPath ()Ljava/lang/String;
@@ -43,8 +42,7 @@ public final class com/mayakapps/kache/JavaFileKache : com/mayakapps/kache/Conta
 }
 
 public final class com/mayakapps/kache/JavaFileKache$Configuration {
-	public fun <init> (Ljava/io/File;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;)V
-	public synthetic fun <init> (Ljava/io/File;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/io/File;J)V
 	public final fun getCacheVersion ()I
 	public final fun getCreationScope ()Lkotlinx/coroutines/CoroutineScope;
 	public final fun getDirectory ()Ljava/io/File;
@@ -85,8 +83,7 @@ public final class com/mayakapps/kache/OkioFileKache$Companion {
 }
 
 public final class com/mayakapps/kache/OkioFileKache$Configuration {
-	public fun <init> (Lokio/Path;JLcom/mayakapps/kache/KacheStrategy;Lokio/FileSystem;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;)V
-	public synthetic fun <init> (Lokio/Path;JLcom/mayakapps/kache/KacheStrategy;Lokio/FileSystem;Lkotlinx/coroutines/CoroutineScope;ILcom/mayakapps/kache/KeyTransformer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lokio/Path;J)V
 	public final fun getCacheVersion ()I
 	public final fun getCreationScope ()Lkotlinx/coroutines/CoroutineScope;
 	public final fun getDirectory ()Lokio/Path;
