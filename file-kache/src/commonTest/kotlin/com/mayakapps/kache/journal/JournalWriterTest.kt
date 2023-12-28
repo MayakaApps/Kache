@@ -21,62 +21,65 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertTrue
 
-class JournalWriteTests {
+class JournalWriterTest {
 
     @Test
-    fun testWriteHeader() {
+    fun writeHeader() {
+        val headerBytes =
+            JOURNAL_MAGIC.encodeToByteArray() + JOURNAL_VERSION + byteArrayOf(0x00, 0x00, 0x00, 0x01)
+
         val buffer = Buffer()
         JournalWriter(buffer).use { it.writeHeader() }
         assertContentEquals(headerBytes, buffer.readByteArray())
     }
 
     @Test
-    fun testWriteDirty() {
+    fun writeDirty() {
         val bytes = byteArrayOf(
-            JournalEntry.DIRTY, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
+            JournalEntry.DIRTY, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
         )
 
         val buffer = Buffer()
-        JournalWriter(buffer).use { it.writeDirty(KEY) }
+        JournalWriter(buffer).use { it.writeDirty(KEY_1) }
         assertContentEquals(bytes, buffer.readByteArray())
     }
 
     @Test
-    fun testWriteClean() {
+    fun writeClean() {
         val bytes = byteArrayOf(
-            JournalEntry.CLEAN, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
+            JournalEntry.CLEAN, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
         )
 
         val buffer = Buffer()
-        JournalWriter(buffer).use { it.writeClean(KEY) }
+        JournalWriter(buffer).use { it.writeClean(KEY_1) }
         assertContentEquals(bytes, buffer.readByteArray())
     }
 
     @Test
-    fun testWriteRemove() {
+    fun writeRemove() {
         val bytes = byteArrayOf(
-            JournalEntry.REMOVE, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
+            JournalEntry.REMOVE, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
         )
 
         val buffer = Buffer()
-        JournalWriter(buffer).use { it.writeRemove(KEY) }
+        JournalWriter(buffer).use { it.writeRemove(KEY_1) }
         assertContentEquals(bytes, buffer.readByteArray())
     }
 
     @Test
-    fun testWriteAll() {
+    fun writeAll() {
         val bytes = byteArrayOf(
-            JournalEntry.CLEAN, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
-            JournalEntry.DIRTY, 0x0A, 0x41, 0x6C, 0x74, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
+            JournalEntry.CLEAN, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
+            JournalEntry.DIRTY, KEY_2.length.toByte(), *KEY_2.encodeToByteArray(),
         )
 
         val buffer = Buffer()
-        JournalWriter(buffer).use { it.writeAll(listOf(KEY), listOf(ALT_KEY)) }
+        JournalWriter(buffer).use { it.writeAll(listOf(KEY_1), listOf(KEY_2)) }
         assertContentEquals(bytes, buffer.readByteArray())
     }
 
     @Test
-    fun testClose() {
+    fun close() {
         val sink = object : Sink {
             var wasClosed = false
 
@@ -94,9 +97,7 @@ class JournalWriteTests {
     }
 
     companion object {
-        private const val KEY = "TestKey"
-        private const val ALT_KEY = "AltTestKey"
-        private val headerBytes =
-            JOURNAL_MAGIC.encodeToByteArray() + JOURNAL_VERSION + byteArrayOf(0x00, 0x00, 0x00, 0x01)
+        private const val KEY_1 = "one"
+        private const val KEY_2 = "two"
     }
 }

@@ -20,16 +20,16 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class SHA256KeyHasherTests {
+class SHA256KeyHasherTest {
 
     @Test
-    fun testEmptyString() = runTest {
+    fun emptyString() = runTest {
         val hash = SHA256KeyHasher.transform("")
         assertEquals("E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855", hash)
     }
 
     @Test
-    fun testStringWithSpecialCharacters() = runTest {
+    fun stringWithSpecialCharacters() = runTest {
         val hash = SHA256KeyHasher.transform(
             "Key !@#\$%^&*)(_+\\/- مفتاح. \uD83D\uDE02\uD83E\uDEF1\uD83C\uDFFD\u200D\uD83E\uDEF2\uD83C\uDFFF",
         )
@@ -38,7 +38,7 @@ class SHA256KeyHasherTests {
     }
 
     @Test
-    fun testLongString() = runTest {
+    fun longString() = runTest {
         val hash = SHA256KeyHasher.transform(
             "Av10GLREbz6hf7DtmvjBlT4zpusN5fvvlj054gES3soJacpUxmTIcUKwMK9MkjhtO9fvaRKy8PiCEUSXOOCjdkqk4ICwOb" +
                     "4SOyQe3vfxb6S6ZYyi39RNaysrOCIBNCEXNRtFKfPH0Xw2MpwcREXLFcu21SkRGCF9KlBRiHpfgMV94O8eyD1QY0x2cQG" +
@@ -57,7 +57,7 @@ class SHA256KeyHasherTests {
     }
 
     @Test
-    fun testRandomKeys() = runTest {
+    fun randomKeys() = runTest {
         val data = listOf(
             "6rWhI9qdZ80iLQKUQNeCRZ4R40eA0Qd0SxG0DJf9RQNVqfei" to
                     "DB3D43E38ACEF90EAB976E4A1CC10DA115F96253F1E0A9798F849B8D8F0B7114",
