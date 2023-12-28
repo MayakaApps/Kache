@@ -90,29 +90,30 @@ public class JavaFileKache internal constructor(
          * The maximum size of the cache in bytes.
          */
         public var maxSize: Long,
+    ) {
 
         /**
          * The strategy used to evict entries from the cache.
          */
-        public var strategy: KacheStrategy = KacheStrategy.LRU,
+        public var strategy: KacheStrategy = KacheStrategy.LRU
 
         /**
          * The coroutine dispatcher used for executing `creationFunction` of put requests.
          */
-        public var creationScope: CoroutineScope = CoroutineScope(FileKacheDefaults.defaultCoroutineDispatcher),
+        public var creationScope: CoroutineScope = CoroutineScope(FileKacheDefaults.defaultCoroutineDispatcher)
 
         /**
          * The version of the cache. This is useful to invalidate the cache when the format of the data stored in the
          * cache changes.
          */
-        public var cacheVersion: Int = 1,
+        public var cacheVersion: Int = 1
 
         /**
          * The [KeyTransformer] used to transform the keys before they are used to store and retrieve data. It is
          * needed to avoid using invalid characters in the file names.
          */
-        public var keyTransformer: KeyTransformer? = SHA256KeyHasher,
-    )
+        public var keyTransformer: KeyTransformer? = SHA256KeyHasher
+    }
 }
 
 /**

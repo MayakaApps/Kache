@@ -212,34 +212,35 @@ public class OkioFileKache private constructor(
          * The max size of this cache ib bytes.
          */
         public var maxSize: Long,
+    ) {
 
         /**
          * The strategy used for evicting elements. See [KacheStrategy]
          */
-        public var strategy: KacheStrategy = KacheStrategy.LRU,
+        public var strategy: KacheStrategy = KacheStrategy.LRU
 
         /**
          * The file system used for storing the journal and cached files. See [FileSystem]
          */
-        public var fileSystem: FileSystem = FileKacheDefaults.defaultFileSystem,
+        public var fileSystem: FileSystem = FileKacheDefaults.defaultFileSystem
 
         /**
          * The coroutine dispatcher used for executing `creationFunction` of put requests.
          */
-        public var creationScope: CoroutineScope = CoroutineScope(FileKacheDefaults.defaultCoroutineDispatcher),
+        public var creationScope: CoroutineScope = CoroutineScope(FileKacheDefaults.defaultCoroutineDispatcher)
 
         /**
          * The version of the entries in this cache. It is used for invalidating the cache. Update it when you change
          * the format of the entries in this cache.
          */
-        public var cacheVersion: Int = 1,
+        public var cacheVersion: Int = 1
 
         /**
          * The [KeyTransformer] used to transform the keys before they are used to store and retrieve data. It is
          * needed to avoid using invalid characters in the file names.
          */
-        public var keyTransformer: KeyTransformer? = SHA256KeyHasher,
-    )
+        public var keyTransformer: KeyTransformer? = SHA256KeyHasher
+    }
 
     public companion object {
 

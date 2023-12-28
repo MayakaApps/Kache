@@ -415,43 +415,44 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
          * The max size of this cache. For more information. See [InMemoryKache.maxSize].
          */
         public var maxSize: Long,
+    ) {
 
         /**
          * The strategy used for evicting elements. See [KacheStrategy]
          */
-        public var strategy: KacheStrategy = KacheStrategy.LRU,
+        public var strategy: KacheStrategy = KacheStrategy.LRU
 
         /**
          * The coroutine scope used for executing `creationFunction` of put requests.
          */
-        public var creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
+        public var creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default)
 
         /**
          * function used for calculating the size of the elements. See [SizeCalculator]
          */
-        public var sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
+        public var sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 }
 
         /**
          * listener called when an entry is removed for any reason. See [EntryRemovedListener]
          */
-        public var onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
+        public var onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> }
 
         /**
          * The time source used for calculating the time marks of the elements. Only used if the
          * [expireAfterWriteDuration] or [expireAfterAccessDuration] is set. See [TimeSource]
          */
-        public var timeSource: TimeSource = TimeSource.Monotonic,
+        public var timeSource: TimeSource = TimeSource.Monotonic
 
         /**
          * The duration after which the elements are removed after they are written. See [Duration]
          */
-        public var expireAfterWriteDuration: Duration = Duration.INFINITE,
+        public var expireAfterWriteDuration: Duration = Duration.INFINITE
 
         /**
          * The duration after which the elements are removed after they are accessed. See [Duration]
          */
-        public var expireAfterAccessDuration: Duration = Duration.INFINITE,
-    )
+        public var expireAfterAccessDuration: Duration = Duration.INFINITE
+    }
 }
 
 /**
