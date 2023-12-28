@@ -214,7 +214,7 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
         removeAllCreations()
 
         mapMutex.withLock {
-            map.removeAllWithCallback(reversed = reversed) { key, value ->
+            map.removeAllWithCallback(reversed = reversed) { key, value, _ ->
                 size -= safeSizeOf(key, value)
                 onEntryRemoved(false, key, value, null)
                 false // Continue removing
@@ -230,7 +230,7 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
         removeAllCreations()
 
         mapMutex.withLock {
-            map.removeAllWithCallback(reversed = reversed) { key, value ->
+            map.removeAllWithCallback(reversed = reversed) { key, value, _ ->
                 size -= safeSizeOf(key, value)
                 onEntryRemoved(true, key, value, null)
                 false // Continue removing
@@ -263,7 +263,7 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     private fun nonLockedTrimToSize(size: Long) {
         if (this@InMemoryKache.size <= size) return
 
-        map.removeAllWithCallback(reversed = reversed) { key, value ->
+        map.removeAllWithCallback(reversed = reversed) { key, value, _ ->
             this@InMemoryKache.size -= safeSizeOf(key, value)
             onEntryRemoved(true, key, value, null)
             this@InMemoryKache.size <= size

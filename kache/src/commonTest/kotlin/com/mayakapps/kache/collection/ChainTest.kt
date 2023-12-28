@@ -16,9 +16,10 @@
 
 package com.mayakapps.kache.collection
 
-import kotlin.test.Test
-import kotlin.test.assertContentEquals
-import kotlin.test.fail
+import kotlin.test.*
+import kotlin.time.AbstractLongTimeSource
+import kotlin.time.DurationUnit
+import kotlin.time.TimeSource
 
 class ChainTest {
 
@@ -39,20 +40,6 @@ class ChainTest {
         chain.addToEnd(8)
         assertContentEquals(listOf(4, 2, 8), chain.toIndexListByForEachIndexed())
         assertContentEquals(listOf(8, 2, 4), chain.toIndexListByForEachIndexed(reversed = true))
-    }
-
-    @Test
-    fun shallowCopy() {
-        val indices = intArrayOf(4, 2, 8)
-        val chain = mutableChainOf(*indices)
-        val copy = chain.shallowCopy()
-        assertContentEquals(chain.toIndexList(), copy.toIndexList())
-        assertContentEquals(indices.toList(), copy.toIndexList())
-
-        // The copy is shallow, it is only used to survive initializeStorage() call. The copy behavior
-        // is not guaranteed after modifying the original chain in any other way.
-        chain.initializeStorage(10)
-        assertContentEquals(indices.toList(), copy.toIndexList())
     }
 
     @Test
@@ -80,6 +67,39 @@ class ChainTest {
         chain.initializeStorage(20)
         assertContentEquals(emptyList(), chain.toIndexList())
         assertContentEquals(emptyList(), chain.toIndexList(reversed = true))
+
+        // Make sure that the chain was reinitialized with the new capacity
+        try {
+            chain.addToEnd(10)
+            chain.addToEnd(19)
+        } catch (e: IndexOutOfBoundsException) {
+            fail("The chain was not reinitialized with the new capacity")
+        }
+    }
+
+    @Test
+    fun resizeStorage() {
+        val chain = mutableChainOf(1, 0, 2, initialCapacity = 3)
+        chain.resizeStorage(20, listOf(12, 7, 16)::get)
+        assertContentEquals(listOf(7, 12, 16), chain.toIndexList())
+        assertContentEquals(listOf(16, 12, 7), chain.toIndexList(reversed = true))
+
+        // Make sure that the chain was reinitialized with the new capacity
+        try {
+            chain.addToEnd(10)
+            chain.addToEnd(19)
+        } catch (e: IndexOutOfBoundsException) {
+            fail("The chain was not reinitialized with the new capacity")
+        }
+    }
+
+    @Test
+    fun resizeStorageWithCalculator() {
+        val chain = mutableChainOf(1, 0, 2, initialCapacity = 3)
+        val newIndices = listOf(12, 7, 16)
+        chain.resizeStorage(20) { newIndices[it] }
+        assertContentEquals(listOf(7, 12, 16), chain.toIndexList())
+        assertContentEquals(listOf(16, 12, 7), chain.toIndexList(reversed = true))
 
         // Make sure that the chain was reinitialized with the new capacity
         try {
@@ -160,10 +180,48 @@ class ChainTest {
         assertContentEquals(emptyList(), chain.toIndexList(reversed = true))
     }
 
+    @Test
+    fun timedChain() {
+        val timeSource = MsTimeSource()
+        val chain = mutableTimedChainOf(4, 2, 8, timeSource = timeSource)
+
+        timeSource += 1000L
+
+        assertEquals(1000L, chain.getTimeMark(4)!!.elapsedNow().inWholeMilliseconds)
+        assertEquals(1000L, chain.getTimeMark(2)!!.elapsedNow().inWholeMilliseconds)
+        assertEquals(1000L, chain.getTimeMark(8)!!.elapsedNow().inWholeMilliseconds)
+
+        chain.moveToEnd(2)
+        chain.addToEnd(6)
+
+        timeSource += 1000L
+
+        assertEquals(1000L, chain.getTimeMark(2)!!.elapsedNow().inWholeMilliseconds)
+        assertEquals(1000L, chain.getTimeMark(6)!!.elapsedNow().inWholeMilliseconds)
+
+        chain.remove(2)
+        assertNull(chain.getTimeMark(2))
+
+        chain.clear()
+        assertNull(chain.getTimeMark(6))
+    }
+
     private fun mutableChainOf(vararg indices: Int, initialCapacity: Int = 10): MutableChain {
         require(initialCapacity >= indices.size) { "initialCapacity must be >= indices.size" }
 
         val chain = MutableChain(initialCapacity)
+        indices.forEach { chain.addToEnd(it) }
+        return chain
+    }
+
+    private fun mutableTimedChainOf(
+        vararg indices: Int,
+        initialCapacity: Int = 10,
+        timeSource: TimeSource,
+    ): MutableTimedChain {
+        require(initialCapacity >= indices.size) { "initialCapacity must be >= indices.size" }
+
+        val chain = MutableTimedChain(initialCapacity, timeSource)
         indices.forEach { chain.addToEnd(it) }
         return chain
     }
@@ -189,5 +247,15 @@ class ChainTest {
         }
 
         return list
+    }
+
+    private class MsTimeSource : AbstractLongTimeSource(unit = DurationUnit.MILLISECONDS) {
+        private var reading = 0L
+
+        override fun read(): Long = reading
+
+        operator fun plusAssign(milliseconds: Long) {
+            reading += milliseconds
+        }
     }
 }
