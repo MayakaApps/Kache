@@ -215,8 +215,13 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
 
         mapMutex.withLock {
             map.removeAllWithCallback(reversed = reversed) { key, value ->
+                size -= safeSizeOf(key, value)
                 onEntryRemoved(false, key, value, null)
                 false // Continue removing
+            }
+
+            check(size == 0L) {
+                "sizeCalculator is reporting inconsistent results!"
             }
         }
     }
@@ -226,8 +231,13 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
 
         mapMutex.withLock {
             map.removeAllWithCallback(reversed = reversed) { key, value ->
+                size -= safeSizeOf(key, value)
                 onEntryRemoved(true, key, value, null)
                 false // Continue removing
+            }
+
+            check(size == 0L) {
+                "sizeCalculator is reporting inconsistent results!"
             }
         }
     }
