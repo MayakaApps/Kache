@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class InMemoryKacheTest {
 
@@ -214,10 +215,9 @@ class InMemoryKacheTest {
         assertEquals(0, removalLogger.getAndClearEvents().size)
 
         // put a very big entry
-        val tinyKache = testInMemoryKache(
-            maxSize = 10,
-            sizeCalculator = { _, _ -> 20 },
-        )
+        val tinyKache = testInMemoryKache(maxSize = 10) {
+            sizeCalculator = { _, _ -> 20 }
+        }
         tinyKache.put(KEY_1, VAL_1)
         assertEquals(0, tinyKache.size)
         assertNull(tinyKache.getIfAvailable(KEY_1))
@@ -512,7 +512,9 @@ class InMemoryKacheTest {
         val removalLogger = EntryRemovalLogger<String, Int>()
 
         // LRU
-        val lruKache = testInMemoryKache(strategy = KacheStrategy.LRU, entryRemovalLogger = removalLogger)
+        val lruKache = testInMemoryKache(entryRemovalLogger = removalLogger) {
+            strategy = KacheStrategy.LRU
+        }
         lruKache.putFourElementsWithAccess()
         lruKache.trimToSize(3)
         assertEquals(3, lruKache.size)
@@ -523,7 +525,9 @@ class InMemoryKacheTest {
         )
 
         // MRU
-        val mruKache = testInMemoryKache(strategy = KacheStrategy.MRU, entryRemovalLogger = removalLogger)
+        val mruKache = testInMemoryKache(entryRemovalLogger = removalLogger) {
+            strategy = KacheStrategy.MRU
+        }
         mruKache.putFourElementsWithAccess()
         mruKache.trimToSize(3)
         assertEquals(3, mruKache.size)
@@ -534,7 +538,9 @@ class InMemoryKacheTest {
         )
 
         // FIFO
-        val fifoKache = testInMemoryKache(strategy = KacheStrategy.FIFO, entryRemovalLogger = removalLogger)
+        val fifoKache = testInMemoryKache(entryRemovalLogger = removalLogger) {
+            strategy = KacheStrategy.FIFO
+        }
         fifoKache.putFourElementsWithAccess()
         fifoKache.trimToSize(3)
         assertEquals(3, fifoKache.size)
@@ -545,7 +551,9 @@ class InMemoryKacheTest {
         )
 
         // FILO
-        val filoKache = testInMemoryKache(strategy = KacheStrategy.FILO, entryRemovalLogger = removalLogger)
+        val filoKache = testInMemoryKache(entryRemovalLogger = removalLogger) {
+            strategy = KacheStrategy.FILO
+        }
         filoKache.putFourElementsWithAccess()
         filoKache.trimToSize(3)
         assertEquals(3, filoKache.size)
@@ -605,14 +613,54 @@ class InMemoryKacheTest {
 
     @Test
     fun sizeCalculation() = runTest {
-        val kache = testInMemoryKache(
-            maxSize = 1L + VAL_1 + VAL_2,
-            sizeCalculator = { _, value -> value.toLong() },
-        )
+        val kache = testInMemoryKache(maxSize = 1L + VAL_1 + VAL_2) {
+            sizeCalculator = { _, value -> value.toLong() }
+        }
 
         kache.put(KEY_1, VAL_1)
         kache.put(KEY_2, VAL_2)
 
         assertEquals((VAL_1 + VAL_2).toLong(), kache.size)
+    }
+
+    @Test
+    fun expireAfterWrite() = runTest {
+        val timeSource = MsTimeSource()
+        val kache = testInMemoryKache {
+            this.timeSource = timeSource
+            this.expireAfterWriteDuration = 1000.milliseconds
+        }
+
+        kache.put(KEY_1, VAL_1)
+        assertEquals(VAL_1, kache.get(KEY_1))
+        timeSource += 999
+        assertEquals(VAL_1, kache.get(KEY_1))
+        timeSource += 1
+        assertNull(kache.get(KEY_1))
+        assertEquals(0, kache.size)
+
+        kache.put(KEY_1, VAL_1)
+        timeSource += 1000
+        assertEquals(VAL_2, kache.getOrPut(KEY_1) { VAL_2 })
+    }
+
+    @Test
+    fun expireAfterAccess() = runTest {
+        val timeSource = MsTimeSource()
+        val kache = testInMemoryKache {
+            this.timeSource = timeSource
+            this.expireAfterAccessDuration = 1000.milliseconds
+        }
+
+        kache.put(KEY_1, VAL_1)
+        assertEquals(VAL_1, kache.get(KEY_1))
+        timeSource += 999
+        assertEquals(VAL_1, kache.get(KEY_1))
+        timeSource += 1
+        assertEquals(VAL_1, kache.get(KEY_1))
+        timeSource += 1000
+        assertNull(kache.get(KEY_1))
+
+        assertEquals(0, kache.size)
     }
 }

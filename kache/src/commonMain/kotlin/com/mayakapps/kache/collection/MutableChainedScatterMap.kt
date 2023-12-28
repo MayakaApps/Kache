@@ -65,11 +65,9 @@ internal class MutableChainedScatterMap<K, V>(
     }
 
     override fun resizeStorage(newCapacity: Int) {
-        val previousMetadata = metadata
         val previousKeys = keys
         val previousValues = values
-        val previousMainChain = mainChain.shallowCopy()
-        val previousAccessoryChain = (if (accessOrder) insertionChain else accessChain)?.shallowCopy()
+        val accessoryChain = if (accessOrder) insertionChain else accessChain
 
         initializeStorage(newCapacity)
         accessChain?.initializeStorage(_capacity)
@@ -78,26 +76,20 @@ internal class MutableChainedScatterMap<K, V>(
         val newKeys = keys
         val newValues = values
         val newIndices = IntArray(capacity)
-        val newMainChain = mainChain
-        val newAccessoryChain = if (accessOrder) insertionChain else accessChain
 
-        previousMainChain.forEachIndexed { i ->
-            if (isFull(previousMetadata, i)) {
-                val previousKey = previousKeys[i]
-                val hash = hash(previousKey)
-                val index = findFirstAvailableSlot(h1(hash))
+        mainChain.resizeStorage(newCapacity) { i ->
+            val previousKey = previousKeys[i]
+            val hash = hash(previousKey)
+            val index = findFirstAvailableSlot(h1(hash))
 
-                writeMetadata(index, h2(hash).toLong())
-                newKeys[index] = previousKey
-                newValues[index] = previousValues[i]
-                newMainChain.addToEnd(index)
-                newIndices[i] = index
-            }
+            writeMetadata(index, h2(hash).toLong())
+            newKeys[index] = previousKey
+            newValues[index] = previousValues[i]
+            newIndices[i] = index
+            index
         }
 
-        previousAccessoryChain?.forEachIndexed { i ->
-            newAccessoryChain?.addToEnd(newIndices[i])
-        }
+        accessoryChain?.resizeStorage(newCapacity, newIndices)
     }
 
     fun getKeySet(
@@ -134,7 +126,7 @@ internal class MutableChainedScatterMap<K, V>(
     inline fun forEach(
         accessOrder: Boolean = this.accessOrder,
         reversed: Boolean = false,
-        block: (key: K, value: V) -> Unit
+        block: (key: K, value: V, indexInChain: Int) -> Unit
     ) {
         val chain: MutableChain = if (accessOrder) {
             accessChain ?: insertionChain!!
@@ -144,7 +136,7 @@ internal class MutableChainedScatterMap<K, V>(
 
         chain.forEachIndexed(reversed = reversed) { index ->
             @Suppress("UNCHECKED_CAST")
-            block(keys[index] as K, values[index] as V)
+            block(keys[index] as K, values[index] as V, index)
         }
     }
 
@@ -154,10 +146,11 @@ internal class MutableChainedScatterMap<K, V>(
      * iteration can be reversed by setting the [reversed] parameter to `true`. The removal of
      * key/value pairs can be stopped by returning `true` from the [callback] function.
      */
-    inline fun removeAllWithCallback(
+    inline fun  removeAllWithCallback(
         reversed: Boolean = false,
         accessOrder: Boolean = this.accessOrder,
-        callback: (key: K, value: V) -> Boolean,
+        stopRemoving: (key: K, value: V, indexInChain: Int) -> Boolean = { _, _, _ -> false },
+        callback: (key: K, value: V) -> Unit,
     ) {
         val chain: MutableChain = if (accessOrder) {
             accessChain ?: insertionChain!!
@@ -168,11 +161,15 @@ internal class MutableChainedScatterMap<K, V>(
         chain.forEachIndexed(reversed = reversed) { index ->
             val key = keys[index]
             val value = values[index]
-            removeValueAt(index)
+
             @Suppress("UNCHECKED_CAST")
-            if (callback(key as K, value as V)) {
+            if (stopRemoving(key as K, value as V, index)) {
                 return
             }
+
+            removeValueAt(index)
+            @Suppress("UNCHECKED_CAST")
+            callback(key as K, value as V)
         }
     }
 }

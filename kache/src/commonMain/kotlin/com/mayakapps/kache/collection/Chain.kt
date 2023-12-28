@@ -18,6 +18,8 @@ package com.mayakapps.kache.collection
 
 import androidx.collection.internal.EMPTY_INTS
 import kotlin.jvm.JvmField
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 internal sealed class Chain {
     @JvmField
@@ -34,29 +36,10 @@ internal sealed class Chain {
 
     internal inline fun forEachIndexed(reversed: Boolean = false, action: (index: Int) -> Unit) {
         if (reversed) {
-            var index = tail
-            while (index != -1) {
-                val prevIndex = prev[index]
-                action(index)
-                index = prevIndex
-            }
+            iterateChain(tail, prev, action)
         } else {
-            var index = head
-            while (index != -1) {
-                val nextIndex = next[index]
-                action(index)
-                index = nextIndex
-            }
+            iterateChain(head, next, action)
         }
-    }
-
-    internal fun shallowCopy(): Chain {
-        val copy = MutableChain(0)
-        copy.head = head
-        copy.tail = tail
-        copy.next = next
-        copy.prev = prev
-        return copy
     }
 
     internal abstract class AbstractIterator<T>(
@@ -82,23 +65,84 @@ internal sealed class Chain {
     }
 }
 
-internal class MutableChain(initialCapacity: Int) : Chain() {
+internal open class MutableChain(initialCapacity: Int) : Chain() {
 
     init {
         require(initialCapacity >= 0) { "Capacity must be a positive value." }
         if (initialCapacity > 0) {
-            initializeStorage(initialCapacity)
+            next = IntArray(initialCapacity) { -1 }
+            prev = IntArray(initialCapacity) { -1 }
         }
     }
 
-    internal fun initializeStorage(capacity: Int) {
+    internal open fun initializeStorage(capacity: Int) {
         head = -1
         tail = -1
         next = IntArray(capacity) { -1 }
         prev = IntArray(capacity) { -1 }
     }
 
-    internal fun addToEnd(index: Int) {
+    internal fun resizeStorage(newCapacity: Int, newIndices: IntArray) {
+        val oldHead = head
+        val oldNext = next
+        val oldExtras = getExtras()
+
+        initializeStorage(newCapacity)
+        val newExtras = getExtras()
+
+        if (oldHead == -1) {
+            head = -1
+            tail = -1
+            return
+        }
+
+        head = newIndices[oldHead]
+        tail = newIndices[tail]
+
+        var newPrevIndex = -1
+        var newIndex = newIndices[oldHead]
+
+        iterateChain(oldHead, oldNext) { oldIndex ->
+            val oldNextIndex = oldNext[oldIndex]
+            val newNextIndex = newIndices[oldNextIndex]
+
+            next[newIndex] = newNextIndex
+            prev[newIndex] = newPrevIndex
+
+            newPrevIndex = newIndex
+            newIndex = newNextIndex
+
+            newExtras?.set(newIndex, oldExtras?.get(oldIndex))
+        }
+    }
+
+    internal inline fun resizeStorage(newCapacity: Int, calculateNewIndex: (Int) -> Int) {
+        val oldHead = head
+        val oldNext = next
+        val oldExtras = getExtras()
+
+        initializeStorage(newCapacity)
+        val newExtras = getExtras()
+
+        iterateChain(oldHead, oldNext) { oldIndex ->
+            val newIndex = calculateNewIndex(oldIndex)
+
+            if (head == -1) {
+                head = newIndex
+                tail = newIndex
+            }else {
+                next[tail] = newIndex
+                prev[newIndex] = tail
+                tail = newIndex
+            }
+
+            newExtras?.set(newIndex, oldExtras?.get(oldIndex))
+        }
+    }
+
+    protected open fun getExtras(): Array<Any?>? = null
+
+    internal open fun addToEnd(index: Int) {
         if (head == -1) {
             head = index
             tail = index
@@ -110,7 +154,7 @@ internal class MutableChain(initialCapacity: Int) : Chain() {
         tail = index
     }
 
-    internal fun moveToEnd(index: Int) {
+    internal open fun moveToEnd(index: Int) {
         if (index == tail) {
             return
         }
@@ -136,7 +180,7 @@ internal class MutableChain(initialCapacity: Int) : Chain() {
         tail = index
     }
 
-    internal fun remove(index: Int) {
+    internal open fun remove(index: Int) {
         if (index == head) {
             head = next[index]
         }
@@ -160,10 +204,62 @@ internal class MutableChain(initialCapacity: Int) : Chain() {
         prev[index] = -1
     }
 
-    internal fun clear() {
+    internal open fun clear() {
         head = -1
         tail = -1
         next.fill(-1)
         prev.fill(-1)
+    }
+}
+
+internal class MutableTimedChain(
+    initialCapacity: Int,
+    private val timeSource: TimeSource = TimeSource.Monotonic,
+): MutableChain(initialCapacity) {
+
+    @JvmField
+    internal var timeMarks = Array<TimeMark?>(initialCapacity) { null }
+
+    override fun initializeStorage(capacity: Int) {
+        super.initializeStorage(capacity)
+        timeMarks = Array(capacity) { null }
+    }
+
+    internal fun getTimeMark(index: Int): TimeMark? = timeMarks[index]
+
+    @Suppress("UNCHECKED_CAST")
+    override fun getExtras(): Array<Any?> = timeMarks as Array<Any?>
+
+    override fun addToEnd(index: Int) {
+        super.addToEnd(index)
+        timeMarks[index] = timeSource.markNow()
+    }
+
+    override fun moveToEnd(index: Int) {
+        super.moveToEnd(index)
+        timeMarks[index] = timeSource.markNow()
+    }
+
+    override fun remove(index: Int) {
+        super.remove(index)
+        timeMarks[index] = null
+    }
+
+    override fun clear() {
+        super.clear()
+        timeMarks.fill(null)
+    }
+}
+
+private inline fun iterateChain(
+    head: Int,
+    next: IntArray,
+    action: (index: Int) -> Unit,
+) {
+    var index = head
+    while (index != -1) {
+        val nextIndex = next[index]
+        action(index)
+        index = nextIndex
     }
 }

@@ -20,9 +20,12 @@ import androidx.collection.mutableScatterMapOf
 import com.mayakapps.kache.InMemoryKache.Configuration
 import com.mayakapps.kache.collection.MutableChain
 import com.mayakapps.kache.collection.MutableChainedScatterMap
+import com.mayakapps.kache.collection.MutableTimedChain
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.time.Duration
+import kotlin.time.TimeSource
 
 /**
  * A typealias that represents a function for calculating the size of a cache entry represented by the provided `key`
@@ -66,12 +69,39 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     private val creationScope: CoroutineScope,
     private val sizeCalculator: SizeCalculator<K, V>,
     private val onEntryRemoved: EntryRemovedListener<K, V>,
+    timeSource: TimeSource,
+    private val expireAfterWriteDuration: Duration,
+    private val expireAfterAccessDuration: Duration,
 ) : ObjectKache<K, V> {
 
     private val creationMap = mutableScatterMapOf<K, Deferred<V?>>()
     private val creationMutex = Mutex()
 
-    private val map: MutableChainedScatterMap<K, V> = strategy.createMap()
+    private val accessChain = when {
+        expireAfterAccessDuration != Duration.INFINITE -> MutableTimedChain(
+            initialCapacity = 0,
+            timeSource = timeSource,
+        )
+
+        strategy == KacheStrategy.LRU || strategy == KacheStrategy.MRU -> MutableChain(0)
+        else -> null
+    }
+
+    private val insertionChain = when {
+        expireAfterWriteDuration != Duration.INFINITE -> MutableTimedChain(
+            initialCapacity = 0,
+            timeSource = timeSource,
+        )
+
+        strategy == KacheStrategy.FIFO || strategy == KacheStrategy.FILO -> MutableChain(0)
+        else -> null
+    }
+
+    private val map: MutableChainedScatterMap<K, V> = MutableChainedScatterMap(
+        accessChain = accessChain,
+        insertionChain = insertionChain,
+        accessOrder = strategy == KacheStrategy.LRU || strategy == KacheStrategy.MRU,
+    )
     private val mapMutex = Mutex()
 
     override var maxSize: Long = maxSize
@@ -84,24 +114,50 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
 
     private val keySet = map.getKeySet(reversed = reversed)
 
-    override suspend fun getKeys(): Set<K> = mapMutex.withLock { keySet.toSet() }
+    override suspend fun getKeys(): Set<K> = mapMutex.withLock {
+        nonLockedEvictExpired()
+        keySet.toSet()
+    }
 
-    override suspend fun getUnderCreationKeys(): Set<K> = mapMutex.withLock { creationMap.keySet.toSet() }
+    override suspend fun getUnderCreationKeys(): Set<K> = mapMutex.withLock {
+        nonLockedEvictExpired()
+        creationMap.keySet.toSet()
+    }
 
-    override suspend fun getAllKeys(): KacheKeys<K> =
-        mapMutex.withLock { KacheKeys(keySet.toSet(), creationMap.keySet.toSet()) }
+    override suspend fun getAllKeys(): KacheKeys<K> = mapMutex.withLock {
+        nonLockedEvictExpired()
+        KacheKeys(keySet.toSet(), creationMap.keySet.toSet())
+    }
 
-    override suspend fun getOrDefault(key: K, defaultValue: V): V =
-        getFromCreation(key) ?: getIfAvailableOrDefault(key, defaultValue)
+    override suspend fun getOrDefault(key: K, defaultValue: V): V {
+        evictExpired()
+        return getFromCreation(key) ?: getIfAvailableOrDefault(key, defaultValue)
+    }
 
-    override suspend fun get(key: K): V? =
-        getFromCreation(key) ?: getIfAvailable(key)
+    override suspend fun get(key: K): V? {
+        evictExpired()
+        return getFromCreation(key) ?: getIfAvailable(key)
+    }
 
     override fun getIfAvailableOrDefault(key: K, defaultValue: V): V =
         getIfAvailable(key) ?: defaultValue
 
-    override fun getIfAvailable(key: K): V? =
-        map[key]
+    override fun getIfAvailable(key: K): V? {
+        val index = map.findKeyIndex(key)
+        if (index < 0) return null
+
+        if (expireAfterAccessDuration != Duration.INFINITE) {
+            val timeMark = (accessChain as MutableTimedChain).getTimeMark(index)
+            if (timeMark == null || timeMark.elapsedNow() >= expireAfterAccessDuration) return null
+        }
+
+        if (expireAfterWriteDuration != Duration.INFINITE) {
+            val timeMark = (insertionChain as MutableTimedChain).getTimeMark(index)
+            if (timeMark == null || timeMark.elapsedNow() >= expireAfterWriteDuration) return null
+        }
+
+        return map[key]
+    }
 
 
     override suspend fun getOrPut(key: K, creationFunction: suspend (key: K) -> V?): V? {
@@ -142,6 +198,7 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
 
                     size += safeSizeOf(key, value) - (oldValue?.let { safeSizeOf(key, it) } ?: 0)
                     nonLockedTrimToSize(maxSize)
+                    nonLockedEvictExpired()
 
                     oldValue?.let { onEntryRemoved(false, key, it, value) }
                 }
@@ -203,6 +260,9 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
         return mapMutex.withLock {
             val oldValue = map.remove(key)
             if (oldValue != null) size -= safeSizeOf(key, oldValue)
+
+            nonLockedEvictExpired()
+
             oldValue
         }?.let { oldValue ->
             onEntryRemoved(false, key, oldValue, null)
@@ -217,7 +277,6 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
             map.removeAllWithCallback(reversed = reversed) { key, value ->
                 size -= safeSizeOf(key, value)
                 onEntryRemoved(false, key, value, null)
-                false // Continue removing
             }
 
             check(size == 0L) {
@@ -233,7 +292,6 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
             map.removeAllWithCallback(reversed = reversed) { key, value ->
                 size -= safeSizeOf(key, value)
                 onEntryRemoved(true, key, value, null)
-                false // Continue removing
             }
 
             check(size == 0L) {
@@ -256,6 +314,7 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
 
     override suspend fun trimToSize(size: Long) {
         mapMutex.withLock {
+            nonLockedEvictExpired()
             nonLockedTrimToSize(size)
         }
     }
@@ -263,10 +322,46 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     private fun nonLockedTrimToSize(size: Long) {
         if (this@InMemoryKache.size <= size) return
 
-        map.removeAllWithCallback(reversed = reversed) { key, value ->
+        map.removeAllWithCallback(
+            reversed = reversed,
+            stopRemoving = { _, _, _ -> this@InMemoryKache.size <= size },
+        ) { key, value ->
             this@InMemoryKache.size -= safeSizeOf(key, value)
             onEntryRemoved(true, key, value, null)
-            this@InMemoryKache.size <= size
+        }
+
+        check(this.size >= 0 || (map.isEmpty() && this.size != 0L)) {
+            "sizeCalculator is reporting inconsistent results!"
+        }
+    }
+
+    override suspend fun evictExpired() {
+        mapMutex.withLock {
+            nonLockedEvictExpired()
+        }
+    }
+
+    private fun nonLockedEvictExpired() {
+        (accessChain as? MutableTimedChain)?.let { chain ->
+            map.removeAllWithCallback(accessOrder = true,
+                stopRemoving = { _, _, index ->
+                    chain.getTimeMark(index)!!.elapsedNow() < expireAfterAccessDuration
+                }
+            ) { key, value ->
+                size -= safeSizeOf(key, value)
+                onEntryRemoved(true, key, value, null)
+            }
+        }
+
+        (insertionChain as? MutableTimedChain)?.let { chain ->
+            map.removeAllWithCallback(accessOrder = false,
+                stopRemoving = { _, _, index ->
+                    chain.getTimeMark(index)!!.elapsedNow() < expireAfterWriteDuration
+                }
+            ) { key, value ->
+                size -= safeSizeOf(key, value)
+                onEntryRemoved(true, key, value, null)
+            }
         }
 
         check(this.size >= 0 || (map.isEmpty() && this.size != 0L)) {
@@ -340,6 +435,22 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
          * listener called when an entry is removed for any reason. See [EntryRemovedListener]
          */
         public var onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
+
+        /**
+         * The time source used for calculating the time marks of the elements. Only used if the
+         * [expireAfterWriteDuration] or [expireAfterAccessDuration] is set. See [TimeSource]
+         */
+        public var timeSource: TimeSource = TimeSource.Monotonic,
+
+        /**
+         * The duration after which the elements are removed after they are written. See [Duration]
+         */
+        public var expireAfterWriteDuration: Duration = Duration.INFINITE,
+
+        /**
+         * The duration after which the elements are removed after they are accessed. See [Duration]
+         */
+        public var expireAfterAccessDuration: Duration = Duration.INFINITE,
     )
 }
 
@@ -363,6 +474,9 @@ public fun <K : Any, V : Any> InMemoryKache(
         config.creationScope,
         config.sizeCalculator,
         config.onEntryRemoved,
+        config.timeSource,
+        config.expireAfterWriteDuration,
+        config.expireAfterAccessDuration,
     )
 }
 
@@ -372,13 +486,3 @@ private const val CODE_VALUE = 2
 private class DeferredReplacedException(val replacedWith: Int) : CancellationException(CANCELLATION_MESSAGE)
 
 private const val CANCELLATION_MESSAGE = "The cached element was removed before creation"
-
-private fun <K : Any, V : Any> KacheStrategy.createMap(): MutableChainedScatterMap<K, V> {
-    val accessOrder = this == KacheStrategy.LRU || this == KacheStrategy.MRU
-
-    return MutableChainedScatterMap(
-        accessChain = if (accessOrder) MutableChain(0) else null,
-        insertionChain = if (accessOrder) null else MutableChain(0),
-        accessOrder = accessOrder,
-    )
-}
