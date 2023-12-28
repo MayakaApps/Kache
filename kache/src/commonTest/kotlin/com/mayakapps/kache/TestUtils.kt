@@ -17,61 +17,60 @@
 package com.mayakapps.kache
 
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.runTest
 
-internal fun runBasicInMemoryKacheRemoveListenerTest(
+internal fun TestScope.testInMemoryKache(
     maxSize: Long = MAX_SIZE,
     strategy: KacheStrategy = KacheStrategy.LRU,
     sizeCalculator: SizeCalculator<String, Int> = { _, _ -> 1 },
-    testBody: suspend InMemoryKache<String, Int>.(MutableList<RemovedEntry<String, Int>>) -> Unit,
-) = runTest {
-    val removedEntries = mutableListOf<RemovedEntry<String, Int>>()
-    // Explicit type parameter is a workaround for https://youtrack.jetbrains.com/issue/KT-53109
-    val cache = InMemoryKache<String, Int>(maxSize) {
-        this.strategy = strategy
-        this.creationScope = this@runTest
-        this.sizeCalculator = sizeCalculator
-        this.onEntryRemoved = { evicted, key, oldValue, newValue ->
-            removedEntries += RemovedEntry(evicted, key, oldValue, newValue)
-        }
+    entryRemovalLogger: EntryRemovalLogger<String, Int>? = null,
+) = InMemoryKache(maxSize) {
+    this.strategy = strategy
+    this.creationScope = this@testInMemoryKache
+    this.sizeCalculator = sizeCalculator
+    if (entryRemovalLogger != null) {
+        this.onEntryRemoved = entryRemovalLogger::onEntryRemoved
     }
-
-    cache.testBody(removedEntries)
 }
 
-internal data class RemovedEntry<K, V>(val evicted: Boolean, val key: K, val oldValue: V, val newValue: V?)
 
-internal fun runBasicInMemoryKacheTest(
-    maxSize: Long = MAX_SIZE,
-    strategy: KacheStrategy = KacheStrategy.LRU,
-    sizeCalculator: SizeCalculator<String, Int> = { _, _ -> 1 },
-    testBody: suspend InMemoryKache<String, Int>.(TestScope) -> Unit,
-) = runInMemoryKacheTest(maxSize, strategy, sizeCalculator, testBody = testBody)
+/**
+ * Puts 4 elements into the kache and gets 2 of them. This way the state of the kache is as follows:
+ * - The least-recently-used element is [KEY_3] with [VAL_3]
+ * - The most-recently-used element is [KEY_2] with [VAL_2]
+ * - The first-in element is [KEY_1] with [VAL_1]
+ * - The last-in element is [KEY_4] with [VAL_4]
+ */
+internal suspend fun InMemoryKache<String, Int>.putFourElementsWithAccess() {
+    put(KEY_1, VAL_1)
+    put(KEY_2, VAL_2)
+    put(KEY_3, VAL_3)
+    put(KEY_4, VAL_4)
+    get(KEY_1)
+    get(KEY_2)
+}
 
-internal inline fun <K : Any, V : Any> runInMemoryKacheTest(
-    maxSize: Long = MAX_SIZE,
-    strategy: KacheStrategy = KacheStrategy.LRU,
-    noinline sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 },
-    noinline onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> },
-    crossinline testBody: suspend InMemoryKache<K, V>.(TestScope) -> Unit,
-) = runTest {
-    testBody(
-        InMemoryKache(maxSize) {
-            this.strategy = strategy
-            this.creationScope = this@runTest
-            this.sizeCalculator = sizeCalculator
-            this.onEntryRemoved = onEntryRemoved
-        },
-        this,
-    )
+internal class EntryRemovalLogger<K, V> {
+    private val removedEntries = mutableListOf<Event<K, V>>()
+
+    internal fun onEntryRemoved(evicted: Boolean, key: K, oldValue: V, newValue: V?) {
+        removedEntries += Event(evicted, key, oldValue, newValue)
+    }
+
+    internal fun getAndClearEvents() = removedEntries.toList().also { removedEntries.clear() }
+
+    internal fun clear() = removedEntries.clear()
+
+    internal data class Event<K, V>(val evicted: Boolean, val key: K, val oldValue: V, val newValue: V?)
 }
 
 internal const val MAX_SIZE = 10L
-internal const val KEY_1 = "key 1"
-internal const val VAL_1 = 201
-internal const val KEY_2 = "key 2"
-internal const val VAL_2 = 202
-internal const val KEY_3 = "key 3"
-internal const val VAL_3 = 203
-internal const val KEY_4 = "key 4"
-internal const val VAL_4 = 204
+internal const val KEY_1 = "one"
+internal const val VAL_1 = 1
+internal const val KEY_2 = "two"
+internal const val VAL_2 = 2
+internal const val KEY_3 = "three"
+internal const val VAL_3 = 3
+internal const val KEY_4 = "four"
+internal const val VAL_4 = 4
+internal const val KEY_5 = "five"
+internal const val VAL_5 = 5
