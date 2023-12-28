@@ -70,12 +70,16 @@ public interface ObjectKache<K : Any, V : Any> {
     /**
      * Returns the value for [key] if it exists in the cache or [defaultValue] if it doesn't exist or its creation
      * is still in progress.
+     *
+     * Note that this function returns [defaultValue] if the entry is expired, but it doesn't remove it either.
      */
     public fun getIfAvailableOrDefault(key: K, defaultValue: V): V
 
     /**
      * Returns the value for [key] if it exists in the cache or `null` if it doesn't exist or its creation is still
      * in progress.
+     *
+     * Note that this function doesn't return the value if it is expired, but it doesn't remove it either.
      */
     public fun getIfAvailable(key: K): V?
 
@@ -145,4 +149,9 @@ public interface ObjectKache<K : Any, V : Any> {
      * size of the cache, allowing it to grow again.
      */
     public suspend fun trimToSize(size: Long)
+
+    /**
+     * Removes all expired entries, calling [EntryRemovedListener] on each removed entry with `evicted` set to `true`.
+     */
+    public suspend fun evictExpired()
 }

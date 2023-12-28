@@ -16,9 +16,8 @@
 
 package com.mayakapps.kache.collection
 
+import com.mayakapps.kache.MsTimeSource
 import kotlin.test.*
-import kotlin.time.AbstractLongTimeSource
-import kotlin.time.DurationUnit
 import kotlin.time.TimeSource
 
 class ChainTest {
@@ -247,15 +246,5 @@ class ChainTest {
         }
 
         return list
-    }
-
-    private class MsTimeSource : AbstractLongTimeSource(unit = DurationUnit.MILLISECONDS) {
-        private var reading = 0L
-
-        override fun read(): Long = reading
-
-        operator fun plusAssign(milliseconds: Long) {
-            reading += milliseconds
-        }
     }
 }

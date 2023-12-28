@@ -17,19 +17,19 @@
 package com.mayakapps.kache
 
 import kotlinx.coroutines.test.TestScope
+import kotlin.time.AbstractLongTimeSource
+import kotlin.time.DurationUnit
 
 internal fun TestScope.testInMemoryKache(
     maxSize: Long = MAX_SIZE,
-    strategy: KacheStrategy = KacheStrategy.LRU,
-    sizeCalculator: SizeCalculator<String, Int> = { _, _ -> 1 },
     entryRemovalLogger: EntryRemovalLogger<String, Int>? = null,
+    configuration: InMemoryKache.Configuration<String, Int>.() -> Unit = {}
 ) = InMemoryKache(maxSize) {
-    this.strategy = strategy
-    this.creationScope = this@testInMemoryKache
-    this.sizeCalculator = sizeCalculator
+    creationScope = this@testInMemoryKache
     if (entryRemovalLogger != null) {
-        this.onEntryRemoved = entryRemovalLogger::onEntryRemoved
+        onEntryRemoved = entryRemovalLogger::onEntryRemoved
     }
+    configuration()
 }
 
 
@@ -61,6 +61,16 @@ internal class EntryRemovalLogger<K, V> {
     internal fun clear() = removedEntries.clear()
 
     internal data class Event<K, V>(val evicted: Boolean, val key: K, val oldValue: V, val newValue: V?)
+}
+
+internal class MsTimeSource : AbstractLongTimeSource(unit = DurationUnit.MILLISECONDS) {
+    private var reading = 0L
+
+    override fun read(): Long = reading
+
+    operator fun plusAssign(milliseconds: Long) {
+        reading += milliseconds
+    }
 }
 
 internal const val MAX_SIZE = 10L

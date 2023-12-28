@@ -146,10 +146,11 @@ internal class MutableChainedScatterMap<K, V>(
      * iteration can be reversed by setting the [reversed] parameter to `true`. The removal of
      * key/value pairs can be stopped by returning `true` from the [callback] function.
      */
-    inline fun removeAllWithCallback(
+    inline fun  removeAllWithCallback(
         reversed: Boolean = false,
         accessOrder: Boolean = this.accessOrder,
-        callback: (key: K, value: V, indexInChain: Int) -> Boolean,
+        stopRemoving: (key: K, value: V, indexInChain: Int) -> Boolean = { _, _, _ -> false },
+        callback: (key: K, value: V) -> Unit,
     ) {
         val chain: MutableChain = if (accessOrder) {
             accessChain ?: insertionChain!!
@@ -160,11 +161,15 @@ internal class MutableChainedScatterMap<K, V>(
         chain.forEachIndexed(reversed = reversed) { index ->
             val key = keys[index]
             val value = values[index]
-            removeValueAt(index)
+
             @Suppress("UNCHECKED_CAST")
-            if (callback(key as K, value as V, index)) {
+            if (stopRemoving(key as K, value as V, index)) {
                 return
             }
+
+            removeValueAt(index)
+            @Suppress("UNCHECKED_CAST")
+            callback(key as K, value as V)
         }
     }
 }
