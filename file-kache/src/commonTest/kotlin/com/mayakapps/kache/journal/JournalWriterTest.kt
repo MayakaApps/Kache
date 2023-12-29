@@ -26,7 +26,7 @@ class JournalWriterTest {
     @Test
     fun writeHeader() {
         val headerBytes =
-            JOURNAL_MAGIC.encodeToByteArray() + JOURNAL_VERSION + byteArrayOf(0x00, 0x00, 0x00, 0x01)
+            JOURNAL_MAGIC.encodeToByteArray() + JOURNAL_VERSION + byteArrayOf(0x00, 0x00, 0x00, 0x01, 0x00)
 
         val buffer = Buffer()
         JournalWriter(buffer).use { it.writeHeader() }
@@ -69,12 +69,13 @@ class JournalWriterTest {
     @Test
     fun writeAll() {
         val bytes = byteArrayOf(
-            JournalEntry.CLEAN, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
+            JournalEntry.CLEAN_WITH_TRANSFORMED_KEY, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
+            KEY_2.length.toByte(), *KEY_2.encodeToByteArray(),
             JournalEntry.DIRTY, KEY_2.length.toByte(), *KEY_2.encodeToByteArray(),
         )
 
         val buffer = Buffer()
-        JournalWriter(buffer).use { it.writeAll(listOf(KEY_1), listOf(KEY_2)) }
+        JournalWriter(buffer).use { it.writeAll(mapOf(KEY_1 to KEY_2), listOf(KEY_2)) }
         assertContentEquals(bytes, buffer.readByteArray())
     }
 

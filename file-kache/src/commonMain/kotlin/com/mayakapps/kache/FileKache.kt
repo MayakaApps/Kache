@@ -18,6 +18,7 @@ package com.mayakapps.kache
 
 import com.mayakapps.kache.FileKache.Configuration
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import okio.Path
@@ -61,7 +62,7 @@ public class FileKache internal constructor(
         }?.toString()
 
     override suspend fun putAsync(key: String, creationFunction: suspend (String) -> Boolean): Deferred<String?> =
-        creationScope.async {
+        creationScope.async(start = CoroutineStart.UNDISPATCHED) {
             baseKache.putAsync(key) { file ->
                 creationFunction(file.toString())
             }.await()?.toString()

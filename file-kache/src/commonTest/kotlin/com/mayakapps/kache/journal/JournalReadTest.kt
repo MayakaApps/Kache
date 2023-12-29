@@ -132,15 +132,15 @@ class JournalReadTest {
         private val keyTwoBytes = byteArrayOf(KEY_2.length.toByte()) + KEY_2.encodeToByteArray()
 
         private val journalHeader =
-            byteArrayOf(0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, JOURNAL_VERSION, 0x00, 0x00, 0x00, 0x01)
+            byteArrayOf(0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, JOURNAL_VERSION, 0x00, 0x00, 0x00, 0x01, 0x00)
         private val emptyJournal = journalHeader
 
         private val journalWithDirty =
             byteArrayOf(*journalHeader, JournalEntry.DIRTY, *keyOneBytes, JournalEntry.DIRTY, *keyTwoBytes)
 
         private val journalWithDirtyData = JournalData(
-            cleanEntriesKeys = emptyList(),
-            dirtyEntriesKeys = listOf(KEY_1, KEY_2),
+            cleanEntries = linkedMapOf(),
+            dirtyEntryKeys = setOf(KEY_1, KEY_2),
             redundantEntriesCount = 2,
         )
 
@@ -148,8 +148,8 @@ class JournalReadTest {
             byteArrayOf(*journalHeader, JournalEntry.DIRTY, *keyOneBytes, JournalEntry.CLEAN, *keyOneBytes)
 
         private val journalWithAddData = JournalData(
-            cleanEntriesKeys = listOf(KEY_1),
-            dirtyEntriesKeys = emptyList(),
+            cleanEntries = linkedMapOf(KEY_1 to null),
+            dirtyEntryKeys = emptySet(),
             redundantEntriesCount = 1,
         )
 
@@ -160,8 +160,8 @@ class JournalReadTest {
                 JournalEntry.CLEAN, *keyTwoBytes,
             )
         private val journalWithMixedAddData = JournalData(
-            cleanEntriesKeys = listOf(KEY_1, KEY_2),
-            dirtyEntriesKeys = emptyList(),
+            cleanEntries = linkedMapOf(KEY_1 to null, KEY_2 to null),
+            dirtyEntryKeys = emptySet(),
             redundantEntriesCount = 2,
         )
 
@@ -172,10 +172,9 @@ class JournalReadTest {
                 JournalEntry.REMOVE, *keyOneBytes,
             )
         private val journalWithAddAndRemoveData = JournalData(
-            cleanEntriesKeys = emptyList(),
-            dirtyEntriesKeys = emptyList(),
+            cleanEntries = linkedMapOf(),
+            dirtyEntryKeys = emptySet(),
             redundantEntriesCount = 4,
-
             )
 
         private val journalWithAddAndReAdd =
@@ -185,8 +184,8 @@ class JournalReadTest {
                 JournalEntry.CLEAN, *keyOneBytes,
             )
         private val journalWithAddAndReAddData = JournalData(
-            cleanEntriesKeys = listOf(KEY_1),
-            dirtyEntriesKeys = emptyList(),
+            cleanEntries = linkedMapOf(KEY_1 to null),
+            dirtyEntryKeys = emptySet(),
             redundantEntriesCount = 3,
         )
 
@@ -196,8 +195,8 @@ class JournalReadTest {
                 JournalEntry.DIRTY, *keyOneBytes,
             )
         private val journalWithAddAndDirtyAddData = JournalData(
-            cleanEntriesKeys = listOf(KEY_1),
-            dirtyEntriesKeys = listOf(KEY_1),
+            cleanEntries = linkedMapOf(KEY_1 to null),
+            dirtyEntryKeys = setOf(KEY_1),
             redundantEntriesCount = 2,
         )
 
@@ -209,8 +208,8 @@ class JournalReadTest {
             )
 
         private val journalWithAddAndCancelledAddData = JournalData(
-            cleanEntriesKeys = listOf(KEY_1),
-            dirtyEntriesKeys = emptyList(),
+            cleanEntries = linkedMapOf(KEY_1 to null),
+            dirtyEntryKeys = emptySet(),
             redundantEntriesCount = 3,
         )
     }

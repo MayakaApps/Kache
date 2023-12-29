@@ -326,9 +326,6 @@ class OkioFileKacheTest {
         println(fileSystem.list(filesDirectory))
         kache.clear()
 
-        // A suspension point to make sure that the cache is cleared
-        delay(1L)
-
         // The cache should be empty
         println(kache.get(KEY_1))
         println(kache.get(KEY_2))
@@ -373,6 +370,41 @@ class OkioFileKacheTest {
         assertTrue((fileSystem.metadata(journalFile).size ?: 0) < 1024)
     }
 
+    @Test
+    fun reopen() = runTest {
+        // The cache should keep the entries after re-open
+        val contentFileSystem = FakeFileSystem()
+        createThreeElementOkioFileKacheWithAccess(contentFileSystem, KacheStrategy.LRU)
+        val contentKache = testOkioFileKache(contentFileSystem)
+        contentFileSystem.assertPathContentEquals(VAL_1, contentKache.get(KEY_1))
+        contentFileSystem.assertPathContentEquals(VAL_2, contentKache.get(KEY_2))
+        contentFileSystem.assertPathContentEquals(VAL_3, contentKache.get(KEY_3))
+
+        // LRU: The cache should keep the order of the entries
+        val lruFileSystem = FakeFileSystem()
+        createThreeElementOkioFileKacheWithAccess(lruFileSystem, KacheStrategy.LRU)
+        val lruKache = testOkioFileKache(lruFileSystem, maxSize = 17L) { strategy = KacheStrategy.LRU }
+        lruKache.put(lruFileSystem, KEY_4, VAL_4)
+        assertNull(lruKache.get(KEY_3))
+
+        // FIFO: The cache should keep the order of the entries
+        val fifoFileSystem = FakeFileSystem()
+        createThreeElementOkioFileKacheWithAccess(fifoFileSystem, KacheStrategy.FIFO)
+        val fifoKache = testOkioFileKache(fifoFileSystem, maxSize = 17L) { strategy = KacheStrategy.FIFO }
+        fifoKache.put(fifoFileSystem, KEY_4, VAL_4)
+        assertNull(fifoKache.get(KEY_1))
+
+        // The cache should be empty after re-open if the journal is corrupted
+        val corruptedFileSystem = FakeFileSystem()
+        createThreeElementOkioFileKacheWithAccess(corruptedFileSystem, KacheStrategy.LRU)
+        corruptedFileSystem.write(journalFile) { writeUtf8("corrupted") }
+        val corruptedKache = testOkioFileKache(corruptedFileSystem)
+        assertNull(corruptedKache.get(KEY_1))
+        assertNull(corruptedKache.get(KEY_2))
+        assertNull(corruptedKache.get(KEY_3))
+        assertEquals(0, corruptedFileSystem.list(filesDirectory).size)
+    }
+
     private suspend fun TestScope.testOkioFileKache(
         fileSystem: FileSystem = FakeFileSystem(),
         maxSize: Long = MAX_SIZE,
@@ -396,6 +428,31 @@ class OkioFileKacheTest {
             fileSystem.sink(cachePath).buffer().use { it.writeUtf8(value) }
             true
         }
+    }
+
+
+    /**
+     * Puts 3 elements into the kache and gets the first two of them. The fourth should be added after re-open
+     * This way the state of the kache is as follows:
+     * - The least-recently-used element is [KEY_3] with [VAL_3]
+     * - The most-recently-used element is [KEY_4] with [VAL_4]
+     * - The first-in element is [KEY_1] with [VAL_1]
+     * - The last-in element is [KEY_4] with [VAL_4]
+     */
+    private suspend fun TestScope.createThreeElementOkioFileKacheWithAccess(
+        fileSystem: FileSystem,
+        strategy: KacheStrategy,
+    ) {
+        val kache = testOkioFileKache(fileSystem) {
+            this.strategy = strategy
+        }
+
+        kache.put(fileSystem, KEY_1, VAL_1)
+        kache.put(fileSystem, KEY_2, VAL_2)
+        kache.put(fileSystem, KEY_3, VAL_3)
+        kache.get(KEY_1)
+        kache.get(KEY_2)
+        kache.close()
     }
 
     private fun FileSystem.assertPathContentEquals(content: String, path: Path?) {

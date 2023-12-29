@@ -16,42 +16,37 @@
 
 package com.mayakapps.kache.journal
 
+internal fun JournalEntry(
+    opcode: Byte,
+    key: String,
+    transformedKey: String? = null,
+) = when (opcode) {
+    JournalEntry.DIRTY -> JournalEntry.Dirty(key)
+    JournalEntry.CLEAN -> JournalEntry.Clean(key)
+    JournalEntry.CLEAN_WITH_TRANSFORMED_KEY -> JournalEntry.CleanWithTransformedKey(key, transformedKey!!)
+    JournalEntry.CANCEL -> JournalEntry.Cancel(key)
+    JournalEntry.REMOVE -> JournalEntry.Remove(key)
+    JournalEntry.READ -> JournalEntry.Read(key)
+
+    else -> throw JournalInvalidOpcodeException()
+}
+
 internal sealed interface JournalEntry {
     val key: String
 
     data class Dirty(override val key: String) : JournalEntry
-
     data class Clean(override val key: String) : JournalEntry
-
+    data class CleanWithTransformedKey(override val key: String, val transformedKey: String) : JournalEntry
     data class Cancel(override val key: String) : JournalEntry
-
     data class Remove(override val key: String) : JournalEntry
-
     data class Read(override val key: String) : JournalEntry
 
-    val opcode: Byte
-        get() = when (this) {
-            is Dirty -> DIRTY
-            is Clean -> CLEAN
-            is Cancel -> CANCEL
-            is Remove -> REMOVE
-            is Read -> READ
-        }
-
     companion object {
-        operator fun invoke(opcode: Byte, key: String) = when (opcode) {
-            DIRTY -> Dirty(key)
-            CLEAN -> Clean(key)
-            CANCEL -> Cancel(key)
-            REMOVE -> Remove(key)
-            READ -> Read(key)
-            else -> throw JournalInvalidOpcodeException()
-        }
-
-        const val DIRTY: Byte = 1
-        const val CLEAN: Byte = 2
-        const val CANCEL: Byte = 3
-        const val REMOVE: Byte = 4
-        const val READ: Byte = 5
+        const val DIRTY: Byte = 0x10
+        const val CLEAN: Byte = 0x20
+        const val CLEAN_WITH_TRANSFORMED_KEY: Byte = 0x21
+        const val CANCEL: Byte = 0x30
+        const val REMOVE: Byte = 0x40
+        const val READ: Byte = 0x50
     }
 }
