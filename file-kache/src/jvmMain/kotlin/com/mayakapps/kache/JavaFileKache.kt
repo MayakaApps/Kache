@@ -45,12 +45,18 @@ public class JavaFileKache internal constructor(
     private val baseKache: ContainerKache<String, Path>,
     private val creationScope: CoroutineScope,
 ) : ContainerKache<String, File> {
+    override val maxSize: Long get() = baseKache.maxSize
+    override val size: Long get() = baseKache.size
 
-    override suspend fun get(key: String): File? =
-        baseKache.get(key)?.toFile()
+    override suspend fun getKeys(): Set<String> = baseKache.getKeys()
 
-    override suspend fun getIfAvailable(key: String): File? =
-        baseKache.getIfAvailable(key)?.toFile()
+    override suspend fun getUnderCreationKeys(): Set<String> = baseKache.getUnderCreationKeys()
+
+    override suspend fun getAllKeys(): KacheKeys<String> = baseKache.getAllKeys()
+
+    override suspend fun get(key: String): File? =        baseKache.get(key)?.toFile()
+
+    override suspend fun getIfAvailable(key: String): File? =        baseKache.getIfAvailable(key)?.toFile()
 
     override suspend fun getOrPut(key: String, creationFunction: suspend (File) -> Boolean): File? =
         baseKache.getOrPut(key) { file ->
@@ -69,14 +75,29 @@ public class JavaFileKache internal constructor(
             }.await()?.toFile()
         }
 
-    override suspend fun remove(key: String): Unit =
+    override suspend fun remove(key: String) {
         baseKache.remove(key)
+    }
 
-    override suspend fun clear(): Unit =
+    override suspend fun clear() {
         baseKache.clear()
+    }
 
-    override suspend fun close(): Unit =
+    override suspend fun removeAllUnderCreation() {
+        baseKache.removeAllUnderCreation()
+    }
+
+    override suspend fun resize(maxSize: Long) {
+        baseKache.resize(maxSize)
+    }
+
+    override suspend fun trimToSize(size: Long) {
+        baseKache.trimToSize(size)
+    }
+
+    override suspend fun close() {
         baseKache.close()
+    }
 
     /**
      * Configuration for [JavaFileKache]. It is used as a receiver of [JavaFileKache] builder which is [invoke].

@@ -145,8 +145,8 @@ public interface ObjectKache<K : Any, V : Any> {
     public suspend fun resize(maxSize: Long)
 
     /**
-     * Remove the eldest entries until the total of remaining entries is/at/or below [size]. It won't affect the max
-     * size of the cache, allowing it to grow again.
+     * Remove entries according to the policy defined by strategy until the total of remaining entries is/at/or below
+     * [size]. It won't affect the max size of the cache, allowing it to grow again.
      */
     public suspend fun trimToSize(size: Long)
 

@@ -34,6 +34,77 @@ import kotlin.test.*
 class OkioFileKacheTest {
 
     @Test
+    fun getKeys() = runTest {
+        val fileSystem = FakeFileSystem()
+        val kache = testOkioFileKache(fileSystem)
+
+        // Empty
+        assertContentEquals(emptyList(), kache.getKeys())
+
+        // Non-empty
+        kache.put(fileSystem, KEY_1, VAL_1)
+        kache.put(fileSystem, KEY_2, VAL_2)
+        assertContentEquals(listOf(KEY_1, KEY_2), kache.getKeys())
+
+        // Under-creation
+        @Suppress("DeferredResultUnused")
+        kache.putAsync(fileSystem, KEY_3, VAL_3)
+        assertContentEquals(listOf(KEY_1, KEY_2), kache.getKeys())
+
+        // Re-open
+        kache.close()
+        val kache2 = testOkioFileKache(fileSystem)
+        assertContentEquals(listOf(KEY_1, KEY_2), kache2.getKeys())
+    }
+
+    @Test
+    fun getUnderCreationKeys() = runTest {
+        val fileSystem = FakeFileSystem()
+        val kache = testOkioFileKache(fileSystem)
+
+        // Empty
+        assertContentEquals(emptyList(), kache.getUnderCreationKeys())
+
+        // Non-empty
+        kache.put(fileSystem, KEY_1, VAL_1)
+        assertContentEquals(emptyList(), kache.getUnderCreationKeys())
+
+        // Under-creation
+        @Suppress("DeferredResultUnused")
+        kache.putAsync(fileSystem, KEY_2, VAL_2)
+        assertContentEquals(listOf(KEY_2), kache.getUnderCreationKeys())
+
+        // Re-open
+        kache.close()
+        val kache2 = testOkioFileKache(fileSystem)
+        assertContentEquals(emptyList(), kache2.getUnderCreationKeys())
+    }
+
+    @Test
+    fun getAllKeys() = runTest {
+        val fileSystem = FakeFileSystem()
+        val kache = testOkioFileKache(fileSystem)
+
+        // Empty
+        assertEquals(KacheKeys(emptySet(), emptySet()), kache.getAllKeys())
+
+        // Non-empty
+        kache.put(fileSystem, KEY_1, VAL_1)
+        kache.put(fileSystem, KEY_2, VAL_2)
+        assertEquals(KacheKeys(setOf(KEY_1, KEY_2), emptySet()), kache.getAllKeys())
+
+        // Under-creation
+        @Suppress("DeferredResultUnused")
+        kache.putAsync(fileSystem, KEY_3, VAL_3)
+        assertEquals(KacheKeys(setOf(KEY_1, KEY_2), setOf(KEY_3)), kache.getAllKeys())
+
+        // Re-open
+        kache.close()
+        val kache2 = testOkioFileKache(fileSystem)
+        assertEquals(KacheKeys(setOf(KEY_1, KEY_2), emptySet()), kache2.getAllKeys())
+    }
+
+    @Test
     fun get() = runTest {
         val fileSystem = FakeFileSystem()
         val kache = testOkioFileKache(fileSystem)
@@ -333,6 +404,39 @@ class OkioFileKacheTest {
         assertContentEquals(emptyList(), fileSystem.list(filesDirectory))
         assertNull(kache.get(KEY_1))
         assertNull(kache.get(KEY_2))
+    }
+
+    @Test
+    fun removeAllUnderCreation() = runTest {
+        val fileSystem = FakeFileSystem()
+        val kache = testOkioFileKache(fileSystem)
+
+        kache.put(fileSystem, KEY_1, VAL_1)
+        kache.put(fileSystem, KEY_2, VAL_2)
+
+        var capturedCachePath: Path? = null
+        val deferred = kache.putAsync(KEY_3) { cachePath ->
+            capturedCachePath = cachePath
+            println("capturedCachePath: $capturedCachePath")
+            fileSystem.sink(cachePath).buffer().use {
+                delay(60_000)
+                it.writeUtf8(VAL_3)
+            }
+            true
+        }
+        delay(1000)
+        kache.removeAllUnderCreation()
+
+        // The deferred should be cancelled
+        assertFailsWith<CancellationException> { deferred.await() }
+
+        // The cache should contain only the existing entries
+        fileSystem.assertPathContentEquals(VAL_1, kache.get(KEY_1))
+        fileSystem.assertPathContentEquals(VAL_2, kache.get(KEY_2))
+        assertNull(kache.get(KEY_3))
+
+        // The under-creation entry should be removed
+        assertFalse(fileSystem.exists(capturedCachePath!!))
     }
 
     @Test

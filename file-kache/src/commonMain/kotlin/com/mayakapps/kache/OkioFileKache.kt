@@ -69,6 +69,14 @@ public class OkioFileKache private constructor(
         JournalWriter(fileSystem.appendingSink(journalFile, mustExist = true).buffer())
 
     private var redundantJournalEntriesCount = initialRedundantJournalEntriesCount
+    override val maxSize: Long get() = underlyingKache.maxSize
+    override val size: Long get() = underlyingKache.size
+
+    override suspend fun getKeys(): Set<String> = underlyingKache.getKeys()
+
+    override suspend fun getUnderCreationKeys(): Set<String> = underlyingKache.getUnderCreationKeys()
+
+    override suspend fun getAllKeys(): KacheKeys<String> = underlyingKache.getAllKeys()
 
     override suspend fun get(key: String): Path? {
         val result = underlyingKache.get(key)
@@ -116,6 +124,18 @@ public class OkioFileKache private constructor(
         underlyingKache.clear()
     }
 
+    override suspend fun removeAllUnderCreation() {
+        underlyingKache.removeAllUnderCreation()
+    }
+
+    override suspend fun resize(maxSize: Long) {
+        underlyingKache.resize(maxSize)
+    }
+
+    override suspend fun trimToSize(size: Long) {
+        underlyingKache.trimToSize(size)
+    }
+
     override suspend fun close() {
         underlyingKache.removeAllUnderCreation()
         journalMutex.withLock { journalWriter.close() }
@@ -130,21 +150,30 @@ public class OkioFileKache private constructor(
         val cleanFile = filesDirectory.resolve(transformedKey)
         val isReplacing = fileSystem.exists(cleanFile)
 
-        writeDirty(key)
-        return if (creationFunction(tempFile) && fileSystem.exists(tempFile)) {
-            fileSystem.atomicMove(tempFile, cleanFile, deleteTarget = true)
+        try {
+            writeDirty(key)
+            return if (creationFunction(tempFile) && fileSystem.exists(tempFile)) {
+                fileSystem.atomicMove(tempFile, cleanFile, deleteTarget = true)
+                fileSystem.delete(tempFile)
+
+                if (isReplacing) writeClean(key)
+                else writeClean(key, transformedKey)
+
+                rebuildJournalIfRequired()
+                transformedKey
+            } else {
+                fileSystem.delete(tempFile)
+                writeCancel(key)
+                rebuildJournalIfRequired()
+                null
+            }
+        } catch (th: Throwable) {
             fileSystem.delete(tempFile)
 
-            if (isReplacing) writeClean(key)
-            else writeClean(key, transformedKey)
-
-            rebuildJournalIfRequired()
-            transformedKey
-        } else {
-            fileSystem.delete(tempFile)
             writeCancel(key)
             rebuildJournalIfRequired()
-            null
+
+            throw th
         }
     }
 
