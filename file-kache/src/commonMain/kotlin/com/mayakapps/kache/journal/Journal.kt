@@ -16,6 +16,7 @@
 
 package com.mayakapps.kache.journal
 
+import com.mayakapps.kache.KacheStrategy
 import com.mayakapps.kache.atomicMove
 import okio.FileSystem
 import okio.Path
@@ -23,12 +24,16 @@ import okio.buffer
 import okio.use
 
 internal data class JournalData(
-    val cleanEntriesKeys: List<String>,
-    val dirtyEntriesKeys: List<String>,
+    val cleanEntries: LinkedHashMap<String, String?>,
+    val dirtyEntryKeys: Set<String>,
     val redundantEntriesCount: Int,
 )
 
-internal fun FileSystem.readJournalIfExists(directory: Path, cacheVersion: Int = 1): JournalData? {
+internal fun FileSystem.readJournalIfExists(
+    directory: Path,
+    cacheVersion: Int = 1,
+    strategy: KacheStrategy = KacheStrategy.LRU,
+): JournalData? {
     val journalFile = directory.resolve(JOURNAL_FILE)
     val tempJournalFile = directory.resolve(JOURNAL_FILE_TEMP)
     val backupJournalFile = directory.resolve(JOURNAL_FILE_BACKUP)
@@ -49,10 +54,10 @@ internal fun FileSystem.readJournalIfExists(directory: Path, cacheVersion: Int =
     if (!exists(journalFile)) return null
 
     var entriesCount = 0
-    val dirtyEntriesKeys = mutableListOf<String>()
-    val cleanEntriesKeys = mutableListOf<String>()
+    val dirtyEntryKeys = mutableSetOf<String>()
+    val cleanEntries = linkedMapOf<String, String?>()
 
-    JournalReader(source(journalFile).buffer(), cacheVersion).use { reader ->
+    JournalReader(source(journalFile).buffer(), cacheVersion, strategy).use { reader ->
         reader.validateHeader()
 
         while (true) {
@@ -61,45 +66,56 @@ internal fun FileSystem.readJournalIfExists(directory: Path, cacheVersion: Int =
 
             when (entry) {
                 is JournalEntry.Dirty -> {
-                    dirtyEntriesKeys += entry.key
+                    dirtyEntryKeys.add(entry.key)
                 }
 
                 is JournalEntry.Clean -> {
-                    // Remove existing entry if it exists to avoid duplicates
-                    cleanEntriesKeys.remove(entry.key)
+                    // Remove existing entry to re-insert it at the end of the map
+                    val transformedKey = cleanEntries.remove(entry.key)
 
-                    dirtyEntriesKeys.remove(entry.key)
-                    cleanEntriesKeys += entry.key
+                    dirtyEntryKeys.remove(entry.key)
+                    cleanEntries[entry.key] = transformedKey
+                }
+
+                is JournalEntry.CleanWithTransformedKey -> {
+                    // Remove existing entry to re-insert it at the end of the map
+                    cleanEntries.remove(entry.key)
+
+                    dirtyEntryKeys.remove(entry.key)
+                    cleanEntries[entry.key] = entry.transformedKey
                 }
 
                 is JournalEntry.Cancel -> {
-                    dirtyEntriesKeys.remove(entry.key)
+                    dirtyEntryKeys.remove(entry.key)
                 }
 
                 is JournalEntry.Remove -> {
-                    dirtyEntriesKeys.remove(entry.key)
-                    cleanEntriesKeys.remove(entry.key)
+                    dirtyEntryKeys.remove(entry.key)
+                    cleanEntries.remove(entry.key)
                 }
 
                 is JournalEntry.Read -> {
-                    cleanEntriesKeys.remove(entry.key)
-                    cleanEntriesKeys += entry.key
+                    if (strategy == KacheStrategy.LRU || strategy == KacheStrategy.MRU) {
+                        // Remove existing entry to re-insert it at the end of the map
+                        val transformedKey = cleanEntries.remove(entry.key)
+                        cleanEntries[entry.key] = transformedKey
+                    }
                 }
             }
         }
     }
 
     return JournalData(
-        cleanEntriesKeys = cleanEntriesKeys,
-        dirtyEntriesKeys = dirtyEntriesKeys,
-        redundantEntriesCount = entriesCount - cleanEntriesKeys.size,
+        cleanEntries = cleanEntries,
+        dirtyEntryKeys = dirtyEntryKeys,
+        redundantEntriesCount = entriesCount - cleanEntries.size,
     )
 }
 
 internal fun FileSystem.writeJournalAtomically(
     directory: Path,
-    cleanEntriesKeys: Collection<String>,
-    dirtyEntriesKeys: Collection<String>
+    cleanEntries: Map<String, String>,
+    dirtyEntryKeys: Collection<String>
 ) {
     val journalFile = directory.resolve(JOURNAL_FILE)
     val tempJournalFile = directory.resolve(JOURNAL_FILE_TEMP)
@@ -109,7 +125,7 @@ internal fun FileSystem.writeJournalAtomically(
 
     JournalWriter(sink(tempJournalFile, mustCreate = true).buffer()).use { writer ->
         writer.writeHeader()
-        writer.writeAll(cleanEntriesKeys, dirtyEntriesKeys)
+        writer.writeAll(cleanEntries, dirtyEntryKeys)
     }
 
     if (exists(journalFile)) atomicMove(journalFile, backupJournalFile, deleteTarget = true)

@@ -16,45 +16,57 @@
 
 package com.mayakapps.kache.journal
 
+import com.mayakapps.kache.KacheStrategy
 import okio.BufferedSink
 import okio.Closeable
 
 internal class JournalWriter(
     private val sink: BufferedSink,
     private val cacheVersion: Int = 1,
+    private val strategy: KacheStrategy = KacheStrategy.LRU,
 ) : Closeable {
 
     internal fun writeHeader() {
         sink.writeUtf8(JOURNAL_MAGIC)
         sink.writeByte(JOURNAL_VERSION.toInt())
         sink.writeInt(cacheVersion)
+        sink.writeByte(strategy.ordinal)
         sink.flush()
     }
 
-    internal fun writeAll(cleanKeys: Collection<String>, dirtyKeys: Collection<String>) {
-        for (key in cleanKeys) writeEntry(JournalEntry.CLEAN, key)
+    internal fun writeAll(cleanKeys: Map<String, String>, dirtyKeys: Collection<String>) {
+        for ((key, transformedKey) in cleanKeys) writeEntry(
+            JournalEntry.CLEAN_WITH_TRANSFORMED_KEY, key, transformedKey
+        )
         for (key in dirtyKeys) writeEntry(JournalEntry.DIRTY, key)
         sink.flush()
     }
 
     internal fun writeDirty(key: String) = writeEntryAndFlush(JournalEntry.DIRTY, key)
 
-    internal fun writeClean(key: String) = writeEntryAndFlush(JournalEntry.CLEAN, key)
+    internal fun writeClean(key: String, transformedKey: String? = null) = writeEntryAndFlush(
+        if (transformedKey == null) JournalEntry.CLEAN
+        else JournalEntry.CLEAN_WITH_TRANSFORMED_KEY,
+        key,
+        transformedKey
+    )
 
     internal fun writeCancel(key: String) = writeEntryAndFlush(JournalEntry.CANCEL, key)
 
     internal fun writeRemove(key: String) = writeEntryAndFlush(JournalEntry.REMOVE, key)
 
-    internal fun writeRead(key: String) = writeEntryAndFlush(JournalEntry.READ, key)
+    internal fun writeRead(key: String) =
+        writeEntryAndFlush(JournalEntry.READ, key)
 
-    private fun writeEntryAndFlush(opcode: Byte, key: String) {
-        writeEntry(opcode, key)
+    private fun writeEntryAndFlush(opcode: Byte, key: String, transformedKey: String? = null) {
+        writeEntry(opcode, key, transformedKey)
         sink.flush()
     }
 
-    private fun writeEntry(opcode: Byte, key: String) {
+    private fun writeEntry(opcode: Byte, key: String, transformedKey: String? = null) {
         sink.writeByte(opcode.toInt())
         sink.writeByteLengthUtf8(key)
+        if (transformedKey != null) sink.writeByteLengthUtf8(transformedKey)
     }
 
     private fun BufferedSink.writeByteLengthUtf8(string: String) {

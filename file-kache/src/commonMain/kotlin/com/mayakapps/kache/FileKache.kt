@@ -18,6 +18,7 @@ package com.mayakapps.kache
 
 import com.mayakapps.kache.FileKache.Configuration
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import okio.Path
@@ -44,11 +45,18 @@ public class FileKache internal constructor(
     private val creationScope: CoroutineScope,
 ) : ContainerKache<String, String> {
 
-    override suspend fun get(key: String): String? =
-        baseKache.get(key)?.toString()
+    override val maxSize: Long get() = baseKache.maxSize
+    override val size: Long get() = baseKache.size
 
-    override suspend fun getIfAvailable(key: String): String? =
-        baseKache.getIfAvailable(key)?.toString()
+    override suspend fun getKeys(): Set<String> = baseKache.getKeys()
+
+    override suspend fun getUnderCreationKeys(): Set<String> = baseKache.getUnderCreationKeys()
+
+    override suspend fun getAllKeys(): KacheKeys<String> = baseKache.getAllKeys()
+
+    override suspend fun get(key: String): String? = baseKache.get(key)?.toString()
+
+    override suspend fun getIfAvailable(key: String): String? = baseKache.getIfAvailable(key)?.toString()
 
     override suspend fun getOrPut(key: String, creationFunction: suspend (String) -> Boolean): String? =
         baseKache.getOrPut(key) { file ->
@@ -61,20 +69,35 @@ public class FileKache internal constructor(
         }?.toString()
 
     override suspend fun putAsync(key: String, creationFunction: suspend (String) -> Boolean): Deferred<String?> =
-        creationScope.async {
+        creationScope.async(start = CoroutineStart.UNDISPATCHED) {
             baseKache.putAsync(key) { file ->
                 creationFunction(file.toString())
             }.await()?.toString()
         }
 
-    override suspend fun remove(key: String): Unit =
+    override suspend fun remove(key: String) {
         baseKache.remove(key)
+    }
 
-    override suspend fun clear(): Unit =
+    override suspend fun clear() {
         baseKache.clear()
+    }
 
-    override suspend fun close(): Unit =
+    override suspend fun removeAllUnderCreation() {
+        baseKache.removeAllUnderCreation()
+    }
+
+    override suspend fun resize(maxSize: Long) {
+        baseKache.resize(maxSize)
+    }
+
+    override suspend fun trimToSize(size: Long) {
+        baseKache.trimToSize(size)
+    }
+
+    override suspend fun close() {
         baseKache.close()
+    }
 
     /**
      * Configuration for [FileKache]. It is used as a receiver of [FileKache] builder which is [invoke].

@@ -16,6 +16,7 @@
 
 package com.mayakapps.kache.journal
 
+import com.mayakapps.kache.KacheStrategy
 import okio.BufferedSource
 import okio.Closeable
 import okio.EOFException
@@ -23,6 +24,7 @@ import okio.EOFException
 internal class JournalReader(
     private val source: BufferedSource,
     private val cacheVersion: Int = 1,
+    private val strategy: KacheStrategy = KacheStrategy.LRU,
 ) : Closeable {
 
     internal fun validateHeader() {
@@ -38,8 +40,18 @@ internal class JournalReader(
         if (version != JOURNAL_VERSION) throw JournalInvalidHeaderException("Journal version ($version) doesn't match")
 
         val existingCacheVersion = source.readInt()
-        if (cacheVersion != existingCacheVersion)
-            throw JournalInvalidHeaderException("Existing cache version ($existingCacheVersion) doesn't match current version ($cacheVersion)")
+        if (cacheVersion != existingCacheVersion) {
+            throw JournalInvalidHeaderException(
+                "Existing cache version ($existingCacheVersion) doesn't match current version ($cacheVersion)"
+            )
+        }
+
+        val existingStrategy = source.readByte()
+        if (strategy.ordinal != existingStrategy.toInt()) {
+            throw JournalInvalidHeaderException(
+                "Existing strategy ($existingStrategy) doesn't match current strategy (${strategy.ordinal})"
+            )
+        }
     }
 
     internal fun readEntry(): JournalEntry? {
@@ -52,7 +64,11 @@ internal class JournalReader(
 
         val key = source.readByteLengthUtf8()
 
-        return JournalEntry(opcodeId, key)
+        val transformedKey =
+            if (opcodeId == JournalEntry.CLEAN_WITH_TRANSFORMED_KEY) source.readByteLengthUtf8()
+            else null
+
+        return JournalEntry(opcodeId, key, transformedKey)
     }
 
     override fun close() {

@@ -24,6 +24,33 @@ import kotlinx.coroutines.Deferred
  * requires serialization and deserialization logic that is handled by the user.
  */
 public interface ContainerKache<K : Any, C : Any> {
+
+    /**
+     * The max size of this cache in bytes. It doesn't include the size of the journal.
+     */
+    public val maxSize: Long
+
+    /**
+     * The current size of this cache in bytes. It doesn't include the size of the journal.
+     */
+    public val size: Long
+
+    /**
+     * Returns a set of the keys that are currently in the cache, not under-creation keys.
+     */
+    public suspend fun getKeys(): Set<K>
+
+    /**
+     * Returns a set of the keys that are currently under creation.
+     */
+    public suspend fun getUnderCreationKeys(): Set<K>
+
+    /**
+     * Returns a [KacheKeys] instance that represents the keys that are currently in the cache, along with those that
+     * are under creation.
+     */
+    public suspend fun getAllKeys(): KacheKeys<K>
+
     /**
      * Returns the container for [key] if it exists in the cache or waits for its creation if it is currently in
      * progress. This returns `null` if a file is not cached and isn't in creation or cannot be created. It may even
@@ -68,6 +95,23 @@ public interface ContainerKache<K : Any, C : Any> {
      * Clears the cache.
      */
     public suspend fun clear()
+
+    /**
+     * Cancels all in-progress creations.
+     */
+    public suspend fun removeAllUnderCreation()
+
+    /**
+     * Sets the max size of the cache to [maxSize]. If the new maxSize is smaller than the previous value, the cache
+     * would be trimmed.
+     */
+    public suspend fun resize(maxSize: Long)
+
+    /**
+     * Remove entries according to the policy defined by strategy until the total of remaining entries is/at/or below
+     * [size]. It won't affect the max size of the cache, allowing it to grow again.
+     */
+    public suspend fun trimToSize(size: Long)
 
     /**
      * Closes the journal and cancels any in-progress creation.

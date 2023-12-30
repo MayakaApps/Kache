@@ -18,16 +18,12 @@ package com.mayakapps.kache
 
 import com.mayakapps.kache.OkioFileKache.Configuration
 import com.mayakapps.kache.journal.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.invoke
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okio.EOFException
 import okio.FileSystem
 import okio.Path
-import okio.Path.Companion.toPath
 import okio.buffer
 
 /**
@@ -58,12 +54,14 @@ public class OkioFileKache private constructor(
 
     // Explicit type parameter is a workaround for https://youtrack.jetbrains.com/issue/KT-53109
     @Suppress("RemoveExplicitTypeArguments")
-    private val underlyingKache = InMemoryKache<String, Path>(maxSize = maxSize) {
+    private val underlyingKache = InMemoryKache<String, String>(maxSize = maxSize) {
         this.strategy = strategy
-        this.sizeCalculator = { _, file -> fileSystem.metadata(file).size ?: 0 }
-        this.onEntryRemoved = { _, key, oldValue, _ -> onEntryRemoved(key, oldValue) }
+        this.sizeCalculator = { _, filename -> fileSystem.metadata(filesDirectory.resolve(filename)).size ?: 0 }
+        this.onEntryRemoved = { _, key, oldValue, newValue -> onEntryRemoved(key, oldValue, newValue) }
         this.creationScope = this@OkioFileKache.creationScope
     }
+
+    private val filesDirectory = directory.resolve(FILES_DIR)
 
     private val journalMutex = Mutex()
     private val journalFile = directory.resolve(JOURNAL_FILE)
@@ -71,50 +69,71 @@ public class OkioFileKache private constructor(
         JournalWriter(fileSystem.appendingSink(journalFile, mustExist = true).buffer())
 
     private var redundantJournalEntriesCount = initialRedundantJournalEntriesCount
+    override val maxSize: Long get() = underlyingKache.maxSize
+    override val size: Long get() = underlyingKache.size
+
+    override suspend fun getKeys(): Set<String> = underlyingKache.getKeys()
+
+    override suspend fun getUnderCreationKeys(): Set<String> = underlyingKache.getUnderCreationKeys()
+
+    override suspend fun getAllKeys(): KacheKeys<String> = underlyingKache.getAllKeys()
 
     override suspend fun get(key: String): Path? {
-        val transformedKey = key.transform()
-        val result = underlyingKache.get(transformedKey)
-        if (result != null) writeRead(transformedKey)
-        return result
+        val result = underlyingKache.get(key)
+        if (result != null) writeRead(key)
+        return result?.let { filesDirectory.resolve(it) }
     }
 
     override suspend fun getIfAvailable(key: String): Path? {
-        val transformedKey = key.transform()
-        val result = underlyingKache.getIfAvailable(transformedKey)
-        if (result != null) writeRead(transformedKey)
-        return result
+        val result = underlyingKache.getIfAvailable(key)
+        if (result != null) writeRead(key)
+        return result?.let { filesDirectory.resolve(it) }
     }
 
     override suspend fun getOrPut(key: String, creationFunction: suspend (Path) -> Boolean): Path? {
         var created = false
-        val transformedKey = key.transform()
-        val result = underlyingKache.getOrPut(transformedKey) {
+        val result = underlyingKache.getOrPut(key) {
             created = true
             wrapCreationFunction(it, creationFunction)
         }
 
-        if (!created && result != null) writeRead(transformedKey)
-        return result
+        if (!created && result != null) writeRead(key)
+        return result?.let { filesDirectory.resolve(it) }
     }
 
-    override suspend fun put(key: String, creationFunction: suspend (Path) -> Boolean): Path? =
-        underlyingKache.put(key.transform()) { wrapCreationFunction(it, creationFunction) }
+    override suspend fun put(key: String, creationFunction: suspend (Path) -> Boolean): Path? {
+        val filename = underlyingKache.put(key) { wrapCreationFunction(it, creationFunction) }
+        return if (filename != null) filesDirectory.resolve(filename) else null
+    }
 
     override suspend fun putAsync(key: String, creationFunction: suspend (Path) -> Boolean): Deferred<Path?> =
-        underlyingKache.putAsync(key.transform()) { wrapCreationFunction(it, creationFunction) }
+        creationScope.async(start = CoroutineStart.UNDISPATCHED) {
+            underlyingKache.putAsync(key) { wrapCreationFunction(it, creationFunction) }.await()?.let {
+                filesDirectory.resolve(it)
+            }
+        }
 
     override suspend fun remove(key: String) {
         // It's fine to consider the file is dirty now. Even if removal failed it's scheduled for
-        val transformedKey = key.transform()
-        writeDirty(transformedKey)
-        underlyingKache.remove(transformedKey)
+        writeDirty(key)
+        underlyingKache.remove(key)
     }
 
     override suspend fun clear() {
-        close()
-        if (fileSystem.metadata(directory).isDirectory) fileSystem.deleteRecursively(directory)
-        fileSystem.createDirectories(directory)
+        underlyingKache.getKeys().forEach { writeDirty(it) }
+        underlyingKache.clear()
+    }
+
+    override suspend fun removeAllUnderCreation() {
+        underlyingKache.removeAllUnderCreation()
+    }
+
+    override suspend fun resize(maxSize: Long) {
+        underlyingKache.resize(maxSize)
+    }
+
+    override suspend fun trimToSize(size: Long) {
+        underlyingKache.trimToSize(size)
     }
 
     override suspend fun close() {
@@ -122,36 +141,49 @@ public class OkioFileKache private constructor(
         journalMutex.withLock { journalWriter.close() }
     }
 
-    private suspend fun String.transform() =
-        keyTransformer?.transform(this) ?: this
-
     private suspend fun wrapCreationFunction(
         key: String,
         creationFunction: suspend (Path) -> Boolean,
-    ): Path? {
-        val tempFile = directory.resolve(key + TEMP_EXT)
-        val cleanFile = directory.resolve(key)
+    ): String? {
+        val transformedKey = keyTransformer?.transform(key) ?: key
+        val tempFile = filesDirectory.resolve(transformedKey + TEMP_EXT)
+        val cleanFile = filesDirectory.resolve(transformedKey)
+        val isReplacing = fileSystem.exists(cleanFile)
 
-        writeDirty(key)
-        return if (creationFunction(tempFile) && fileSystem.exists(tempFile)) {
-            fileSystem.atomicMove(tempFile, cleanFile, deleteTarget = true)
+        try {
+            writeDirty(key)
+            return if (creationFunction(tempFile) && fileSystem.exists(tempFile)) {
+                fileSystem.atomicMove(tempFile, cleanFile, deleteTarget = true)
+                fileSystem.delete(tempFile)
+
+                if (isReplacing) writeClean(key)
+                else writeClean(key, transformedKey)
+
+                rebuildJournalIfRequired()
+                transformedKey
+            } else {
+                fileSystem.delete(tempFile)
+                writeCancel(key)
+                rebuildJournalIfRequired()
+                null
+            }
+        } catch (th: Throwable) {
             fileSystem.delete(tempFile)
-            writeClean(key)
-            rebuildJournalIfRequired()
-            cleanFile
-        } else {
-            fileSystem.delete(tempFile)
+
             writeCancel(key)
             rebuildJournalIfRequired()
-            null
+
+            throw th
         }
     }
 
-    private fun onEntryRemoved(key: String, oldValue: Path) {
-        creationScope.launch {
-            fileSystem.delete(oldValue)
-            fileSystem.delete((oldValue.toString() + TEMP_EXT).toPath())
+    private fun onEntryRemoved(key: String, oldValue: String, newValue: String?) {
+        if (newValue != null) return
 
+        fileSystem.delete(filesDirectory.resolve(oldValue))
+        fileSystem.delete(filesDirectory.resolve(oldValue + TEMP_EXT))
+
+        creationScope.launch(start = CoroutineStart.UNDISPATCHED) {
             writeRemove(key)
             rebuildJournalIfRequired()
         }
@@ -161,8 +193,8 @@ public class OkioFileKache private constructor(
         journalWriter.writeDirty(key)
     }
 
-    private suspend fun writeClean(key: String) = journalMutex.withLock {
-        journalWriter.writeClean(key)
+    private suspend fun writeClean(key: String, transformedKey: String? = null) = journalMutex.withLock {
+        journalWriter.writeClean(key, transformedKey)
         redundantJournalEntriesCount++
     }
 
@@ -191,7 +223,11 @@ public class OkioFileKache private constructor(
             journalWriter.close()
 
             val (cleanKeys, dirtyKeys) = underlyingKache.getAllKeys()
-            fileSystem.writeJournalAtomically(directory, cleanKeys, dirtyKeys)
+            val cleanEntries = cleanKeys.mapNotNull { key ->
+                val transformedKey = underlyingKache.getIfAvailable(key) ?: return@mapNotNull null
+                key to transformedKey
+            }.toMap()
+            fileSystem.writeJournalAtomically(directory, cleanEntries, dirtyKeys)
 
             journalWriter =
                 JournalWriter(fileSystem.appendingSink(journalFile, mustExist = true).buffer())
@@ -255,25 +291,29 @@ public class OkioFileKache private constructor(
         ): OkioFileKache {
             require(maxSize > 0) { "maxSize must be positive value" }
 
-            // Make sure that journal directory exists
+            // Make sure that directories exist
+            val filesDirectory = directory.resolve(FILES_DIR)
             fileSystem.createDirectories(directory)
+            fileSystem.createDirectories(filesDirectory)
 
             val journalData = try {
-                fileSystem.readJournalIfExists(directory, cacheVersion)
+                fileSystem.readJournalIfExists(directory, cacheVersion, strategy)
             } catch (ex: JournalException) {
                 // Journal is corrupted - Clear cache
                 fileSystem.deleteContents(directory)
+                fileSystem.createDirectories(filesDirectory)
                 null
             } catch (ex: EOFException) {
                 // Journal is corrupted - Clear cache
                 fileSystem.deleteContents(directory)
+                fileSystem.createDirectories(filesDirectory)
                 null
             }
 
             // Delete dirty entries
             if (journalData != null) {
-                for (key in journalData.dirtyEntriesKeys) {
-                    fileSystem.delete(directory.resolve(key + TEMP_EXT))
+                for (key in journalData.dirtyEntryKeys) {
+                    fileSystem.delete(filesDirectory.resolve(key + TEMP_EXT))
                 }
             }
 
@@ -281,13 +321,20 @@ public class OkioFileKache private constructor(
             var redundantJournalEntriesCount = journalData?.redundantEntriesCount ?: 0
 
             if (journalData == null) {
-                fileSystem.writeJournalAtomically(directory, emptyList(), emptyList())
+                fileSystem.writeJournalAtomically(directory, emptyMap(), emptyList())
             } else if (
                 journalData.redundantEntriesCount >= REDUNDANT_ENTRIES_THRESHOLD &&
-                journalData.redundantEntriesCount >= journalData.cleanEntriesKeys.size
+                journalData.redundantEntriesCount >= journalData.cleanEntries.size
             ) {
-                fileSystem
-                    .writeJournalAtomically(directory, journalData.cleanEntriesKeys, emptyList())
+                for ((key, transformedKey) in journalData.cleanEntries) {
+                    if (transformedKey == null) {
+                        journalData.cleanEntries[key] = keyTransformer?.transform(key) ?: key
+                    }
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                val cleanEntries = journalData.cleanEntries as Map<String, String>
+                fileSystem.writeJournalAtomically(directory, cleanEntries, emptyList())
                 redundantJournalEntriesCount = 0
             }
 
@@ -302,14 +349,15 @@ public class OkioFileKache private constructor(
             )
 
             if (journalData != null) {
-                cache.underlyingKache.putAll(journalData.cleanEntriesKeys.associateWith { directory.resolve(it) })
+                @Suppress("UNCHECKED_CAST")
+                cache.underlyingKache.putAll(journalData.cleanEntries as Map<String, String>)
             }
 
             return cache
         }
 
         private const val TEMP_EXT = ".tmp"
-        private const val REDUNDANT_ENTRIES_THRESHOLD = 2000
+        internal const val REDUNDANT_ENTRIES_THRESHOLD = 2000
     }
 }
 
