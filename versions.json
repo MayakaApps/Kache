@@ -7,6 +7,13 @@
     ]
   },
   {
+    "version": "2.1.0-beta01",
+    "title": "2.1.0-beta01",
+    "aliases": [
+      "latest"
+    ]
+  },
+  {
     "version": "2.0.0-SNAPSHOT",
     "title": "2.0.0-SNAPSHOT",
     "aliases": []
@@ -14,9 +21,7 @@
   {
     "version": "2.0.0-rc02",
     "title": "2.0.0-rc02",
-    "aliases": [
-      "latest"
-    ]
+    "aliases": []
   },
   {
     "version": "2.0.0-rc01",
