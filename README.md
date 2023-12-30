@@ -28,10 +28,11 @@ in-memory and persistent caches and supports different eviction strategies (LRU,
 * **JS** (Browser does not support persistent cache)
 * **macOS** (macosX64, macosArm64)
 * **iOS** (iosArm64, iosX64, iosSimulatorArm64)
-* **watchOS** (watchosArm32, watchosArm64, watchosX64, watchosSimulatorArm64)
+* **watchOS** (watchosArm32, watchosArm64, watchosX64, watchosDeviceArm64, watchosSimulatorArm64)
 * **tvOS** (tvosArm64, tvosX64, tvosSimulatorArm64)
-* **Linux** (linuxX64)
+* **Linux** (linuxX64, linuxArm64)
 * **Windows** (mingwX64)
+* **androidNative** (androidNativeArm32, androidNativeArm64, androidNativeX86, androidNativeX64): only supported by in-memory cache for now
 
 ## Why use Kache?
 
@@ -57,11 +58,8 @@ dependencies {
     // For in-memory cache
     implementation("com.mayakapps.kache:kache:<version>")
 
-    // For persistent cache (in non-Okio projects)
+    // For persistent cache
     implementation("com.mayakapps.kache:file-kache:<version>")
-
-    // For persistent cache (in Okio projects)
-    implementation("com.mayakapps.kache:file-kache-okio:<version>")
 }
 ```
 
@@ -79,11 +77,8 @@ dependencies {
     // For in-memory cache
     implementation "com.mayakapps.kache:kache:<version>"
 
-    // For persistent cache (in non-Okio projects)
+    // For persistent cache
     implementation "com.mayakapps.kache:file-kache:<version>"
-
-    // For persistent cache (in Okio projects)
-    implementation "com.mayakapps.kache:file-kache-okio:<version>"
 }
 ```
 
@@ -152,7 +147,7 @@ See documentation [here](https://mayakaapps.github.io/Kache/latest/)
 
 ## License
 
-This library is distributed under the MIT license. All the code inside this library is licensed under the MIT license
+All the code inside this library is licensed under Apache License 2.0
 unless explicitly stated otherwise.
 
 ## Contributing
@@ -164,7 +159,7 @@ bugs/features that needs to be fixed/implemented.
 
 ## Acknowledgements
 
-These amazing projects have all credit for establishing the algorithms and base implementation for this project.
+These amazing projects have all credit for inspiring this project.
 
 * Android's [LruCache](https://developer.android.com/reference/android/util/LruCache)
 * [Jake Wharton](https://github.com/JakeWharton)'s [DiskLruCache](https://github.com/JakeWharton/DiskLruCache)
