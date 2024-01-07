@@ -2,7 +2,7 @@
 kotlin = "1.9.22"
 
 dokka = "1.9.10"
-mavenPublish = "0.26.0"
+mavenPublish = "0.21.0"
 
 kotlinx-binaryCompatibilityValidator = "0.13.2"
 
