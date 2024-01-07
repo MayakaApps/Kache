@@ -55,11 +55,11 @@ jobs:
 
       - name: Upload non-Apple artifacts
         if: matrix.os == 'ubuntu-latest'
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=nonAppleOnly
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=nonAppleOnly --no-parallel
 
       - name: Upload Apple artifacts
         if: matrix.os == 'macOS-latest'
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=appleOnly
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=appleOnly --no-parallel
 
       - name: Save Konan cache
         uses: actions/cache/save@v3

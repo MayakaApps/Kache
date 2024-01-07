@@ -53,11 +53,11 @@ jobs:
 
       - name: Upload non-Apple snapshot artifacts
         if: endsWith(env.KACHE_VERSION, '-SNAPSHOT') && matrix.os == 'ubuntu-latest'
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=nonAppleOnly
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=nonAppleOnly --no-parallel
 
       - name: Upload Apple snapshot artifacts
         if: endsWith(env.KACHE_VERSION, '-SNAPSHOT') && matrix.os == 'macOS-latest'
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=appleOnly
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=appleOnly --no-parallel
 
       - name: Save Konan cache
         if: endsWith(env.KACHE_VERSION, '-SNAPSHOT')

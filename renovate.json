@@ -6,6 +6,9 @@
   "constraints": {
     "python": "3.11.3"
   },
+  "ignoreDeps": [
+    "com.vanniktech.maven.publish"
+  ],
   "ignorePaths": [
     ".github/workflows/publish-docs-requirements.txt"
   ],
