@@ -55,6 +55,11 @@ allprojects {
     tasks.withType<AbstractPublishToMaven>().configureEach {
         dependsOn(tasks.withType<Sign>())
     }
+
+    // Workaround for Dokka configuration cache failure (issue: https://github.com/Kotlin/dokka/issues/2231)
+    tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+        notCompatibleWithConfigurationCache("https://github.com/Kotlin/dokka/issues/2231")
+    }
 }
 
 tasks.withType<org.jetbrains.dokka.gradle.DokkaMultiModuleTask>().configureEach {
