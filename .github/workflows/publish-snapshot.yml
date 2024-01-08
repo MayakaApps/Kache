@@ -20,12 +20,12 @@ jobs:
     runs-on: macOS-latest
     if: github.repository == 'MayakaApps/Kache'
 
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
 
       - name: Setup JDK
         uses: actions/setup-java@v4
@@ -36,25 +36,10 @@ jobs:
       - name: Setup gradle
         uses: gradle/gradle-build-action@v2
 
-      - name: Extract Kache and Kotlin versions
+      - name: Extract Kache version
         run: |
           echo "KACHE_VERSION=$(sed -rn 's/^VERSION_NAME=(.*)\r?$/\1/p' 'gradle.properties')" >> $GITHUB_ENV
-          echo "KOTLIN_VERSION=$(sed -rn 's/^kotlin[[:space:]]?=[[:space:]]?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
-
-      - name: Restore Konan cache
-        if: endsWith(env.KACHE_VERSION, '-SNAPSHOT')
-        uses: actions/cache/restore@v3
-        id: restore-cache
-        with:
-          path: ~/.konan
-          key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
 
       - name: Publish
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository
-
-      - name: Save Konan cache
         if: endsWith(env.KACHE_VERSION, '-SNAPSHOT')
-        uses: actions/cache/save@v3
-        with:
-          path: ~/.konan
-          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository

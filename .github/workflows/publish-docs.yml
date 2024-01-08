@@ -11,9 +11,6 @@ concurrency:
   group: "docs"
   cancel-in-progress: false
 
-env:
-  GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-
 jobs:
   publish-docs:
     runs-on: ubuntu-latest
