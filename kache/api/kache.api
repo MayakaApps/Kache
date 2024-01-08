@@ -2,11 +2,19 @@ public abstract interface class com/mayakapps/kache/ContainerKache {
 	public abstract fun clear (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getAllKeys (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getIfAvailable (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getKeys (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getMaxSize ()J
 	public abstract fun getOrPut (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getSize ()J
+	public abstract fun getUnderCreationKeys (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun put (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun putAsync (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun remove (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun removeAllUnderCreation (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun resize (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun trimToSize (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/mayakapps/kache/InMemoryKache : com/mayakapps/kache/ObjectKache {

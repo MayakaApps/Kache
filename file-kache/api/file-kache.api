@@ -2,11 +2,19 @@ public final class com/mayakapps/kache/FileKache : com/mayakapps/kache/Container
 	public fun clear (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getAllKeys (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getIfAvailable (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getKeys (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getMaxSize ()J
 	public fun getOrPut (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getSize ()J
+	public fun getUnderCreationKeys (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun put (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun putAsync (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun remove (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun removeAllUnderCreation (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun resize (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun trimToSize (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/mayakapps/kache/FileKache$Configuration {
@@ -34,11 +42,19 @@ public final class com/mayakapps/kache/JavaFileKache : com/mayakapps/kache/Conta
 	public fun clear (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getAllKeys (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getIfAvailable (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getKeys (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getMaxSize ()J
 	public fun getOrPut (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getSize ()J
+	public fun getUnderCreationKeys (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun put (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun putAsync (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun remove (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun removeAllUnderCreation (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun resize (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun trimToSize (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/mayakapps/kache/JavaFileKache$Configuration {
@@ -72,11 +88,19 @@ public final class com/mayakapps/kache/OkioFileKache : com/mayakapps/kache/Conta
 	public fun clear (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getAllKeys (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getIfAvailable (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getKeys (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getMaxSize ()J
 	public fun getOrPut (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getSize ()J
+	public fun getUnderCreationKeys (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun put (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun putAsync (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun remove (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun removeAllUnderCreation (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun resize (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun trimToSize (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/mayakapps/kache/OkioFileKache$Companion {
