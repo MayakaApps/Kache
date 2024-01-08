@@ -1,4 +1,4 @@
-name: CI
+name: Test Pull Request
 
 on:
   pull_request:
@@ -10,7 +10,9 @@ env:
   GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
 
 jobs:
-  Test:
+  test:
+    name: Test Pull Request
+
     strategy:
       fail-fast: false
       matrix:
