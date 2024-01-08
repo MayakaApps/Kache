@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macOS-latest ]
+        os: [ ubuntu-latest, macOS-latest ]
 
     runs-on: ${{matrix.os}}
     if: github.repository == 'MayakaApps/Kache'
@@ -38,29 +38,13 @@ jobs:
       - name: Setup gradle
         uses: gradle/gradle-build-action@v2
 
-      - name: Run JVM, JS, WASM, and linuxX64 tests
+      - name: Run check & tests for JVM, JS, and Linux tier 1 & 2 K/N targets
         if: matrix.os == 'ubuntu-latest'
-        run: ./gradlew jvmTest jsTest linuxX64Test --stacktrace
+        run: ./gradlew check jvmTest jsTest linuxX64Test --stacktrace
 
-      - name: Run mingwX64 tests
-        if: matrix.os == 'windows-latest'
-        run: ./gradlew mingwX64Test --stacktrace
-
-      - name: Run macosX64, macosArm64, iosX64, and iosSimulatorArm64 tests
+      - name: Run tests for Apple tier 1 & 2 K/N targets
         if: matrix.os == 'macOS-latest'
-        run: |
-          ./gradlew macosX64Test macosArm64Test iosX64Test iosSimulatorArm64Test --stacktrace
-
-      - name: Bundle the build report
-        if: failure()
-        run: find . -type d -name 'reports' | zip -@ -r build-reports.zip
-
-      - name: Upload the build report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: error-report
-          path: build-reports.zip
+        run: ./gradlew macosX64Test macosArm64Test iosSimulatorArm64Test iosX64Test watchosSimulatorArm64Test watchosX64Test tvosSimulatorArm64Test tvosX64Test --stacktrace
 
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4
