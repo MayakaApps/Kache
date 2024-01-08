@@ -41,23 +41,6 @@ jobs:
       - name: Setup gradle
         uses: gradle/gradle-build-action@v2
 
-      - name: Extract Kotlin version - Linux and macOS
-        if: matrix.os != 'windows-latest'
-        run: |
-          echo "KOTLIN_VERSION=$(sed -rn 's/^kotlin[[:space:]]?=[[:space:]]?\"(.*)\"/\1/p' 'gradle/libs.versions.toml')" >> $GITHUB_ENV
-
-      - name: Extract Kotlin version - Windows
-        if: matrix.os == 'windows-latest'
-        run: |
-          powershell -command "echo "KOTLIN_VERSION=$((Select-String -Path 'gradle/libs.versions.toml' -Pattern '^kotlin\s?=\s?\"(.*)\"').Matches.Groups[1].Value)" >> $env:GITHUB_ENV"
-
-      - name: Restore Konan cache
-        uses: actions/cache/restore@v3
-        id: restore-cache
-        with:
-          path: ~/.konan
-          key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
-
       - name: Run JVM, JS, WASM, and linuxX64 tests
         if: matrix.os == 'ubuntu-latest'
         run: ./gradlew jvmTest jsTest linuxX64Test --stacktrace
