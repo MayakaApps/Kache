@@ -53,6 +53,7 @@ jobs:
           key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
 
       - name: Publish
+        if: endsWith(env.KACHE_VERSION, '-SNAPSHOT')
         run: ./gradlew publishAllPublicationsToMavenCentralRepository
 
       - name: Save Konan cache
