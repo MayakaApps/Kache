@@ -1,0 +1,40 @@
+name: Test
+
+on:
+  workflow_dispatch
+
+jobs:
+  test:
+    name: Test
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest ]
+
+    runs-on: ${{matrix.os}}
+    if: github.repository == 'MayakaApps/Kache'
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Run check & tests for JVM, JS, and Linux tier 1 & 2 K/N targets
+        if: matrix.os == 'ubuntu-latest'
+        run: ./gradlew check jvmTest jsTest linuxX64Test --stacktrace
+
+      - name: Run tests for Apple tier 1 & 2 K/N targets
+        if: matrix.os == 'macOS-latest'
+        run: ./gradlew macosX64Test macosArm64Test iosSimulatorArm64Test iosX64Test watchosSimulatorArm64Test watchosX64Test tvosSimulatorArm64Test tvosX64Test --stacktrace
