@@ -1,6 +1,9 @@
 name: Publish Release
 
 on:
+  pull_request:
+    branches:
+      - main
   release:
     types: [ created ]
 
@@ -55,11 +58,11 @@ jobs:
 
       - name: Upload non-Apple artifacts
         if: matrix.os == 'ubuntu-latest'
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=nonAppleOnly --no-parallel
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=nonAppleOnly --no-daemon --no-parallel
 
       - name: Upload Apple artifacts
         if: matrix.os == 'macOS-latest'
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=appleOnly --no-parallel
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=appleOnly --no-daemon --no-parallel
 
       - name: Save Konan cache
         uses: actions/cache/save@v3
