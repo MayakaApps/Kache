@@ -14,12 +14,10 @@ env:
   ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
 
 jobs:
-  publish:
-    strategy:
-      matrix:
-        os: [ macOS-latest, ubuntu-latest ]
+  publish-snapshot:
+    name: Publish Snapshot
 
-    runs-on: ${{matrix.os}}
+    runs-on: macOS-latest
     if: github.repository == 'MayakaApps/Kache'
 
     steps:
@@ -51,13 +49,8 @@ jobs:
           path: ~/.konan
           key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
 
-      - name: Upload non-Apple snapshot artifacts
-        if: endsWith(env.KACHE_VERSION, '-SNAPSHOT') && matrix.os == 'ubuntu-latest'
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=nonAppleOnly --no-parallel
-
-      - name: Upload Apple snapshot artifacts
-        if: endsWith(env.KACHE_VERSION, '-SNAPSHOT') && matrix.os == 'macOS-latest'
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=appleOnly --no-parallel
+      - name: Publish
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository
 
       - name: Save Konan cache
         if: endsWith(env.KACHE_VERSION, '-SNAPSHOT')

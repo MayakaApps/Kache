@@ -16,14 +16,10 @@ env:
   ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_KEY_PASSWORD }}
 
 jobs:
-  upload:
-    name: Upload artifacts from Linux and macOS
+  publish-release:
+    name: Publish Release
 
-    strategy:
-      matrix:
-        os: [ macOS-latest, ubuntu-latest ]
-
-    runs-on: ${{matrix.os}}
+    runs-on: macOS-latest
     if: github.repository == 'MayakaApps/Kache'
 
     steps:
@@ -53,16 +49,5 @@ jobs:
           path: ~/.konan
           key: ${{ runner.os }}-konan-${{ env.KOTLIN_VERSION }}
 
-      - name: Upload non-Apple artifacts
-        if: matrix.os == 'ubuntu-latest'
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=nonAppleOnly --no-parallel
-
-      - name: Upload Apple artifacts
-        if: matrix.os == 'macOS-latest'
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository -PpublicationType=appleOnly --no-parallel
-
-      - name: Save Konan cache
-        uses: actions/cache/save@v3
-        with:
-          path: ~/.konan
-          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+      - name: Publish
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository
