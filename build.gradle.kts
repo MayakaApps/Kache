@@ -28,6 +28,9 @@ allprojects {
         }
 
         tasks.withType<org.jetbrains.dokka.gradle.AbstractDokkaTask>().configureEach {
+            // Workaround for Dokka configuration cache failure (issue: https://github.com/Kotlin/dokka/issues/2231)
+            notCompatibleWithConfigurationCache("https://github.com/Kotlin/dokka/issues/2231")
+
             pluginsMapConfiguration.set(
                 mapOf(
                     "org.jetbrains.dokka.base.DokkaBase" to """
@@ -54,11 +57,6 @@ allprojects {
     // Workaround for Gradle implicit dependency error on publishing (issue: https://youtrack.jetbrains.com/issue/KT-46466)
     tasks.withType<AbstractPublishToMaven>().configureEach {
         dependsOn(tasks.withType<Sign>())
-    }
-
-    // Workaround for Dokka configuration cache failure (issue: https://github.com/Kotlin/dokka/issues/2231)
-    tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
-        notCompatibleWithConfigurationCache("https://github.com/Kotlin/dokka/issues/2231")
     }
 }
 
