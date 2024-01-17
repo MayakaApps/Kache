@@ -22,6 +22,7 @@
  * https://android.googlesource.com/platform/frameworks/support/+/androidx-main/collection/collection/src/commonMain/kotlin/androidx/collection/ObjectList.kt
  *
  * Modifications:
+ * - Rename package to `com.mayakapps.kache.collection`
  * - Change top-level declarations visibility to internal.
  * - Comment out @PublishedApi annotations.
  * - Comment out functions depending on ScatterSet as it is not needed.
@@ -32,7 +33,7 @@
 @file:Suppress("NOTHING_TO_INLINE", "RedundantVisibilityModifier", "UNCHECKED_CAST")
 @file:OptIn(ExperimentalContracts::class)
 
-package androidx.collection
+package com.mayakapps.kache.collection
 
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -80,14 +81,14 @@ internal sealed class ObjectList<E>(initialCapacity: Int) {
     /**
      * The number of elements in the [ObjectList].
      */
-    @get:androidx.annotation.IntRange(from = 0)
+    @get:com.mayakapps.kache.annotation.IntRange(from = 0)
     public val size: Int
         get() = _size
 
     /**
      * Returns the last valid index in the [ObjectList]. This can be `-1` when the list is empty.
      */
-    @get:androidx.annotation.IntRange(from = -1)
+    @get:com.mayakapps.kache.annotation.IntRange(from = -1)
     public inline val lastIndex: Int get() = _size - 1
 
     /**
@@ -369,7 +370,7 @@ internal sealed class ObjectList<E>(initialCapacity: Int) {
      * Returns the element at the given [index] or throws [IndexOutOfBoundsException] if
      * the [index] is out of bounds of this collection.
      */
-    public operator fun get(@androidx.annotation.IntRange(from = 0) index: Int): E {
+    public operator fun get(@com.mayakapps.kache.annotation.IntRange(from = 0) index: Int): E {
         if (index !in 0 until _size) {
             throw IndexOutOfBoundsException("Index $index must be in 0..$lastIndex")
         }
@@ -380,7 +381,7 @@ internal sealed class ObjectList<E>(initialCapacity: Int) {
      * Returns the element at the given [index] or throws [IndexOutOfBoundsException] if
      * the [index] is out of bounds of this collection.
      */
-    public fun elementAt(@androidx.annotation.IntRange(from = 0) index: Int): E {
+    public fun elementAt(@com.mayakapps.kache.annotation.IntRange(from = 0) index: Int): E {
         if (index !in 0 until _size) {
             throw IndexOutOfBoundsException("Index $index must be in 0..$lastIndex")
         }
@@ -395,7 +396,7 @@ internal sealed class ObjectList<E>(initialCapacity: Int) {
      * an index not in the list.
      */
     public inline fun elementAtOrElse(
-        @androidx.annotation.IntRange(from = 0) index: Int,
+        @com.mayakapps.kache.annotation.IntRange(from = 0) index: Int,
         defaultValue: (index: Int) -> E
     ): E {
         if (index !in 0 until _size) {
@@ -682,7 +683,7 @@ internal class MutableObjectList<E>(
      * elements at [index] and after, if any.
      * @throws IndexOutOfBoundsException if [index] isn't between 0 and [size], inclusive
      */
-    public fun add(@androidx.annotation.IntRange(from = 0) index: Int, element: E) {
+    public fun add(@com.mayakapps.kache.annotation.IntRange(from = 0) index: Int, element: E) {
         if (index !in 0.._size) {
             throw IndexOutOfBoundsException("Index $index must be in 0..$_size")
         }
@@ -707,7 +708,7 @@ internal class MutableObjectList<E>(
      * @throws IndexOutOfBoundsException if [index] isn't between 0 and [size], inclusive.
      */
     public fun addAll(
-        @androidx.annotation.IntRange(from = 0) index: Int,
+        @com.mayakapps.kache.annotation.IntRange(from = 0) index: Int,
         @Suppress("ArrayReturn") elements: Array<E>
     ): Boolean {
         if (index !in 0.._size) {
@@ -736,7 +737,7 @@ internal class MutableObjectList<E>(
      * @throws IndexOutOfBoundsException if [index] isn't between 0 and [size], inclusive.
      */
     public fun addAll(
-        @androidx.annotation.IntRange(from = 0) index: Int,
+        @com.mayakapps.kache.annotation.IntRange(from = 0) index: Int,
         elements: Collection<E>
     ): Boolean {
         if (index !in 0.._size) {
@@ -767,7 +768,7 @@ internal class MutableObjectList<E>(
      * @throws IndexOutOfBoundsException if [index] isn't between 0 and [size], inclusive
      */
     public fun addAll(
-        @androidx.annotation.IntRange(from = 0) index: Int,
+        @com.mayakapps.kache.annotation.IntRange(from = 0) index: Int,
         elements: ObjectList<E>
     ): Boolean {
         if (index !in 0.._size) {
@@ -1116,7 +1117,7 @@ internal class MutableObjectList<E>(
      * Removes the element at the given [index] and returns it.
      * @throws IndexOutOfBoundsException if [index] isn't between 0 and [lastIndex], inclusive
      */
-    public fun removeAt(@androidx.annotation.IntRange(from = 0) index: Int): E {
+    public fun removeAt(@com.mayakapps.kache.annotation.IntRange(from = 0) index: Int): E {
         if (index !in 0 until _size) {
             throw IndexOutOfBoundsException("Index $index must be in 0..$lastIndex")
         }
@@ -1141,8 +1142,8 @@ internal class MutableObjectList<E>(
      * @throws IllegalArgumentException if [start] is greater than [end]
      */
     public fun removeRange(
-        @androidx.annotation.IntRange(from = 0) start: Int,
-        @androidx.annotation.IntRange(from = 0) end: Int
+        @com.mayakapps.kache.annotation.IntRange(from = 0) start: Int,
+        @com.mayakapps.kache.annotation.IntRange(from = 0) end: Int
     ) {
         if (start !in 0.._size || end !in 0.._size) {
             throw IndexOutOfBoundsException("Start ($start) and end ($end) must be in 0..$_size")
@@ -1251,7 +1252,7 @@ internal class MutableObjectList<E>(
      * @throws IndexOutOfBoundsException if [index] isn't between 0 and [lastIndex], inclusive
      */
     public operator fun set(
-        @androidx.annotation.IntRange(from = 0) index: Int,
+        @com.mayakapps.kache.annotation.IntRange(from = 0) index: Int,
         element: E
     ): E {
         if (index !in 0 until _size) {

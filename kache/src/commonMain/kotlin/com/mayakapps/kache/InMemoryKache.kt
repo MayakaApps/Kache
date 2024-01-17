@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 MayakaApps
+ * Copyright 2024 MayakaApps
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package com.mayakapps.kache
 
-import androidx.collection.mutableScatterMapOf
+import com.mayakapps.kache.collection.mutableScatterMapOf
 import com.mayakapps.kache.InMemoryKache.Configuration
 import com.mayakapps.kache.collection.MutableChain
 import com.mayakapps.kache.collection.MutableChainedScatterMap

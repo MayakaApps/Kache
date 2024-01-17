@@ -21,6 +21,7 @@
  * https://android.googlesource.com/platform/frameworks/support/+/androidx-main/collection/collection/src/commonMain/kotlin/androidx/collection/ScatterMap.kt
  *
  * Modifications:
+ * - Rename package to `com.mayakapps.kache.collection`
  * - Change top-level declarations visibility to internal.
  * - Comment out @PublishedApi annotations.
  * - Comment out functions depending on ScatterSet as it is not needed.
@@ -49,10 +50,9 @@
     "NOTHING_TO_INLINE"
 )
 
-package androidx.collection
+package com.mayakapps.kache.collection
 
-import androidx.collection.internal.EMPTY_OBJECTS
-import com.mayakapps.kache.collection.MutableChainedScatterMap
+import com.mayakapps.kache.collection.internal.EMPTY_OBJECTS
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.max
