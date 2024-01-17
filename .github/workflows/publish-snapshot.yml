@@ -42,4 +42,4 @@ jobs:
 
       - name: Publish
         if: endsWith(env.KACHE_VERSION, '-SNAPSHOT')
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository
+        run: ./gradlew --no-configuration-cache publishAllPublicationsToMavenCentralRepository

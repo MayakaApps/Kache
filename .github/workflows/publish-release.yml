@@ -39,4 +39,4 @@ jobs:
         uses: gradle/gradle-build-action@v2
 
       - name: Publish
-        run: ./gradlew publishAllPublicationsToMavenCentralRepository
+        run: ./gradlew --no-configuration-cache publishAllPublicationsToMavenCentralRepository
