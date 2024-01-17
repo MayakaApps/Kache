@@ -22,12 +22,13 @@
  * https://android.googlesource.com/platform/frameworks/support/+/androidx-main/annotation/annotation/src/commonMain/kotlin/androidx/annotation/IntRange.kt
  *
  * Modifications:
+ * - Rename package to `com.mayakapps.kache.annotation`
  * - Change visibility to internal.
  *
  * The file is up-to-date as of commit 34f5de5 on Jun 20, 2023.
  */
 
-package androidx.annotation
+package com.mayakapps.kache.annotation
 
 /**
  * Denotes that the annotated element should be an int or long in the given range.

@@ -22,13 +22,14 @@
  * https://android.googlesource.com/platform/frameworks/support/+/androidx-main/collection/collection/src/commonTest/kotlin/androidx/collection/ScatterMapTest.kt
  *
  * Modifications:
+ * - Rename package to `com.mayakapps.kache.collection`
  * - Comment out functions depending on ScatterSet as it is not needed.
  * - Rename equals() to equalsTest() to avoid conflict with the equals() function in JavaScript.
  *
  * The file is up-to-date as of commit 7814c21 on Nov 15, 2023.
  */
 
-package androidx.collection
+package com.mayakapps.kache.collection
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

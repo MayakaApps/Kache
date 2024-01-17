@@ -22,12 +22,13 @@
  * https://android.googlesource.com/platform/frameworks/support/+/androidx-main/collection/collection/src/commonTest/kotlin/androidx/collection/ObjectListTest.kt
  *
  * Modifications:
+ * - Rename package to `com.mayakapps.kache.collection`
  * - Comment out functions depending on ScatterSet as it is not needed.
  *
  * The file is up-to-date as of commit d076a38 on Oct 26, 2023.
  */
 
-package androidx.collection
+package com.mayakapps.kache.collection
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

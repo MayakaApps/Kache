@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package androidx.collection.internal
+package com.mayakapps.kache.collection.internal
 
 import kotlin.jvm.JvmField
 
