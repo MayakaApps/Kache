@@ -9,4 +9,4 @@
 set -ex
 
 # Generate the API docs
-./gradlew dokkaHtmlMultiModule
+./gradlew --no-configuration-cache dokkaHtmlMultiModule
