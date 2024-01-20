@@ -69,8 +69,6 @@ internal class MutableChainedScatterMap<K, V>(
         val accessoryChain = if (accessOrder) insertionChain else accessChain
 
         initializeStorage(newCapacity)
-        accessChain?.initializeStorage(_capacity)
-        insertionChain?.initializeStorage(_capacity)
 
         val newKeys = keys
         val newValues = values
