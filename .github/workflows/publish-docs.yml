@@ -35,7 +35,7 @@ jobs:
           java-version: 17
 
       - name: Setup gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
 
       - name: Setup Python
         uses: actions/setup-python@v5
