@@ -34,7 +34,7 @@ jobs:
           java-version: 17
 
       - name: Setup gradle
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Extract Kache version
         run: |

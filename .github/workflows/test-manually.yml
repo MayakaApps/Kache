@@ -29,7 +29,7 @@ jobs:
           java-version: 17
 
       - name: Setup gradle
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Run check & tests for JVM, JS, and Linux tier 1 & 2 K/N targets
         if: matrix.os == 'ubuntu-latest'
