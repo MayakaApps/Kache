@@ -67,14 +67,14 @@ internal class MutableChainedScatterMap<K, V>(
         val previousKeys = keys
         val previousValues = values
         val accessoryChain = if (accessOrder) insertionChain else accessChain
+        val newIndices = IntArray(_capacity)
 
         initializeStorage(newCapacity)
 
         val newKeys = keys
         val newValues = values
-        val newIndices = IntArray(capacity)
 
-        mainChain.resizeStorage(newCapacity) { i ->
+        mainChain.resizeStorage(_capacity) { i ->
             val previousKey = previousKeys[i]
             val hash = hash(previousKey)
             val index = findFirstAvailableSlot(h1(hash))
