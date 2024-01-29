@@ -7,11 +7,16 @@
     ]
   },
   {
-    "version": "2.1.0-beta03",
-    "title": "2.1.0-beta03",
+    "version": "2.1.0-beta04",
+    "title": "2.1.0-beta04",
     "aliases": [
       "latest"
     ]
+  },
+  {
+    "version": "2.1.0-beta03",
+    "title": "2.1.0-beta03",
+    "aliases": []
   },
   {
     "version": "2.1.0-beta02",
