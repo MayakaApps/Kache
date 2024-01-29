@@ -16,11 +16,11 @@
 
 package com.mayakapps.kache
 
-import com.mayakapps.kache.collection.mutableScatterMapOf
 import com.mayakapps.kache.InMemoryKache.Configuration
 import com.mayakapps.kache.collection.MutableChain
 import com.mayakapps.kache.collection.MutableChainedScatterMap
 import com.mayakapps.kache.collection.MutableTimedChain
+import com.mayakapps.kache.collection.mutableScatterMapOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -184,32 +184,34 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
         mappingFunction: suspend (key: K) -> V?,
     ): Deferred<V?> {
         val deferred = creationScope.async {
-            val value = try {
-                mappingFunction(key)
-            } catch (cancellation: CancellationException) {
-                null
-            }
+            try {
+                val value = try {
+                    mappingFunction(key)
+                } catch (cancellation: CancellationException) {
+                    null
+                }
 
-            if (value != null) {
-                // All operations inside the lock to prevent cancellation before trimming or
-                // invoking listener
-                mapMutex.withLock {
-                    val oldValue = map.put(key, value)
+                if (value != null) {
+                    // All operations inside the lock to prevent cancellation before trimming or
+                    // invoking listener
+                    mapMutex.withLock {
+                        val oldValue = map.put(key, value)
 
-                    size += safeSizeOf(key, value) - (oldValue?.let { safeSizeOf(key, it) } ?: 0)
-                    nonLockedTrimToSize(maxSize)
-                    nonLockedEvictExpired()
+                        size += safeSizeOf(key, value) - (oldValue?.let { safeSizeOf(key, it) } ?: 0)
+                        nonLockedTrimToSize(maxSize)
+                        nonLockedEvictExpired()
 
-                    oldValue?.let { onEntryRemoved(false, key, it, value) }
+                        oldValue?.let { onEntryRemoved(false, key, it, value) }
+                    }
+                }
+
+                value
+            } finally {
+                @Suppress("DeferredResultUnused")
+                creationMutex.withLock {
+                    creationMap.remove(key)
                 }
             }
-
-            value
-        }
-
-        deferred.invokeOnCompletion {
-            @Suppress("DeferredResultUnused")
-            creationMap.remove(key)
         }
 
         removeCreation(key, CODE_CREATION)
@@ -255,7 +257,9 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     }
 
     override suspend fun remove(key: K): V? {
-        removeCreation(key)
+        creationMutex.withLock {
+            removeCreation(key)
+        }
 
         return mapMutex.withLock {
             val oldValue = map.remove(key)
@@ -271,7 +275,9 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     }
 
     override suspend fun clear() {
-        removeAllCreations()
+        creationMutex.withLock {
+            removeAllCreations()
+        }
 
         mapMutex.withLock {
             map.removeAllWithCallback(reversed = reversed) { key, value ->
@@ -286,7 +292,9 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     }
 
     override suspend fun evictAll() {
-        removeAllCreations()
+        creationMutex.withLock {
+            removeAllCreations()
+        }
 
         mapMutex.withLock {
             map.removeAllWithCallback(reversed = reversed) { key, value ->
@@ -302,7 +310,9 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
 
     override suspend fun removeAllUnderCreation() {
         mapMutex.withLock {
-            removeAllCreations()
+            creationMutex.withLock {
+                removeAllCreations()
+            }
         }
     }
 
