@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 MayakaApps
+ * Copyright 2024 MayakaApps
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.mayakapps.kache.journal
 
 internal const val JOURNAL_MAGIC = "JOURNAL"
-internal const val JOURNAL_VERSION: Byte = 3
+internal const val JOURNAL_VERSION: Byte = 4
 
 internal const val JOURNAL_FILE = "journal"
 internal const val JOURNAL_FILE_TEMP = "$JOURNAL_FILE.tmp"

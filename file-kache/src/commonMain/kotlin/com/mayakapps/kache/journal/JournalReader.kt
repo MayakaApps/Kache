@@ -62,10 +62,10 @@ internal class JournalReader(
             return null
         }
 
-        val key = source.readByteLengthUtf8()
+        val key = source.readUShortLengthUtf8()
 
         val transformedKey =
-            if (opcodeId == JournalEntry.CLEAN_WITH_TRANSFORMED_KEY) source.readByteLengthUtf8()
+            if (opcodeId == JournalEntry.CLEAN_WITH_TRANSFORMED_KEY) source.readUByteLengthUtf8()
             else null
 
         return JournalEntry(opcodeId, key, transformedKey)
@@ -75,8 +75,13 @@ internal class JournalReader(
         source.close()
     }
 
-    private fun BufferedSource.readByteLengthUtf8(): String {
+    private fun BufferedSource.readUByteLengthUtf8(): String {
         val length = readByte().toUByte().toLong()
+        return readUtf8(length)
+    }
+
+    private fun BufferedSource.readUShortLengthUtf8(): String {
+        val length = readShort().toUShort().toLong()
         return readUtf8(length)
     }
 }

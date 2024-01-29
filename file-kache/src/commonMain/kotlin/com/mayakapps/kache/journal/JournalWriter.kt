@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 MayakaApps
+ * Copyright 2024 MayakaApps
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,12 +65,17 @@ internal class JournalWriter(
 
     private fun writeEntry(opcode: Byte, key: String, transformedKey: String? = null) {
         sink.writeByte(opcode.toInt())
-        sink.writeByteLengthUtf8(key)
-        if (transformedKey != null) sink.writeByteLengthUtf8(transformedKey)
+        sink.writeUShortLengthUtf8(key)
+        if (transformedKey != null) sink.writeUByteLengthUtf8(transformedKey)
     }
 
-    private fun BufferedSink.writeByteLengthUtf8(string: String) {
+    private fun BufferedSink.writeUByteLengthUtf8(string: String) {
         writeByte(string.length)
+        writeUtf8(string)
+    }
+
+    private fun BufferedSink.writeUShortLengthUtf8(string: String) {
+        writeShort(string.length)
         writeUtf8(string)
     }
 

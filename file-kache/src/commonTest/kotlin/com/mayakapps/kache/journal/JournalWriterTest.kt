@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 MayakaApps
+ * Copyright 2024 MayakaApps
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class JournalWriterTest {
     @Test
     fun writeDirty() {
         val bytes = byteArrayOf(
-            JournalEntry.DIRTY, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
+            JournalEntry.DIRTY, 0x00, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
         )
 
         val buffer = Buffer()
@@ -47,7 +47,7 @@ class JournalWriterTest {
     @Test
     fun writeClean() {
         val bytes = byteArrayOf(
-            JournalEntry.CLEAN, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
+            JournalEntry.CLEAN, 0x00, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
         )
 
         val buffer = Buffer()
@@ -58,7 +58,7 @@ class JournalWriterTest {
     @Test
     fun writeRemove() {
         val bytes = byteArrayOf(
-            JournalEntry.REMOVE, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
+            JournalEntry.REMOVE, 0x00, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
         )
 
         val buffer = Buffer()
@@ -69,9 +69,9 @@ class JournalWriterTest {
     @Test
     fun writeAll() {
         val bytes = byteArrayOf(
-            JournalEntry.CLEAN_WITH_TRANSFORMED_KEY, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
+            JournalEntry.CLEAN_WITH_TRANSFORMED_KEY, 0x00, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
             KEY_2.length.toByte(), *KEY_2.encodeToByteArray(),
-            JournalEntry.DIRTY, KEY_2.length.toByte(), *KEY_2.encodeToByteArray(),
+            JournalEntry.DIRTY, 0x00, KEY_2.length.toByte(), *KEY_2.encodeToByteArray(),
         )
 
         val buffer = Buffer()
