@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 MayakaApps
+ * Copyright 2024 MayakaApps
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ internal class JournalReader(
     }
 
     private fun BufferedSource.readByteLengthUtf8(): String {
-        val length = readByte()
-        return readUtf8(length.toLong())
+        val length = readByte().toUByte().toLong()
+        return readUtf8(length)
     }
 }
