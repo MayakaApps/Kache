@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 MayakaApps
+ * Copyright 2024 MayakaApps
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ class JournalReaderTest {
         // Journal with incorrect version
         val journalWithIncorrectVersion = bufferOf(
             0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
-            0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
+            0x01, 0x00, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
         assertFailsWith<JournalInvalidHeaderException> {
@@ -48,7 +48,7 @@ class JournalReaderTest {
         // Different cache version
         val journalWithDifferentCacheVersion = bufferOf(
             0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00,
-            0x01, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
+            0x01, 0x00, 0x07, 0x54, 0x65, 0x73, 0x74, 0x4B, 0x65, 0x79,
         )
 
         assertFailsWith<JournalInvalidHeaderException> {
@@ -76,28 +76,28 @@ class JournalReaderTest {
 
         // Dirty operation
         val dirtyOperation = bufferOf(
-            JournalEntry.DIRTY, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
+            JournalEntry.DIRTY, 0x00, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
         )
         val dirtyOperationResult = JournalReader(dirtyOperation).use { it.readEntry() }
         assertEquals(JournalEntry.Dirty(KEY_1), dirtyOperationResult)
 
         // Clean operation
         val cleanOperation = bufferOf(
-            JournalEntry.CLEAN, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
+            JournalEntry.CLEAN, 0x00, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
         )
         val cleanOperationResult = JournalReader(cleanOperation).use { it.readEntry() }
         assertEquals(JournalEntry.Clean(KEY_1), cleanOperationResult)
 
         // Remove operation
         val removeOperation = bufferOf(
-            JournalEntry.REMOVE, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
+            JournalEntry.REMOVE, 0x00, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
         )
         val removeOperationResult = JournalReader(removeOperation).use { it.readEntry() }
         assertEquals(JournalEntry.Remove(KEY_1), removeOperationResult)
 
         // Invalid operation
         val invalidOperation = bufferOf(
-            (0xFE).toByte(), KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
+            (0xFE).toByte(), 0x00, KEY_1.length.toByte(), *KEY_1.encodeToByteArray(),
         )
         assertFailsWith<JournalInvalidOpcodeException> {
             JournalReader(invalidOperation).use { it.readEntry() }
@@ -111,7 +111,7 @@ class JournalReaderTest {
 
         // Dirty operation with truncated key
         val dirtyOperationWithTruncatedKey = bufferOf(
-            JournalEntry.DIRTY, KEY_1.length.toByte(), *KEY_1.first().toString().encodeToByteArray(),
+            JournalEntry.DIRTY, 0x00, KEY_1.length.toByte(), *KEY_1.first().toString().encodeToByteArray(),
         )
         assertFailsWith<EOFException> {
             JournalReader(dirtyOperationWithTruncatedKey).use { it.readEntry() }

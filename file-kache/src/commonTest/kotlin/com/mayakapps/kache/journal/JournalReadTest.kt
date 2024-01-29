@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 MayakaApps
+ * Copyright 2024 MayakaApps
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,8 +128,8 @@ class JournalReadTest {
         private val tempJournalFile = directory.resolve(JOURNAL_FILE_TEMP)
         private val backupJournalFile = directory.resolve(JOURNAL_FILE_BACKUP)
 
-        private val keyOneBytes = byteArrayOf(KEY_1.length.toByte()) + KEY_1.encodeToByteArray()
-        private val keyTwoBytes = byteArrayOf(KEY_2.length.toByte()) + KEY_2.encodeToByteArray()
+        private val keyOneBytes = byteArrayOf(0x00, KEY_1.length.toByte()) + KEY_1.encodeToByteArray()
+        private val keyTwoBytes = byteArrayOf(0x00, KEY_2.length.toByte()) + KEY_2.encodeToByteArray()
 
         private val journalHeader =
             byteArrayOf(0x4A, 0x4F, 0x55, 0x52, 0x4E, 0x41, 0x4C, JOURNAL_VERSION, 0x00, 0x00, 0x00, 0x01, 0x00)
