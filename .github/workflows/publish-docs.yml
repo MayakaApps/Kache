@@ -37,7 +37,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11.3 # See the pinned version in renovate.json too
+          python-version: 3.12.1 # See the pinned version in renovate.json too
 
       - name: Generate the API documentation
         run: ./gradlew --no-configuration-cache dokkaHtmlMultiModule
