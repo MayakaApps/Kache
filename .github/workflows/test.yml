@@ -1,40 +1,62 @@
-name: Test
+name: Run Tests
 
 on:
-  workflow_dispatch
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
-    name: Test
+    name: Run Tests
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest ]
+        os: [ ubuntu-latest, macOS-14 ]
 
     runs-on: ${{matrix.os}}
     if: github.repository == 'MayakaApps/Kache'
 
     permissions:
       contents: read
+      checks: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v2
+
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: 17
 
       - name: Setup gradle
         uses: gradle/actions/setup-gradle@v3
 
       - name: Run check & tests for JVM, JS, and Linux tier 1 & 2 K/N targets
-        if: matrix.os == 'ubuntu-latest'
+        if: startsWith(matrix.os, 'ubuntu')
         run: ./gradlew check jvmTest jsTest linuxX64Test --stacktrace
 
       - name: Run tests for Apple tier 1 & 2 K/N targets
-        if: matrix.os == 'macOS-latest'
+        if: startsWith(matrix.os, 'macOS')
         run: ./gradlew macosX64Test macosArm64Test iosSimulatorArm64Test iosX64Test watchosSimulatorArm64Test watchosX64Test tvosSimulatorArm64Test tvosX64Test --stacktrace
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: always() && github.event_name == 'pull_request'
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+          check_name: ${{ runner.os }} Test Report
