@@ -6,19 +6,26 @@ on:
       - main
 
 concurrency:
-  group: "release"
-  cancel-in-progress: false
+  group: "publish-snapshot"
+  cancel-in-progress: true
 
 env:
   ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
   ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
 
 jobs:
-  publish-snapshot:
+  extract-version:
+    name: Extract Library Version
+    if: github.repository == 'MayakaApps/Kache'
+    uses: ./.github/workflows/extract-version.yml
+
+  publish-library:
     name: Publish Snapshot
 
-    runs-on: macOS-latest
-    if: github.repository == 'MayakaApps/Kache'
+    needs: extract-version
+
+    runs-on: macOS-14
+    if: github.repository == 'MayakaApps/Kache' && endsWith(needs.extract-version.outputs.library-version, '-SNAPSHOT')
 
     permissions:
       contents: read
@@ -30,16 +37,21 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: 17
 
       - name: Setup gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Extract Kache version
-        run: |
-          echo "KACHE_VERSION=$(sed -rn 's/^VERSION_NAME=(.*)\r?$/\1/p' 'gradle.properties')" >> $GITHUB_ENV
-
       - name: Publish
-        if: endsWith(env.KACHE_VERSION, '-SNAPSHOT')
         run: ./gradlew --no-configuration-cache publishAllPublicationsToMavenCentralRepository
+
+  publish-docs:
+    name: Publish Documentation
+
+    needs: extract-version
+    if: github.repository == 'MayakaApps/Kache' && endsWith(needs.extract-version.outputs.library-version, '-SNAPSHOT')
+
+    uses: ./.github/workflows/publish-docs.yml
+    with:
+      library-version: ${{ needs.extract-version.outputs.library-version }}
