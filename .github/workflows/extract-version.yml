@@ -1,0 +1,32 @@
+name: Extract Library Version
+
+on:
+  workflow_call:
+    # Map the workflow outputs to job outputs
+    outputs:
+      library-version:
+        description: The extracted library version
+        value: ${{ jobs.extract-version.outputs.library-version }}
+
+jobs:
+  extract-version:
+    name: Extract Library Version
+
+    runs-on: ubuntu-latest
+
+    # Caller must have the following permissions
+    permissions:
+      contents: read
+
+    # Map the job outputs to step outputs
+    outputs:
+      library-version: ${{ steps.extract.outputs.library-version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract Kache version
+        id: extract
+        run: |
+          echo "library-version=$(sed -rn 's/^VERSION_NAME=(.*)\r?$/\1/p' 'gradle.properties')" >> $GITHUB_OUTPUT
