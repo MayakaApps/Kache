@@ -13,7 +13,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    # Caller must have the following permissions
     permissions:
       contents: write
       pages: write
