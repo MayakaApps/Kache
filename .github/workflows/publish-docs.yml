@@ -1,21 +1,19 @@
 name: Publish Documentation
 
 on:
-  push:
-    branches: [main]
-  release:
-    types: [published]
-  workflow_dispatch:
-
-concurrency:
-  group: "docs"
-  cancel-in-progress: false
+  workflow_call:
+    inputs:
+      library-version:
+        required: true
+        type: string
 
 jobs:
   publish-docs:
-    runs-on: ubuntu-latest
-    if: github.repository == 'MayakaApps/Kache'
+    name: Publish Documentation
 
+    runs-on: ubuntu-latest
+
+    # Caller must have the following permissions
     permissions:
       contents: write
       pages: write
@@ -31,7 +29,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: 17
 
       - name: Setup gradle
@@ -41,10 +39,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.11.3 # See the pinned version in renovate.json too
-
-      - name: Extract Kache version
-        run: |
-          echo "KACHE_VERSION=$(sed -rn 's/^VERSION_NAME=(.*)\r?$/\1/p' 'gradle.properties')" >> $GITHUB_ENV
 
       - name: Generate the API documentation
         run: ./gradlew --no-configuration-cache dokkaHtmlMultiModule
@@ -60,10 +54,8 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git fetch origin gh-pages --depth=1
 
-      - name: Deploy SNAPSHOT documentation with mike
-        if: ${{ success() && endsWith(env.KACHE_VERSION, '-SNAPSHOT') }}
-        run: mike deploy -u --push ${{ env.KACHE_VERSION }} snapshot
-
       - name: Deploy documentation with mike
-        if: ${{ success() && !endsWith(env.KACHE_VERSION, '-SNAPSHOT') && github.event_name == 'release' }}
-        run: mike deploy -u --push ${{ env.KACHE_VERSION }} latest
+        if: ${{ success() }}
+        run: |
+          mike deploy -u --push ${{ inputs.library-version }} \
+          ${{ (endsWith(inputs.library-version, '-SNAPSHOT') && 'snapshot') || 'latest' }}
