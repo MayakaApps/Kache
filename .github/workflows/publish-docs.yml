@@ -44,7 +44,7 @@ jobs:
 
       - name: Build mkdocs
         run: |
-          pip3 install -r .github/workflows/publish-docs-requirements.in
+          pip3 install -r .github/workflows/publish-docs-requirements.txt
           mkdocs build
 
       - name: Configure git for mike
