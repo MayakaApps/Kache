@@ -4,6 +4,8 @@
     "config:recommended",
   ],
   packageRules: [
+    // Auto merge Non-major updates except 0.* versions
+    // Note that `:automergeStableNonMajor` preset is not used because it only supports semver versioning
     {
       automerge: true,
       matchCurrentVersion: "!/^0\\./",
