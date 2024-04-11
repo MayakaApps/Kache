@@ -1,8 +1,8 @@
 <component name="CopyrightManager">
   <settings>
     <module2copyright>
-      <element module="Production" copyright="MayakaApps - Apache License 2.0" />
-      <element module="Tests" copyright="MayakaApps - Apache License 2.0" />
+      <element module="Production" copyright="copyright" />
+      <element module="Tests" copyright="copyright" />
     </module2copyright>
   </settings>
 </component>
