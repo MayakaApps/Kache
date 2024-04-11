@@ -2,8 +2,16 @@
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
     "config:recommended",
-    ":automergeStableNonMajor",
-    ":combinePatchMinorReleases",
+  ],
+  packageRules: [
+    {
+      automerge: true,
+      matchCurrentVersion: "!/^0\\./",
+      matchUpdateTypes: [
+        "minor",
+        "patch",
+      ],
+    },
   ],
   customManagers: [
     // Update the python version in GitHub Actions workflows
