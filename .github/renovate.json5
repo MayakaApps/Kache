@@ -5,19 +5,19 @@
     ":automergeStableNonMajor",
     ":combinePatchMinorReleases",
   ],
-  regexManagers: [
+  customManagers: [
+    // Update the python version in GitHub Actions workflows
     {
-      datasourceTemplate: "github-tags",
-      depNameTemplate: "python/cpython",
-      description: "Update the python version in GitHub Actions workflows",
-      extractVersionTemplate: "^v(?<version>\\d+\\.\\d+)(\\.\\d+)?$",
+      customType: "regex",
       fileMatch: [
         "(^|/)\\.github/(?:workflows|actions)/.+\\.ya?ml$",
       ],
       matchStrings: [
-        "actions/setup-python@.*?\\s+with:\\s+python-version: '?(?<currentValue>.+?)'?\\s",
+        "python-version: '?(?<currentValue>.+?)'?\\s",
       ],
-      versioningTemplate: "semver-coerced",
+      "depNameTemplate": "python",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker",
     },
   ],
 }
