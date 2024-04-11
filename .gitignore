@@ -1,18 +1,31 @@
-# IDEA
-.idea/*
-!.idea/codeStyles
-!.idea/copyright
+#
+# Gradle
+#
 
-# Gradle files
 .gradle/
-build/
+**/build/
+!**/src/**/build/
 
-# Local configuration file (sdk path, etc)
-local.properties
+#
+# IntelliJ
+#
 
-# Mac files
-.DS_Store
+**/.idea/*
+!**/.idea/codeStyles
+!**/.idea/copyright
+*.iml
+
+#
+# CI
+#
 
 # Mkdocs
 site/
 docs/api/
+
+#
+# Common
+#
+
+# Mac files
+.DS_Store
