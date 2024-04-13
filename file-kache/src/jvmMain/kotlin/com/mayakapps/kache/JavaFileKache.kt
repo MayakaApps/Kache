@@ -33,7 +33,7 @@ import java.io.File
  *
  * It can be built using the following syntax:
  * ```
- * val cache = OkioFileKache(directory = File("cache"), maxSize = 100L * 1024L * 1024L) {
+ * val cache = JavaFileKache(directory = File("cache"), maxSize = 100L * 1024L * 1024L) {
  *     strategy = KacheStrategy.LRU
  *     // ...
  * }
