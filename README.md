@@ -24,6 +24,7 @@ Kache (previously Kotlinized LRU Cache) is a lightweight Kotlin Multiplatform ca
 in-memory and persistent caches and supports different eviction strategies (LRU, FIFO, MRU, FILO).
 
 ***Supported platforms:***
+
 * **JVM** (and **Android**)
 * **JS** (Browser does not support persistent cache)
 * **macOS** (macosX64, macosArm64)
