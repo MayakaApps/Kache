@@ -5,11 +5,15 @@
 :root {
     --background-color: #ffffff;
     --footer-background: #161616;
+    --footer-font-color: hsla(0, 0%, 100%, 0.6);
+    --footer-go-to-top-color: var(--footer-font-color);
 }
 
-:root.theme-dark {
+:root .theme-dark {
     --background-color: #1e2129;
     --footer-background: #111317;
+    --footer-font-color: hsla(0, 0%, 100%, 0.6);
+    --footer-go-to-top-color: var(--footer-font-color);
 }
 
 .library-name a {

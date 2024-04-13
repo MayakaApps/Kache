@@ -158,7 +158,7 @@ class InMemoryKacheTest {
         assertEquals(VAL_2, kache.getOrPut(KEY_2) { VAL_3 })
         try {
             assertEquals(VAL_2, deferred1.await())
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             fail("Deferred should not be cancelled")
         }
         assertEquals(VAL_2, kache.getIfAvailable(KEY_2))
@@ -168,7 +168,7 @@ class InMemoryKacheTest {
         assertEquals(VAL_3, kache.getOrPut(KEY_3) { null })
         try {
             assertEquals(VAL_3, deferred2.await())
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             fail("Deferred should not be cancelled")
         }
         assertEquals(VAL_3, kache.getIfAvailable(KEY_3))

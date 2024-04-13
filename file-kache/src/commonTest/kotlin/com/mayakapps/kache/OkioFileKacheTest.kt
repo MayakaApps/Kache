@@ -193,7 +193,7 @@ class OkioFileKacheTest {
         fileSystem.assertPathContentEquals(VAL_3, thirdCachePath)
         try {
             putAsyncDeferred.await()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             fail("Deferred should not be cancelled")
         }
 

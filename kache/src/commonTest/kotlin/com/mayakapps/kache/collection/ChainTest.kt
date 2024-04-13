@@ -71,7 +71,7 @@ class ChainTest {
         try {
             chain.addToEnd(10)
             chain.addToEnd(19)
-        } catch (e: IndexOutOfBoundsException) {
+        } catch (_: IndexOutOfBoundsException) {
             fail("The chain was not reinitialized with the new capacity")
         }
     }
@@ -87,7 +87,7 @@ class ChainTest {
         try {
             chain.addToEnd(10)
             chain.addToEnd(19)
-        } catch (e: IndexOutOfBoundsException) {
+        } catch (_: IndexOutOfBoundsException) {
             fail("The chain was not reinitialized with the new capacity")
         }
     }
@@ -104,7 +104,7 @@ class ChainTest {
         try {
             chain.addToEnd(10)
             chain.addToEnd(19)
-        } catch (e: IndexOutOfBoundsException) {
+        } catch (_: IndexOutOfBoundsException) {
             fail("The chain was not reinitialized with the new capacity")
         }
     }

@@ -362,12 +362,12 @@ public class OkioFileKache internal constructor(
 
             val journalData = try {
                 fileSystem.readJournalIfExists(directory, cacheVersion, strategy)
-            } catch (ex: JournalException) {
+            } catch (_: JournalException) {
                 // Journal is corrupted - Clear cache
                 fileSystem.deleteContents(directory)
                 fileSystem.createDirectories(filesDirectory)
                 null
-            } catch (ex: EOFException) {
+            } catch (_: EOFException) {
                 // Journal is corrupted - Clear cache
                 fileSystem.deleteContents(directory)
                 fileSystem.createDirectories(filesDirectory)

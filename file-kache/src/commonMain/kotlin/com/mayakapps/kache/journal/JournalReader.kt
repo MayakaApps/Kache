@@ -30,7 +30,7 @@ internal class JournalReader(
     internal fun validateHeader() {
         val magic = try {
             source.readUtf8(JOURNAL_MAGIC.length.toLong())
-        } catch (ex: EOFException) {
+        } catch (_: EOFException) {
             throw JournalInvalidHeaderException("File size is less than journal magic code size")
         }
 
@@ -57,7 +57,7 @@ internal class JournalReader(
     internal fun readEntry(): JournalEntry? {
         val opcodeId = try {
             source.readByte()
-        } catch (ex: EOFException) {
+        } catch (_: EOFException) {
             // Fine, we've reached the end of the file
             return null
         }
