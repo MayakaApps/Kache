@@ -1,5 +1,13 @@
 :root {
-    --color-dark: #7e56c2;
+    --color-dark: #4051b5;
+}
+
+:root {
+    --background-color: #ffffff;
+}
+
+:root.theme-dark {
+    --background-color: #1e2129;
 }
 
 .library-name a {
@@ -15,14 +23,4 @@
     height: 50px;
     top: -18px;
     left: -60px;
-}
-
-:root {
-    --color-dark: #4051b5;
-    --background-color: #ffffff;
-}
-
-:root.theme-dark {
-    --color-dark: #4051b5;
-    --background-color: #2e303e;
 }

@@ -37,7 +37,7 @@ allprojects {
                     "org.jetbrains.dokka.base.DokkaBase" to """
                     {
                       "customStyleSheets": [
-                        "${rootDir.toString().replace('\\', '/')}/docs/css/kache-dokka.css"
+                        "${rootDir.toString().replace('\\', '/')}/docs/styles/kache-dokka.css"
                       ],
                       "customAssets" : [
                         "${rootDir.toString().replace('\\', '/')}/docs/images/kache-logo.png"
