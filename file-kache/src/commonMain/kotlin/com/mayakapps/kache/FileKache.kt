@@ -32,7 +32,7 @@ import okio.Path.Companion.toPath
  *
  * It can be built using the following syntax:
  * ```
- * val cache = OkioFileKache(directoryPath = "cache", maxSize = 100L * 1024L * 1024L) {
+ * val cache = FileKache(directory = "cache", maxSize = 100L * 1024L * 1024L) {
  *     strategy = KacheStrategy.LRU
  *     // ...
  * }
@@ -166,7 +166,7 @@ public class FileKache internal constructor(
         /**
          * The path of the directory where the cache files and the journal are stored.
          */
-        public var directoryPath: String,
+        public var directory: String,
 
         /**
          * The maximum capacity of the cache.
@@ -203,23 +203,23 @@ public class FileKache internal constructor(
 }
 
 /**
- * Creates a new instance of [FileKache] with the given [directoryPath], [maxSize] and [configuration].
+ * Creates a new instance of [FileKache] with the given [directory], [maxSize] and [configuration].
  *
- * If [directoryPath] or [maxSize] are set inside [configuration], they will override the values passed as parameters.
+ * If [directory] or [maxSize] are set inside [configuration], they will override the values passed as parameters.
  *
- * @see Configuration.directoryPath
+ * @see Configuration.directory
  * @see FileKache.maxSize
  * @see FileKache.Configuration
  */
 public suspend fun FileKache(
-    directoryPath: String,
+    directory: String,
     maxSize: Long,
     configuration: Configuration.() -> Unit = {},
 ): FileKache {
-    val config = Configuration(directoryPath, maxSize).apply(configuration)
+    val config = Configuration(directory, maxSize).apply(configuration)
 
     val baseKache = OkioFileKache(
-        directory = config.directoryPath.toPath(),
+        directory = config.directory.toPath(),
         maxSize = config.maxSize,
     ) {
         strategy = config.strategy
