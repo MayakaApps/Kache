@@ -21,13 +21,13 @@ public final class com/mayakapps/kache/FileKache$Configuration {
 	public fun <init> (Ljava/lang/String;J)V
 	public final fun getCacheVersion ()I
 	public final fun getCreationScope ()Lkotlinx/coroutines/CoroutineScope;
-	public final fun getDirectoryPath ()Ljava/lang/String;
+	public final fun getDirectory ()Ljava/lang/String;
 	public final fun getKeyTransformer ()Lcom/mayakapps/kache/KeyTransformer;
 	public final fun getMaxSize ()J
 	public final fun getStrategy ()Lcom/mayakapps/kache/KacheStrategy;
 	public final fun setCacheVersion (I)V
 	public final fun setCreationScope (Lkotlinx/coroutines/CoroutineScope;)V
-	public final fun setDirectoryPath (Ljava/lang/String;)V
+	public final fun setDirectory (Ljava/lang/String;)V
 	public final fun setKeyTransformer (Lcom/mayakapps/kache/KeyTransformer;)V
 	public final fun setMaxSize (J)V
 	public final fun setStrategy (Lcom/mayakapps/kache/KacheStrategy;)V
