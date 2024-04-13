@@ -62,7 +62,7 @@ class JournalReaderTest {
 
         try {
             JournalReader(emptyJournalWithValidHeader).use { it.validateHeader() }
-        } catch (e: JournalInvalidHeaderException) {
+        } catch (_: JournalInvalidHeaderException) {
             fail("Header should be detected as valid")
         }
     }

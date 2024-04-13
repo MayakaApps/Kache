@@ -13,6 +13,9 @@
 **/.idea/*
 !**/.idea/codeStyles
 !**/.idea/copyright
+!**/.idea/dictionaries
+**/.idea/dictionaries/*
+!**/.idea/dictionaries/default_user.xml
 *.iml
 
 #

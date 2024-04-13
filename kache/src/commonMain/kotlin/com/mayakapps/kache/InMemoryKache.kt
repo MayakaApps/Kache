@@ -196,7 +196,7 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
             try {
                 val value = try {
                     mappingFunction(key)
-                } catch (cancellation: CancellationException) {
+                } catch (_: CancellationException) {
                     null
                 }
 
