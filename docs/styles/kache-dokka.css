@@ -4,23 +4,27 @@
 
 :root {
     --background-color: #ffffff;
+    --footer-background: #161616;
 }
 
 :root.theme-dark {
     --background-color: #1e2129;
+    --footer-background: #111317;
 }
 
 .library-name a {
-    position: relative;
-    margin-left: 75px;
+    font-size: 18px;
+    font-weight: 700;
 }
 
 .library-name a::before {
     background: url("../images/kache-logo.png") center no-repeat;
     background-size: contain;
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    top: -18px;
-    left: -60px;
+    margin-right: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.navigation {
+    padding: 4px max(calc((100% - 1220px) / 2), 16px);
 }
