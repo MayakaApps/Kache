@@ -1,0 +1,331 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ContainerKache</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script>
+<link href="../../../images/kache-logo.png">
+<link href="../../../styles/kache-dokka.css" rel="Stylesheet"></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../../index.html">
+                            Kache
+                    </a>            </div>
+            <div class="library-version">
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector common-like" data-active="" data-filter=":kache:dokkaHtmlPartial/commonMain">common</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="kache::com.mayakapps.kache/ContainerKache///PointingToDeclaration//-998611621">
+  <div class="breadcrumbs"><a href="../../index.html">kache</a><span class="delimiter">/</span><a href="../index.html">com.mayakapps.kache</a><span class="delimiter">/</span><span class="current">ContainerKache</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Container</span><wbr><span><span>Kache</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">ContainerKache</a><span class="token operator">&lt;</span><a href="index.html">K</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token punctuation">, </span><a href="index.html">C</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt;</span></div><p class="paragraph">An interface that represents a cache that holds entries within containers such as files.</p><p class="paragraph">The user is tasked with the serialization and deserialization of the container.</p><p class="paragraph">This module does not provide an implementation for this interface. An implementation can be found in the <code class="lang-kotlin">:file-kache</code> module.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-1182288481%2FProperties%2F-998611621" anchor-label="maxSize" id="-1182288481%2FProperties%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="max-size.html"><span>max</span><wbr><span><span>Size</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1182288481%2FProperties%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="max-size.html">maxSize</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></div><div class="brief "><p class="paragraph">Returns the maximum capacity of this cache, defined by the implementation.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-245622155%2FProperties%2F-998611621" anchor-label="size" id="-245622155%2FProperties%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="size.html"><span><span>size</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-245622155%2FProperties%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="size.html">size</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></div><div class="brief "><p class="paragraph">Returns the current size of the cache, defined by the implementation.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="1617173911%2FFunctions%2F-998611621" anchor-label="clear" id="1617173911%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="clear.html"><span><span>clear</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1617173911%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="clear.html"><span class="token function">clear</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Removes all keys and their corresponding containers from the cache.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1204265908%2FFunctions%2F-998611621" anchor-label="close" id="-1204265908%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="close.html"><span><span>close</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1204265908%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="close.html"><span class="token function">close</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Closes the cache, releasing any resources associated with it.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1339813206%2FFunctions%2F-998611621" anchor-label="get" id="1339813206%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get.html"><span><span>get</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1339813206%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get.html"><span class="token function">get</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">key<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">C</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the container corresponding to the given <a href="get.html">key</a> if it exists or is currently being created, or <code class="lang-kotlin">null</code> otherwise.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1501249929%2FFunctions%2F-998611621" anchor-label="getAllKeys" id="-1501249929%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-all-keys.html"><span>get</span><wbr><span>All</span><wbr><span><span>Keys</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1501249929%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-all-keys.html"><span class="token function">getAllKeys</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-kache-keys/index.html">KacheKeys</a><span class="token operator">&lt;</span><a href="index.html">K</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns a <a href="../-kache-keys/index.html">KacheKeys</a> object containing all keys in the cache, including under-creation keys.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1335749340%2FFunctions%2F-998611621" anchor-label="getIfAvailable" id="-1335749340%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-if-available.html"><span>get</span><wbr><span>If</span><wbr><span><span>Available</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1335749340%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-if-available.html"><span class="token function">getIfAvailable</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">key<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">C</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the container corresponding to the given <a href="get-if-available.html">key</a>, or <code class="lang-kotlin">null</code> if such a key is not present in the cache.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1406868902%2FFunctions%2F-998611621" anchor-label="getKeys" id="-1406868902%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-keys.html"><span>get</span><wbr><span><span>Keys</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1406868902%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-keys.html"><span class="token function">getKeys</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><a href="index.html">K</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns a read-only <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a> of keys currently in the cache, excluding under-creation keys.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-485949402%2FFunctions%2F-998611621" anchor-label="getOrPut" id="-485949402%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-or-put.html"><span>get</span><wbr><span>Or</span><wbr><span><span>Put</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-485949402%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-or-put.html"><span class="token function">getOrPut</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">key<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">creationFunction<span class="token operator">: </span><span class="token keyword">suspend </span><span class="token punctuation">(</span><a href="index.html">C</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">C</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the container corresponding to the given <a href="get-or-put.html">key</a> if it exists or is currently being created, a new container serialized by <a href="get-or-put.html">creationFunction</a>, or <code class="lang-kotlin">null</code> if the creation fails.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1837213887%2FFunctions%2F-998611621" anchor-label="getUnderCreationKeys" id="-1837213887%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-under-creation-keys.html"><span>get</span><wbr><span>Under</span><wbr><span>Creation</span><wbr><span><span>Keys</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1837213887%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-under-creation-keys.html"><span class="token function">getUnderCreationKeys</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><a href="index.html">K</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns a read-only <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a> of keys currently under creation.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-737084463%2FFunctions%2F-998611621" anchor-label="put" id="-737084463%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="put.html"><span><span>put</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-737084463%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="put.html"><span class="token function">put</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">key<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">creationFunction<span class="token operator">: </span><span class="token keyword">suspend </span><span class="token punctuation">(</span><a href="index.html">C</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">C</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Associates a new container serialized by <a href="put.html">creationFunction</a> with the given <a href="put.html">key</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1952988323%2FFunctions%2F-998611621" anchor-label="putAsync" id="-1952988323%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="put-async.html"><span>put</span><wbr><span><span>Async</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1952988323%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="put-async.html"><span class="token function">putAsync</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">key<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">creationFunction<span class="token operator">: </span><span class="token keyword">suspend </span><span class="token punctuation">(</span><a href="index.html">C</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines/Deferred///PointingToDeclaration/">Deferred</span><span class="token operator">&lt;</span><a href="index.html">C</a><span class="token operator">?</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Associates a new container serialized by <a href="put-async.html">creationFunction</a> asynchronously with the given <a href="put-async.html">key</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1288317646%2FFunctions%2F-998611621" anchor-label="remove" id="-1288317646%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="remove.html"><span><span>remove</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1288317646%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="remove.html"><span class="token function">remove</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">key<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Removes the specified <a href="remove.html">key</a> and its corresponding container from the cache.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1694152188%2FFunctions%2F-998611621" anchor-label="removeAllUnderCreation" id="1694152188%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="remove-all-under-creation.html"><span>remove</span><wbr><span>All</span><wbr><span>Under</span><wbr><span><span>Creation</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1694152188%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="remove-all-under-creation.html"><span class="token function">removeAllUnderCreation</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Cancels all in-progress creations.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="142384919%2FFunctions%2F-998611621" anchor-label="resize" id="142384919%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="resize.html"><span><span>resize</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="142384919%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="resize.html"><span class="token function">resize</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">maxSize<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Sets the maximum capacity of this cache to <a href="resize.html">maxSize</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="254166465%2FFunctions%2F-998611621" anchor-label="trimToSize" id="254166465%2FFunctions%2F-998611621" data-filterable-set=":kache:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":kache:dokkaHtmlPartial/commonMain" data-filterable-set=":kache:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="trim-to-size.html"><span>trim</span><wbr><span>To</span><wbr><span><span>Size</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="254166465%2FFunctions%2F-998611621"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":kache:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="trim-to-size.html"><span class="token function">trimToSize</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">size<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Remove entries from the cache until the size is less than or equal to <a href="trim-to-size.html">size</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>Copyright © 2023-2024 MayakaApps.</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
