@@ -4,7 +4,7 @@ site_author: MayakaApps
 site_url: https://mayakaapps.github.io/Kache
 repo_name: Kache
 repo_url: https://github.com/MayakaApps/Kache
-copyright: Copyright &copy; 2023 MayakaApps.
+copyright: Copyright &copy; 2023-2024 MayakaApps. # Also, update copyright notice in Dokka
 remote_branch: gh-pages
 
 nav:

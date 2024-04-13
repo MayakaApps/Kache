@@ -31,6 +31,7 @@ allprojects {
             // Workaround for Dokka configuration cache failure (issue: https://github.com/Kotlin/dokka/issues/2231)
             notCompatibleWithConfigurationCache("https://github.com/Kotlin/dokka/issues/2231")
 
+            // When changing footerMessage, also update it in MkDocs config
             pluginsMapConfiguration.set(
                 mapOf(
                     "org.jetbrains.dokka.base.DokkaBase" to """
@@ -41,7 +42,7 @@ allprojects {
                       "customAssets" : [
                         "${rootDir.toString().replace('\\', '/')}/docs/images/kache-logo.png"
                       ],
-                      "footerMessage": "Copyright &copy; 2023 MayakaApps."
+                      "footerMessage": "Copyright &copy; 2023-2024 MayakaApps."
                     }
                     """.trimIndent()
                 )
