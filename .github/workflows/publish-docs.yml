@@ -46,6 +46,8 @@ jobs:
         run: |
           pip3 install -r .github/workflows/publish-docs-requirements.txt
           mkdocs build
+        env:
+          KACHE_VERSION: ${{ inputs.library-version }}
 
       - name: Configure git for mike
         run: |

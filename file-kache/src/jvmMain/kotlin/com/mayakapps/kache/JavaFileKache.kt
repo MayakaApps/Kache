@@ -45,7 +45,19 @@ public class JavaFileKache internal constructor(
     private val baseKache: ContainerKache<String, Path>,
     private val creationScope: CoroutineScope,
 ) : ContainerKache<String, File> {
+
+    /**
+     * Returns the maximum capacity of this cache in bytes.
+     *
+     * This does not include the size of the journal.
+     */
     override val maxSize: Long get() = baseKache.maxSize
+
+    /**
+     * Returns the current size of the cache in bytes.
+     *
+     * This does not include the size of the journal.
+     */
     override val size: Long get() = baseKache.size
 
     override suspend fun getKeys(): Set<String> = baseKache.getKeys()
@@ -54,20 +66,60 @@ public class JavaFileKache internal constructor(
 
     override suspend fun getAllKeys(): KacheKeys<String> = baseKache.getAllKeys()
 
-    override suspend fun get(key: String): File? =        baseKache.get(key)?.toFile()
+    /**
+     * Returns the file corresponding to the given [key] if it exists or is currently being created, or `null` otherwise.
+     *
+     * The function waits for the creation to complete if it is in progress. If the creation fails, the function returns
+     * `null`. Any unhandled exceptions inside the creation block will be thrown.
+     */
+    override suspend fun get(key: String): File? = baseKache.get(key)?.toFile()
 
-    override suspend fun getIfAvailable(key: String): File? =        baseKache.getIfAvailable(key)?.toFile()
+    /**
+     * Returns the file corresponding to the given [key], or `null` if such a key is not present in the cache.
+     *
+     * This function does not wait for the creation of the file if it is in progress, returning `null` instead.
+     */
+    override suspend fun getIfAvailable(key: String): File? = baseKache.getIfAvailable(key)?.toFile()
 
+    /**
+     * Returns the file corresponding to the given [key] if it exists or is currently being created, a new file
+     * serialized by [creationFunction], or `null` if the creation fails.
+     *
+     * The function waits for the creation to complete if it is in progress. If the creation fails, the function returns
+     * `null`. Any unhandled exceptions inside the creation block will be thrown. [creationFunction] is NOT used as a
+     * fallback if the current creation fails.
+     *
+     * [creationFunction] should return `true` if the creation was successful, and `false` otherwise.
+     */
     override suspend fun getOrPut(key: String, creationFunction: suspend (File) -> Boolean): File? =
         baseKache.getOrPut(key) { file ->
             creationFunction(file.toFile())
         }?.toFile()
 
+    /**
+     * Associates a new file serialized by [creationFunction] with the given [key].
+     *
+     * This function waits for the creation to complete. If the creation fails, the function returns `null`. Any
+     * unhandled exceptions inside the creation block will be thrown. Existing or under-creation files associated
+     * with [key] will be replaced by the new file.
+     *
+     * [creationFunction] should return `true` if the creation was successful, and `false` otherwise.
+     */
     override suspend fun put(key: String, creationFunction: suspend (File) -> Boolean): File? =
         baseKache.put(key) { file ->
             creationFunction(file.toFile())
         }?.toFile()
 
+    /**
+     * Associates a new file serialized by [creationFunction] asynchronously with the given [key].
+     *
+     * Any unhandled exceptions inside the creation block will be thrown. Existing or under-creation files associated
+     * with [key] will be replaced by the new file.
+     *
+     * [creationFunction] should return `true` if the creation was successful, and `false` otherwise.
+     *
+     * Returns: a [Deferred] that will complete with the new file if the creation was successful, or `null` otherwise.
+     */
     override suspend fun putAsync(key: String, creationFunction: suspend (File) -> Boolean): Deferred<File?> =
         creationScope.async(start = CoroutineStart.UNDISPATCHED) {
             baseKache.putAsync(key) { file ->
@@ -75,10 +127,18 @@ public class JavaFileKache internal constructor(
             }.await()?.toFile()
         }
 
+    /**
+     * Removes the specified [key] and its corresponding file from the cache.
+     *
+     * If the file is under creation, the creation will be cancelled.
+     */
     override suspend fun remove(key: String) {
         baseKache.remove(key)
     }
 
+    /**
+     * Removes all keys and their corresponding files from the cache.
+     */
     override suspend fun clear() {
         baseKache.clear()
     }
@@ -100,7 +160,7 @@ public class JavaFileKache internal constructor(
     }
 
     /**
-     * Configuration for [JavaFileKache]. It is used as a receiver of [JavaFileKache] builder which is [invoke].
+     * Configuration for [JavaFileKache] used as a receiver for its builder function.
      */
     public class Configuration(
         /**
@@ -109,13 +169,15 @@ public class JavaFileKache internal constructor(
         public var directory: File,
 
         /**
-         * The maximum size of the cache in bytes.
+         * The maximum capacity of the cache.
          */
         public var maxSize: Long,
     ) {
 
         /**
-         * The strategy used to evict entries from the cache.
+         * The strategy used for evicting elements.
+         *
+         * @see KacheStrategy
          */
         public var strategy: KacheStrategy = KacheStrategy.LRU
 
@@ -125,14 +187,16 @@ public class JavaFileKache internal constructor(
         public var creationScope: CoroutineScope = CoroutineScope(FileKacheDefaults.defaultCoroutineDispatcher)
 
         /**
-         * The version of the cache. This is useful to invalidate the cache when the format of the data stored in the
-         * cache changes.
+         * The version of the cache.
+         *
+         * It is necessary to update this value when the serialization format or key transformation changes. Failure to
+         * do so may result in data corruption, orphans, or other issues.
          */
         public var cacheVersion: Int = 1
 
         /**
          * The [KeyTransformer] used to transform the keys before they are used to store and retrieve data. It is
-         * needed to avoid using invalid characters in the file names.
+         * needed to avoid using invalid characters in file names.
          */
         public var keyTransformer: KeyTransformer? = SHA256KeyHasher
     }

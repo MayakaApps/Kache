@@ -69,7 +69,19 @@ public class OkioFileKache private constructor(
         JournalWriter(fileSystem.appendingSink(journalFile, mustExist = true).buffer())
 
     private var redundantJournalEntriesCount = initialRedundantJournalEntriesCount
+
+    /**
+     * Returns the maximum capacity of this cache in bytes.
+     *
+     * This does not include the size of the journal.
+     */
     override val maxSize: Long get() = underlyingKache.maxSize
+
+    /**
+     * Returns the current size of the cache in bytes.
+     *
+     * This does not include the size of the journal.
+     */
     override val size: Long get() = underlyingKache.size
 
     override suspend fun getKeys(): Set<String> = underlyingKache.getKeys()
@@ -78,18 +90,39 @@ public class OkioFileKache private constructor(
 
     override suspend fun getAllKeys(): KacheKeys<String> = underlyingKache.getAllKeys()
 
+    /**
+     * Returns the file corresponding to the given [key] if it exists or is currently being created, or `null` otherwise.
+     *
+     * The function waits for the creation to complete if it is in progress. If the creation fails, the function returns
+     * `null`. Any unhandled exceptions inside the creation block will be thrown.
+     */
     override suspend fun get(key: String): Path? {
         val result = underlyingKache.get(key)
         if (result != null) writeRead(key)
         return result?.let { filesDirectory.resolve(it) }
     }
 
+    /**
+     * Returns the file corresponding to the given [key], or `null` if such a key is not present in the cache.
+     *
+     * This function does not wait for the creation of the file if it is in progress, returning `null` instead.
+     */
     override suspend fun getIfAvailable(key: String): Path? {
         val result = underlyingKache.getIfAvailable(key)
         if (result != null) writeRead(key)
         return result?.let { filesDirectory.resolve(it) }
     }
 
+    /**
+     * Returns the file corresponding to the given [key] if it exists or is currently being created, a new file
+     * serialized by [creationFunction], or `null` if the creation fails.
+     *
+     * The function waits for the creation to complete if it is in progress. If the creation fails, the function returns
+     * `null`. Any unhandled exceptions inside the creation block will be thrown. [creationFunction] is NOT used as a
+     * fallback if the current creation fails.
+     *
+     * [creationFunction] should return `true` if the creation was successful, and `false` otherwise.
+     */
     override suspend fun getOrPut(key: String, creationFunction: suspend (Path) -> Boolean): Path? {
         var created = false
         val result = underlyingKache.getOrPut(key) {
@@ -101,11 +134,30 @@ public class OkioFileKache private constructor(
         return result?.let { filesDirectory.resolve(it) }
     }
 
+    /**
+     * Associates a new file serialized by [creationFunction] with the given [key].
+     *
+     * This function waits for the creation to complete. If the creation fails, the function returns `null`. Any
+     * unhandled exceptions inside the creation block will be thrown. Existing or under-creation files associated
+     * with [key] will be replaced by the new file.
+     *
+     * [creationFunction] should return `true` if the creation was successful, and `false` otherwise.
+     */
     override suspend fun put(key: String, creationFunction: suspend (Path) -> Boolean): Path? {
         val filename = underlyingKache.put(key) { wrapCreationFunction(it, creationFunction) }
         return if (filename != null) filesDirectory.resolve(filename) else null
     }
 
+    /**
+     * Associates a new file serialized by [creationFunction] asynchronously with the given [key].
+     *
+     * Any unhandled exceptions inside the creation block will be thrown. Existing or under-creation files associated
+     * with [key] will be replaced by the new file.
+     *
+     * [creationFunction] should return `true` if the creation was successful, and `false` otherwise.
+     *
+     * Returns: a [Deferred] that will complete with the new file if the creation was successful, or `null` otherwise.
+     */
     override suspend fun putAsync(key: String, creationFunction: suspend (Path) -> Boolean): Deferred<Path?> =
         creationScope.async(start = CoroutineStart.UNDISPATCHED) {
             underlyingKache.putAsync(key) { wrapCreationFunction(it, creationFunction) }.await()?.let {
@@ -113,12 +165,20 @@ public class OkioFileKache private constructor(
             }
         }
 
+    /**
+     * Removes the specified [key] and its corresponding file from the cache.
+     *
+     * If the file is under creation, the creation will be cancelled.
+     */
     override suspend fun remove(key: String) {
         // It's fine to consider the file is dirty now. Even if removal failed it's scheduled for
         writeDirty(key)
         underlyingKache.remove(key)
     }
 
+    /**
+     * Removes all keys and their corresponding files from the cache.
+     */
     override suspend fun clear() {
         underlyingKache.getKeys().forEach { writeDirty(it) }
         underlyingKache.clear()
@@ -236,7 +296,7 @@ public class OkioFileKache private constructor(
     }
 
     /**
-     * Configuration for [OkioFileKache]. It is used as a receiver of [OkioFileKache] builder which is [invoke].
+     * Configuration for [OkioFileKache] used as a receiver for its builder function.
      */
     public class Configuration(
         /**
@@ -245,13 +305,15 @@ public class OkioFileKache private constructor(
         public var directory: Path,
 
         /**
-         * The max size of this cache ib bytes.
+         * The maximum capacity of the cache.
          */
         public var maxSize: Long,
     ) {
 
         /**
-         * The strategy used for evicting elements. See [KacheStrategy]
+         * The strategy used for evicting elements.
+         *
+         * @see KacheStrategy
          */
         public var strategy: KacheStrategy = KacheStrategy.LRU
 
@@ -266,14 +328,16 @@ public class OkioFileKache private constructor(
         public var creationScope: CoroutineScope = CoroutineScope(FileKacheDefaults.defaultCoroutineDispatcher)
 
         /**
-         * The version of the entries in this cache. It is used for invalidating the cache. Update it when you change
-         * the format of the entries in this cache.
+         * The version of the cache.
+         *
+         * It is necessary to update this value when the serialization format or key transformation changes. Failure to
+         * do so may result in data corruption, orphans, or other issues.
          */
         public var cacheVersion: Int = 1
 
         /**
          * The [KeyTransformer] used to transform the keys before they are used to store and retrieve data. It is
-         * needed to avoid using invalid characters in the file names.
+         * needed to avoid using invalid characters in file names.
          */
         public var keyTransformer: KeyTransformer? = SHA256KeyHasher
     }
@@ -362,9 +426,13 @@ public class OkioFileKache private constructor(
 }
 
 /**
- * Creates a new [OkioFileKache] with the given [directory] and [maxSize] and is configured by [configuration].
+ * Creates a new instance of [OkioFileKache] with the given [directory], [maxSize] and [configuration].
  *
- * @see OkioFileKache.Configuration
+ * If [directory] or [maxSize] are set inside [configuration], they will override the values passed as parameters.
+ *
+ * @see Configuration.directory
+ * @see FileKache.maxSize
+ * @see FileKache.Configuration
  */
 public suspend fun OkioFileKache(
     directory: Path,

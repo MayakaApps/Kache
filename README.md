@@ -156,10 +156,3 @@ All contributions are welcome. If you are reporting an issue, please use the pro
 contribute to the code, please open an issue first describing what feature you're planning to add or what issue you're
 planning to fix. This allows better discussion and coordination of efforts. You can also check open issues for
 bugs/features that needs to be fixed/implemented.
-
-## Acknowledgements
-
-These amazing projects have all credit for inspiring this project.
-
-* Android's [LruCache](https://developer.android.com/reference/android/util/LruCache)
-* [Jake Wharton](https://github.com/JakeWharton)'s [DiskLruCache](https://github.com/JakeWharton/DiskLruCache)

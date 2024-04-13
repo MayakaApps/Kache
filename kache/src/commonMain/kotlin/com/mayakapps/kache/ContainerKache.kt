@@ -19,80 +19,102 @@ package com.mayakapps.kache
 import kotlinx.coroutines.Deferred
 
 /**
- * An interface for a container cache. A container cache is a cache that stores a value for each key in a container i.e.
- * a file. It is used to cache files that are too large to be stored in memory. Storing an object in a container cache
- * requires serialization and deserialization logic that is handled by the user.
+ * An interface that represents a cache that holds entries within containers such as files.
+ *
+ * The user is tasked with the serialization and deserialization of the container.
+ *
+ * This module does not provide an implementation for this interface. An implementation can be found in the `:file-kache` module.
  */
 public interface ContainerKache<K : Any, C : Any> {
 
     /**
-     * The max size of this cache in bytes. It doesn't include the size of the journal.
+     * Returns the maximum capacity of this cache, defined by the implementation.
+     *
+     * This typically excludes the size of keys, metadata, or the journal, if any.
      */
     public val maxSize: Long
 
     /**
-     * The current size of this cache in bytes. It doesn't include the size of the journal.
+     * Returns the current size of the cache, defined by the implementation.
+     *
+     * This typically excludes the size of keys, metadata, or the journal, if any.
      */
     public val size: Long
 
     /**
-     * Returns a set of the keys that are currently in the cache, not under-creation keys.
+     * Returns a read-only [Set] of keys currently in the cache, excluding under-creation keys.
      */
     public suspend fun getKeys(): Set<K>
 
     /**
-     * Returns a set of the keys that are currently under creation.
+     * Returns a read-only [Set] of keys currently under creation.
      */
     public suspend fun getUnderCreationKeys(): Set<K>
 
     /**
-     * Returns a [KacheKeys] instance that represents the keys that are currently in the cache, along with those that
-     * are under creation.
+     * Returns a [KacheKeys] object containing all keys in the cache, including under-creation keys.
      */
     public suspend fun getAllKeys(): KacheKeys<K>
 
     /**
-     * Returns the container for [key] if it exists in the cache or waits for its creation if it is currently in
-     * progress. This returns `null` if a file is not cached and isn't in creation or cannot be created. It may even
-     * throw exceptions for unhandled exceptions in the currently in-progress creation block.
+     * Returns the container corresponding to the given [key] if it exists or is currently being created, or `null` otherwise.
+     *
+     * The function waits for the creation to complete if it is in progress. If the creation fails, the function returns
+     * `null`. Any unhandled exceptions inside the creation block will be thrown.
      */
     public suspend fun get(key: String): C?
 
     /**
-     * Returns the container for [key] if it already exists in the cache or `null` if it doesn't exist or creation is
-     * still in progress.
+     * Returns the container corresponding to the given [key], or `null` if such a key is not present in the cache.
+     *
+     * This function does not wait for the creation of the container if it is in progress, returning `null` instead.
      */
     public suspend fun getIfAvailable(key: String): C?
 
     /**
-     * Returns the container for [key] if it exists in the cache, its creation is in progress or can be created by
-     * [creationFunction]. This returns `null` if a container is not cached and cannot be created. You can imply that
-     * the creation has failed by returning `false`. Any unhandled exceptions inside [creationFunction] won't be handled.
+     * Returns the container corresponding to the given [key] if it exists or is currently being created, a new container
+     * serialized by [creationFunction], or `null` if the creation fails.
+     *
+     * The function waits for the creation to complete if it is in progress. If the creation fails, the function returns
+     * `null`. Any unhandled exceptions inside the creation block will be thrown. [creationFunction] is NOT used as a
+     * fallback if the current creation fails.
+     *
+     * [creationFunction] should return `true` if the creation was successful, and `false` otherwise.
      */
     public suspend fun getOrPut(key: String, creationFunction: suspend (C) -> Boolean): C?
 
     /**
-     * Creates a new container for [key] using [creationFunction] and returns the new value. Any existing container or
-     * in-progress creation of [key] would be replaced by the new function. This returns `null` if the container cannot
-     * be created. You can imply that the creation has failed by returning `false`. Any unhandled exceptions inside
-     * [creationFunction] won't be handled.
+     * Associates a new container serialized by [creationFunction] with the given [key].
+     *
+     * This function waits for the creation to complete. If the creation fails, the function returns `null`. Any
+     * unhandled exceptions inside the creation block will be thrown. Existing or under-creation containers associated
+     * with [key] will be replaced by the new container.
+     *
+     * [creationFunction] should return `true` if the creation was successful, and `false` otherwise.
      */
     public suspend fun put(key: String, creationFunction: suspend (C) -> Boolean): C?
 
     /**
-     * Creates a new container for [key] using [creationFunction] and returns a [Deferred]. Any existing container or
-     * in-progress creation of [key] would be replaced by the new function. You can imply that the creation has failed
-     * by returning `null`.
+     * Associates a new container serialized by [creationFunction] asynchronously with the given [key].
+     *
+     * Any unhandled exceptions inside the creation block will be thrown. Existing or under-creation containers associated
+     * with [key] will be replaced by the new container.
+     *
+     * [creationFunction] should return `true` if the creation was successful, and `false` otherwise.
+     *
+     * Returns: a [Deferred] that will complete with the new container if the creation was successful, or `null` otherwise.
      */
     public suspend fun putAsync(key: String, creationFunction: suspend (C) -> Boolean): Deferred<C?>
 
     /**
-     * Removes the entry and in-progress creation for [key] if it exists. It returns the previous value for [key].
+     * Removes the specified [key] and its corresponding container from the cache.
+     *
+     * If the container is under creation, the creation will be cancelled.
      */
     public suspend fun remove(key: String)
 
     /**
-     * Clears the cache.
+     * Removes all keys and their corresponding containers from the cache.
      */
     public suspend fun clear()
 
@@ -102,19 +124,22 @@ public interface ContainerKache<K : Any, C : Any> {
     public suspend fun removeAllUnderCreation()
 
     /**
-     * Sets the max size of the cache to [maxSize]. If the new maxSize is smaller than the previous value, the cache
-     * would be trimmed.
+     * Sets the maximum capacity of this cache to [maxSize].
+     *
+     * If the new maxSize is smaller than the previous value, the cache would be trimmed.
      */
     public suspend fun resize(maxSize: Long)
 
     /**
-     * Remove entries according to the policy defined by strategy until the total of remaining entries is/at/or below
-     * [size]. It won't affect the max size of the cache, allowing it to grow again.
+     * Remove entries from the cache until the size is less than or equal to [size].
+     *
+     * If the current size is already less than or equal to [size], this function does nothing. The capacity of the
+     * cache is not changed.
      */
     public suspend fun trimToSize(size: Long)
 
     /**
-     * Closes the journal and cancels any in-progress creation.
+     * Closes the cache, releasing any resources associated with it.
      */
     public suspend fun close()
 }
