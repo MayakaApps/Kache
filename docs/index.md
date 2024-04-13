@@ -1,6 +1,17 @@
 Kache (previously Kotlinized LRU Cache) is a lightweight Kotlin Multiplatform caching library that supports both
 in-memory and persistent caches and supports different eviction strategies (LRU, FIFO, MRU, FILO).
 
+***Supported platforms:***
+* **JVM** (and **Android**)
+* **JS** (Browser does not support persistent cache)
+* **macOS** (macosX64, macosArm64)
+* **iOS** (iosArm64, iosX64, iosSimulatorArm64)
+* **watchOS** (watchosArm32, watchosArm64, watchosX64, watchosDeviceArm64, watchosSimulatorArm64)
+* **tvOS** (tvosArm64, tvosX64, tvosSimulatorArm64)
+* **Linux** (linuxX64, linuxArm64)
+* **Windows** (mingwX64)
+* **androidNative** (androidNativeArm32, androidNativeArm64, androidNativeX86, androidNativeX64): only supported by in-memory cache for now
+
 ## Why use Kache?
 
 * **Kotlin Multiplatform.** Use the same code for Android, iOS, and other platforms.
@@ -25,11 +36,8 @@ dependencies {
     // For in-memory cache
     implementation("com.mayakapps.kache:kache:{{ versions.kache }}")
 
-    // For persistent cache (in non-Okio projects)
+    // For persistent cache
     implementation("com.mayakapps.kache:file-kache:{{ versions.kache }}")
-
-    // For persistent cache (in Okio projects)
-    implementation("com.mayakapps.kache:file-kache-okio:{{ versions.kache }}")
 }
 ```
 
@@ -47,11 +55,8 @@ dependencies {
     // For in-memory cache
     implementation "com.mayakapps.kache:kache:{{ versions.kache }}"
 
-    // For persistent cache (in non-Okio projects)
+    // For persistent cache
     implementation "com.mayakapps.kache:file-kache:{{ versions.kache }}"
-
-    // For persistent cache (in Okio projects)
-    implementation "com.mayakapps.kache:file-kache-okio:{{ versions.kache }}"
 }
 ```
 
@@ -114,9 +119,7 @@ try {
 
 ## License
 
-This library is distributed under the MIT license. All the code inside this library is licensed under the MIT license
-except for the code inside the module `:collections` which is licensed under the Apache 2.0 license or GPL 2.0 with
-classpath exception.
+All the code inside this library is licensed under Apache License 2.0 unless explicitly stated otherwise.
 
 ## Contributing
 
@@ -124,10 +127,3 @@ All contributions are welcome. If you are reporting an issue, please use the pro
 contribute to the code, please open an issue first describing what feature you're planning to add or what issue you're
 planning to fix. This allows better discussion and coordination of efforts. You can also check open issues for
 bugs/features that needs to be fixed/implemented.
-
-## Acknowledgements
-
-These amazing projects have all credit for establishing the algorithms and base implementation for this project.
-
-* Android's [LruCache](https://developer.android.com/reference/android/util/LruCache)
-* [Jake Wharton](https://github.com/JakeWharton)'s [DiskLruCache](https://github.com/JakeWharton/DiskLruCache)
