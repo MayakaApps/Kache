@@ -1,0 +1,34 @@
+:root {
+    --color-dark: #4051b5;
+}
+
+:root {
+    --background-color: #ffffff;
+    --footer-background: #161616;
+    --footer-font-color: hsla(0, 0%, 100%, 0.6);
+    --footer-go-to-top-color: var(--footer-font-color);
+}
+
+:root .theme-dark {
+    --background-color: #1e2129;
+    --footer-background: #111317;
+    --footer-font-color: hsla(0, 0%, 100%, 0.6);
+    --footer-go-to-top-color: var(--footer-font-color);
+}
+
+.library-name a {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.library-name a::before {
+    background: url("../images/kache-logo.png") center no-repeat;
+    background-size: contain;
+    margin-right: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.navigation {
+    padding: 4px max(calc((100% - 1220px) / 2), 16px);
+}
