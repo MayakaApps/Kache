@@ -17,7 +17,7 @@
 package com.mayakapps.kache
 
 /**
- * Base interface that can be used to implement custom key transformers for `FileKache` implementations.
+ * An interface that can be used to implement custom key transformers for `FileKache` implementations.
  *
  * In most cases, you don't need to implement one yourself. You can use [SHA256KeyHasher] instead or `null` if your
  * keys are already safe for filenames.

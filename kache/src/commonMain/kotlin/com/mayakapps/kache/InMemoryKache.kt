@@ -28,10 +28,9 @@ import kotlin.time.Duration
 import kotlin.time.TimeSource
 
 /**
- * A typealias that represents a function for calculating the size of a cache entry represented by the provided `key`
- * and `value`.
+ * A function for calculating the size of a cache entry represented by the provided `key` * and `value`.
  *
- * For example, for [String][String], you can use:
+ * For example, for [String], you can use:
  * ```
  * { _, text -> text.length }
  * ```
@@ -41,7 +40,7 @@ import kotlin.time.TimeSource
 public typealias SizeCalculator<K, V> = (key: K, value: V) -> Long
 
 /**
- * A typealias that represents a listener that is triggered when a cache entry is removed.
+ * A listener that is triggered when a cache entry is removed.
  *
  * This is triggered when the entry represented by the `key` and `oldValue` is removed for any reason. If the removal
  * was a result of reaching the max size of the cache, `evicted` is true, otherwise its value is false. If the entry
@@ -57,7 +56,7 @@ public typealias EntryRemovedListener<K, V> = (evicted: Boolean, key: K, oldValu
  * ```
  * val cache = InMemoryKache<String, String>(maxSize = 100) {
  *     strategy = KacheStrategy.LRU
- *     // ...
+ *     // Other configuration
  * }
  * ```
  *
@@ -104,9 +103,19 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     )
     private val mapMutex = Mutex()
 
+    /**
+     * Returns the maximum capacity of this cache, calculated by `sizeCalculator`.
+     *
+     * This does not include the size of keys or necessary metadata e.g., access time.
+     */
     override var maxSize: Long = maxSize
         private set
 
+    /**
+     * Returns the current size of the cache, calculated by `sizeCalculator`.
+     *
+     * This does not include the size of keys or necessary metadata e.g., access time.
+     */
     override var size: Long = 0L
         private set
 
@@ -418,17 +427,21 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     }
 
     /**
-     * Configuration for [InMemoryKache]. It is used as a receiver of [InMemoryKache] builder
+     * Configuration for [InMemoryKache]. It is used as a receiver of [InMemoryKache] builder.
      */
     public class Configuration<K, V>(
         /**
-         * The max size of this cache. For more information. See [InMemoryKache.maxSize].
+         * The maximum capacity of the cache.
+         *
+         * @see InMemoryKache.maxSize
          */
         public var maxSize: Long,
     ) {
 
         /**
-         * The strategy used for evicting elements. See [KacheStrategy]
+         * The strategy used for evicting elements.
+         *
+         * @see KacheStrategy
          */
         public var strategy: KacheStrategy = KacheStrategy.LRU
 
@@ -438,43 +451,54 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
         public var creationScope: CoroutineScope = CoroutineScope(Dispatchers.Default)
 
         /**
-         * function used for calculating the size of the elements. See [SizeCalculator]
+         * A function used for calculating the size of the elements.
+         *
+         * @see SizeCalculator
          */
         public var sizeCalculator: SizeCalculator<K, V> = { _, _ -> 1 }
 
         /**
-         * listener called when an entry is removed for any reason. See [EntryRemovedListener]
+         * A listener called when an entry is removed.
+         *
+         * @see EntryRemovedListener
          */
         public var onEntryRemoved: EntryRemovedListener<K, V> = { _, _, _, _ -> }
 
         /**
          * The time source used for calculating the time marks of the elements. Only used if the
-         * [expireAfterWriteDuration] or [expireAfterAccessDuration] is set. See [TimeSource]
+         * [expireAfterWriteDuration] or [expireAfterAccessDuration] is set.
+         *
+         * @see TimeSource
          */
         public var timeSource: TimeSource = TimeSource.Monotonic
 
         /**
-         * The duration after which the elements are removed after they are written. See [Duration]
+         * The duration after which the elements are removed after they are written.
+         *
+         * @see Duration
          */
         public var expireAfterWriteDuration: Duration = Duration.INFINITE
 
         /**
-         * The duration after which the elements are removed after they are accessed. See [Duration]
+         * The duration after which the elements are removed after they are accessed.
+         *
+         * @see Duration
          */
         public var expireAfterAccessDuration: Duration = Duration.INFINITE
     }
 }
 
 /**
- * Creates a new instance of [InMemoryKache] with a configuration that is initialized by [maxSize] and
- * [configuration] lambda.
+ * Creates a new instance of [InMemoryKache] with the given [maxSize] and [configuration].
+ *
+ * If [maxSize] is set inside [configuration], it will override the value passed as parameter.
  *
  * @see InMemoryKache.maxSize
  * @see InMemoryKache.Configuration
  */
 public fun <K : Any, V : Any> InMemoryKache(
     maxSize: Long,
-    configuration: Configuration<K, V>.() -> Unit = {}
+    configuration: Configuration<K, V>.() -> Unit = {},
 ): InMemoryKache<K, V> {
     require(maxSize > 0) { "maxSize must be positive value" }
 

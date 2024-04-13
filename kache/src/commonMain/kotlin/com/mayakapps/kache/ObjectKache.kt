@@ -19,107 +19,129 @@ package com.mayakapps.kache
 import kotlinx.coroutines.Deferred
 
 /**
- * An interface that represents a cache that stores objects by keys. It is the parent interface for [InMemoryKache].
+ * An interface that represents a cache that holds entries in memory without serialization.
  */
 public interface ObjectKache<K : Any, V : Any> {
 
     /**
-     * The max size of this cache in units calculated by [SizeCalculator] of the cache. This represents the max number
-     * of entries if [SizeCalculator] used the default implementation (returning 1 for each entry),
+     * Returns the maximum capacity of this cache, defined by the implementation.
+     *
+     * This typically excludes the size of keys or metadata, if any.
      */
     public val maxSize: Long
 
     /**
-     * The current size of this cache in units calculated by [SizeCalculator] of the cache. This represents the current
-     * number of entries if [SizeCalculator] used the default implementation (returning 1 for each entry),
+     * Returns the current size of the cache, defined by the implementation.
+     *
+     * This typically excludes the size of keys or metadata, if any.
      */
     public val size: Long
 
     /**
-     * Returns a set of the keys that are currently in the cache, not under-creation keys.
+     * Returns a read-only [Set] of keys currently in the cache, excluding under-creation keys.
      */
     public suspend fun getKeys(): Set<K>
 
     /**
-     * Returns a set of the keys that are currently under creation.
+     * Returns a read-only [Set] of keys currently under creation.
      */
     public suspend fun getUnderCreationKeys(): Set<K>
 
     /**
-     * Returns a [KacheKeys] instance that represents the keys that are currently in the cache, along with those that
-     * are under creation.
+     * Returns a [KacheKeys] object containing all keys in the cache, including under-creation keys.
      */
     public suspend fun getAllKeys(): KacheKeys<K>
 
     /**
-     * Returns the value for [key] if it exists in the cache or waits for its creation if it is currently in progress.
-     * This returns [defaultValue] if a value is neither cached nor under creation or cannot be created.
+     * Returns the value corresponding to the given [key] if it exists or is currently being created, or [defaultValue]
+     * otherwise.
      *
-     * It may even throw exceptions for unhandled exceptions in the currently in-progress creation block.
+     * The function waits for the creation to complete if it is in progress. If the creation fails, the function returns
+     * [defaultValue]. Any unhandled exceptions inside the creation block will be thrown.
      */
     public suspend fun getOrDefault(key: K, defaultValue: V): V
 
     /**
-     * Returns the value for [key] if it exists in the cache or waits for its creation if it is currently in progress.
-     * This returns `null` if a value is neither cached nor under creation or cannot be created.
+     * Returns the value corresponding to the given [key] if it exists or is currently being created, or `null` otherwise.
      *
-     * It may even throw exceptions for unhandled exceptions in the currently in-progress creation block.
+     * The function waits for the creation to complete if it is in progress. If the creation fails, the function returns
+     * `null`. Any unhandled exceptions inside the creation block will be thrown.
      */
     public suspend fun get(key: K): V?
 
     /**
-     * Returns the value for [key] if it exists in the cache or [defaultValue] if it doesn't exist or its creation
-     * is still in progress.
+     * Returns the value corresponding to the given [key], or [defaultValue] if such a key is not present in the cache.
      *
-     * Note that this function returns [defaultValue] if the entry is expired, but it doesn't remove it either.
+     * This function does not wait for the creation of the value if it is in progress, returning [defaultValue] instead.
+     *
+     * Note that this function neither returns nor removes the value if it is expired.
      */
     public fun getIfAvailableOrDefault(key: K, defaultValue: V): V
 
     /**
-     * Returns the value for [key] if it exists in the cache or `null` if it doesn't exist or its creation is still
-     * in progress.
+     * Returns the value corresponding to the given [key], or `null` if such a key is not present in the cache.
      *
-     * Note that this function doesn't return the value if it is expired, but it doesn't remove it either.
+     * This function does not wait for the creation of the value if it is in progress, returning `null` instead.
+     *
+     * Note that this function neither returns nor removes the value if it is expired.
      */
     public fun getIfAvailable(key: K): V?
 
     /**
-     * Returns the value for [key] if it exists in the cache, its creation is in progress, or it can be created by
-     * [creationFunction]. This returns `null` if a value is not cached and cannot be created. You can imply that the
-     * creation has failed by returning `null`. Any unhandled exceptions inside [creationFunction] won't be handled.
+     * Returns the value corresponding to the given [key] if it exists, is currently being created, a new value created by
+     * [creationFunction], or `null` if the creation fails.
+     *
+     * The function waits for the creation to complete if it is in progress. If the creation fails, the function returns
+     * `null`. Any unhandled exceptions inside the creation block will be thrown. [creationFunction] is NOT used as a
+     * fallback if the current creation fails.
+     *
+     * [creationFunction] should return `null` only if the creation fails.
      */
     public suspend fun getOrPut(key: K, creationFunction: suspend (key: K) -> V?): V?
 
     /**
-     * Creates a new entry for [key] using [creationFunction] and returns the new value. Any existing value or
-     * in-progress creation of [key] would be replaced by the new function. This returns `null` if the value cannot be
-     * created. You can imply that the creation has failed by returning `null`. Any unhandled exceptions inside
-     * [creationFunction] won't be handled.
+     * Associates a new value created by [creationFunction] with the given [key].
+     *
+     * This function waits for the creation to complete. If the creation fails, the function returns `null`. Any
+     * unhandled exceptions inside the creation block will be thrown. Existing or under-creation values associated with
+     * [key] will be replaced by the new value.
+     *
+     * [creationFunction] should return `null` only if the creation fails.
      */
     public suspend fun put(key: K, creationFunction: suspend (key: K) -> V?): V?
 
     /**
-     * Creates a new entry for [key] using [creationFunction] and returns a [Deferred]. Any existing value or
-     * in-progress creation of [key] would be replaced by the new function. You can imply that the creation has failed
-     * by returning `null`.
+     * Associates a new value created by [creationFunction] asynchronously with the given [key].
+     *
+     * Any unhandled exceptions inside the creation block will be thrown. Existing or under-creation values associated
+     * with [key] will be replaced by the new value.
+     *
+     * [creationFunction] should return `null` only if the creation fails.
+     *
+     * Returns: a [Deferred] that will complete with the new value if the creation was successful, or `null` otherwise.
      */
     public suspend fun putAsync(key: K, creationFunction: suspend (key: K) -> V?): Deferred<V?>
 
     /**
-     * Caches [value] for [key]. If there is a previous value or in-progress creation, it will be replaced/cancelled.
-     * It returns the previous value if it already exists, or `null` if it doesn't exist or its creation is still in
-     * progress.
+     * Associates the specified [value] with the specified [key] in the cache.
+     *
+     * Existing or under-creation values associated with [key] will be replaced by the new value.
+     *
+     * Returns: the previous value associated with [key], or `null` if there was no previous value.
      */
     public suspend fun put(key: K, value: V): V?
 
     /**
-     * Caches all entries in [from]. If there is a previous value or in-progress creation for any of the keys, it will
-     * be replaced/cancelled.
+     * Updates this cache with key/value pairs from the specified map [from].
+     *
+     * Existing or under-creation values associated with keys in [from] will be replaced by the new values.
      */
     public suspend fun putAll(from: Map<out K, V>)
 
     /**
-     * Removes the entry and in-progress creation for [key] if it exists. It returns the previous value for [key].
+     * Removes the specified [key] and its corresponding value from the cache.
+     *
+     * If the value is under creation, the creation will be cancelled.
      */
     public suspend fun remove(key: K): V?
 
@@ -129,7 +151,9 @@ public interface ObjectKache<K : Any, V : Any> {
     public suspend fun clear()
 
     /**
-     * Evicts all entries, calling [EntryRemovedListener] on each removed entry with `evicted` set to `true`.
+     * Removes all keys and their corresponding values from the cache.
+     *
+     * [EntryRemovedListener] will be called for each removed entry with `evicted` set to `true`.
      */
     public suspend fun evictAll()
 
@@ -139,19 +163,24 @@ public interface ObjectKache<K : Any, V : Any> {
     public suspend fun removeAllUnderCreation()
 
     /**
-     * Sets the max size of the cache to [maxSize]. If the new maxSize is smaller than the previous value, the cache
-     * would be trimmed.
+     * Sets the maximum capacity of this cache to [maxSize].
+     *
+     * If the new maxSize is smaller than the previous value, the cache would be trimmed.
      */
     public suspend fun resize(maxSize: Long)
 
     /**
-     * Remove entries according to the policy defined by strategy until the total of remaining entries is/at/or below
-     * [size]. It won't affect the max size of the cache, allowing it to grow again.
+     * Remove entries from the cache until the size is less than or equal to [size].
+     *
+     * If the current size is already less than or equal to [size], this function does nothing. The capacity of the
+     * cache is not changed.
      */
     public suspend fun trimToSize(size: Long)
 
     /**
-     * Removes all expired entries, calling [EntryRemovedListener] on each removed entry with `evicted` set to `true`.
+     * Removes all expired keys and their corresponding values from the cache.
+     *
+     * [EntryRemovedListener] will be called for each removed entry with `evicted` set to `true`.
      */
     public suspend fun evictExpired()
 }
