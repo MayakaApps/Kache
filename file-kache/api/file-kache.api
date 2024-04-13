@@ -83,8 +83,6 @@ public abstract interface class com/mayakapps/kache/KeyTransformer {
 }
 
 public final class com/mayakapps/kache/OkioFileKache : com/mayakapps/kache/ContainerKache {
-	public static final field Companion Lcom/mayakapps/kache/OkioFileKache$Companion;
-	public synthetic fun <init> (Lokio/FileSystem;Lokio/Path;JLcom/mayakapps/kache/KacheStrategy;Lkotlinx/coroutines/CoroutineScope;Lcom/mayakapps/kache/KeyTransformer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun clear (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -101,9 +99,6 @@ public final class com/mayakapps/kache/OkioFileKache : com/mayakapps/kache/Conta
 	public fun removeAllUnderCreation (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun resize (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun trimToSize (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-}
-
-public final class com/mayakapps/kache/OkioFileKache$Companion {
 }
 
 public final class com/mayakapps/kache/OkioFileKache$Configuration {

@@ -42,7 +42,7 @@ import okio.buffer
  *
  * @see Configuration
  */
-public class OkioFileKache private constructor(
+public class OkioFileKache internal constructor(
     private val fileSystem: FileSystem,
     private val directory: Path,
     maxSize: Long,
@@ -342,7 +342,7 @@ public class OkioFileKache private constructor(
         public var keyTransformer: KeyTransformer? = SHA256KeyHasher
     }
 
-    public companion object {
+    internal companion object {
 
         internal suspend fun open(
             fileSystem: FileSystem,
