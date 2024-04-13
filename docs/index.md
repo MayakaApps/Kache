@@ -95,7 +95,7 @@ Sample Code (`FileKache`):
 
 ```kotlin
 // Could be OkioFileKache or JavaFileKache
-val cache = FileKache(directoryPath = "cache", maxSize = 10 * 1024 * 1024) {
+val cache = FileKache(directory = "cache", maxSize = 10 * 1024 * 1024) {
     // Other optional configurations
     strategy = KacheStrategy.MRU
     // ...

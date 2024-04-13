@@ -20,7 +20,7 @@
 
 </div>
 
-Kache (previously Kotlinized LRU Cache) is a lightweight Kotlin Multiplatform caching library that supports both
+Kache is a lightweight Kotlin Multiplatform caching library that supports both
 in-memory and persistent caches and supports different eviction strategies (LRU, FIFO, MRU, FILO).
 
 ***Supported platforms:***
@@ -119,7 +119,7 @@ Sample Code (`FileKache`):
 
 ```kotlin
 // Could be OkioFileKache or JavaFileKache
-val cache = FileKache(directoryPath = "cache", maxSize = 10 * 1024 * 1024) {
+val cache = FileKache(directory = "cache", maxSize = 10 * 1024 * 1024) {
     // Other optional configurations
     strategy = KacheStrategy.MRU
     // ...
