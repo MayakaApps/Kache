@@ -508,7 +508,7 @@ class InMemoryKacheTest {
     }
 
     @Test
-    fun trimToSizeCrashes() = runTest {
+    fun autoResizeOnAddThenTrim() = runTest {
         val removalLogger = EntryRemovalLogger<String, Int>()
 
         // LRU

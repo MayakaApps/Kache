@@ -49,6 +49,13 @@ internal suspend fun InMemoryKache<String, Int>.putFourElementsWithAccess() {
     get(KEY_2)
 }
 
+/**
+ * Puts 8 elements into the kache and gets 24 of them. This way the state of the kache is as follows:
+ * - The least-recently-used element is [KEY_3] with [VAL_3]
+ * - The most-recently-used element is [KEY_5] with [VAL_5]
+ * - The first-in element is [KEY_1] with [VAL_1]
+ * - The last-in element is [KEY_8] with [VAL_8]
+ */
 internal suspend fun InMemoryKache<String, Int>.putEightElementsWithAccess() {
     put(KEY_1, VAL_1)
     put(KEY_2, VAL_2)
