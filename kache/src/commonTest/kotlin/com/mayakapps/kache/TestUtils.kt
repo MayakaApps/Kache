@@ -49,6 +49,21 @@ internal suspend fun InMemoryKache<String, Int>.putFourElementsWithAccess() {
     get(KEY_2)
 }
 
+internal suspend fun InMemoryKache<String, Int>.putEightElementsWithAccess() {
+    put(KEY_1, VAL_1)
+    put(KEY_2, VAL_2)
+    put(KEY_3, VAL_3)
+    put(KEY_4, VAL_4)
+    put(KEY_5, VAL_5)
+    put(KEY_6, VAL_6)
+    put(KEY_7, VAL_7)
+    put(KEY_8, VAL_8)
+    get(KEY_1)
+    get(KEY_2)
+    get(KEY_4)
+    get(KEY_5)
+}
+
 internal class EntryRemovalLogger<K, V> {
     private val removedEntries = mutableListOf<Event<K, V>>()
 
@@ -84,3 +99,9 @@ internal const val KEY_4 = "four"
 internal const val VAL_4 = 4
 internal const val KEY_5 = "five"
 internal const val VAL_5 = 5
+internal const val KEY_6 = "six"
+internal const val VAL_6 = 6
+internal const val KEY_7 = "seven"
+internal const val VAL_7 = 7
+internal const val KEY_8 = "eight"
+internal const val VAL_8 = 8

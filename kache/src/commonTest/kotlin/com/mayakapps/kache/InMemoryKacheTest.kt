@@ -508,6 +508,29 @@ class InMemoryKacheTest {
     }
 
     @Test
+    fun trimToSizeCrashes() = runTest {
+        val removalLogger = EntryRemovalLogger<String, Int>()
+
+        // LRU
+        val lruKache = testInMemoryKache(entryRemovalLogger = removalLogger) {
+            strategy = KacheStrategy.LRU
+            expireAfterWriteDuration = 60_000.milliseconds
+        }
+        lruKache.putEightElementsWithAccess()
+        lruKache.trimToSize(5)
+        assertEquals(5, lruKache.size)
+        assertContentEquals(listOf(KEY_8, KEY_1, KEY_2, KEY_4, KEY_5), lruKache.getKeys())
+        assertContentEquals(
+            listOf(
+                EntryRemovalLogger.Event(true, KEY_3, VAL_3, null),
+                EntryRemovalLogger.Event(true, KEY_6, VAL_6, null),
+                EntryRemovalLogger.Event(true, KEY_7, VAL_7, null),
+            ),
+            removalLogger.getAndClearEvents(),
+        )
+    }
+
+    @Test
     fun trimToSize() = runTest {
         val removalLogger = EntryRemovalLogger<String, Int>()
 
