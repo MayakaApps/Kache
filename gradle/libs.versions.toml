@@ -8,7 +8,7 @@ kotlinx-binaryCompatibilityValidator = "0.14.0"
 
 kotlinx-coroutines = "1.8.1"
 
-okio = "3.9.0"
+okio = "3.9.1"
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
