@@ -93,6 +93,7 @@ and their different implementations.
 Sample Code (`Kache`):
 
 ```kotlin
+// Could be InMemoryKache
 val cache = Kache<String, ByteArray>(maxSize = 5 * 1024 * 1024) {  // 5 MB
     // Other optional configurations
     strategy = KacheStrategy.LRU
