@@ -86,6 +86,7 @@ internal open class MutableChain(initialCapacity: Int) : Chain() {
         val oldHead = head
         val oldNext = next
         val oldExtras = getExtras()
+        val oldTail = tail
 
         initializeStorage(newCapacity)
         val newExtras = getExtras()
@@ -97,22 +98,22 @@ internal open class MutableChain(initialCapacity: Int) : Chain() {
         }
 
         head = newIndices[oldHead]
-        tail = newIndices[tail]
+        tail = newIndices[oldTail]
 
         var newPrevIndex = -1
         var newIndex = newIndices[oldHead]
 
         iterateChain(oldHead, oldNext) { oldIndex ->
             val oldNextIndex = oldNext[oldIndex]
-            val newNextIndex = newIndices[oldNextIndex]
+            val newNextIndex = if (oldNextIndex >= 0) { newIndices[oldNextIndex] } else -1
 
             next[newIndex] = newNextIndex
             prev[newIndex] = newPrevIndex
 
+            newExtras?.set(newIndex, oldExtras?.get(oldIndex))
+
             newPrevIndex = newIndex
             newIndex = newNextIndex
-
-            newExtras?.set(newIndex, oldExtras?.get(oldIndex))
         }
     }
 
