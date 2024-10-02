@@ -40,7 +40,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.12.6
+          python-version: 3.12.7
 
       - name: Generate the API documentation
         run: ./gradlew --no-configuration-cache dokkaHtmlMultiModule
