@@ -34,9 +34,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
-
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
@@ -44,7 +41,7 @@ jobs:
           java-version: 17
 
       - name: Setup gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run check & tests for JVM, JS, and Linux tier 1 & 2 K/N targets
         if: startsWith(matrix.os, 'ubuntu')
