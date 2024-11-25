@@ -8,23 +8,12 @@ plugins {
 kotlin {
     explicitApi()
 
-    jvm {
-        compilations.configureEach {
-            kotlinOptions.jvmTarget = "1.8"
-        }
-    }
-
-    fun org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsSubTargetDsl.configureTests() {
-        testTask {
-            useMocha {
-                timeout = "30s"
-            }
-        }
-    }
+    jvm()
+    jvmToolchain(8)
 
     js {
-        browser { configureTests() }
-        nodejs { configureTests() }
+        browser()
+        nodejs()
     }
 
     // Still experimental - blocked by coroutines

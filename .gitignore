@@ -7,6 +7,12 @@
 !**/src/**/build/
 
 #
+# Kotlin
+#
+
+.kotlin
+
+#
 # IntelliJ
 #
 
