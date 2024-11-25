@@ -52,7 +52,7 @@ jobs:
         run: ./gradlew macosX64Test macosArm64Test iosSimulatorArm64Test iosX64Test watchosSimulatorArm64Test watchosX64Test tvosSimulatorArm64Test tvosX64Test --stacktrace
 
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4
+        uses: mikepenz/action-junit-report@v5
         if: always() && github.event_name == 'pull_request'
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
