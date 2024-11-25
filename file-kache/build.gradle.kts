@@ -11,19 +11,10 @@ kotlin {
     jvm()
     jvmToolchain(8)
 
-    fun org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsSubTargetDsl.configureTests() {
-        testTask {
-            useMocha {
-                timeout = "30s"
-            }
-        }
-    }
-
     js {
         // JS browser target has no FileSystem implementation in Okio
-        // browser { configureTests() }
-
-        nodejs { configureTests() }
+        // browser()
+        nodejs()
     }
 
     // Still experimental - blocked by coroutines
