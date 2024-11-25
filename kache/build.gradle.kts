@@ -8,11 +8,8 @@ plugins {
 kotlin {
     explicitApi()
 
-    jvm {
-        compilations.configureEach {
-            kotlinOptions.jvmTarget = "1.8"
-        }
-    }
+    jvm()
+    jvmToolchain(8)
 
     fun org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsSubTargetDsl.configureTests() {
         testTask {
