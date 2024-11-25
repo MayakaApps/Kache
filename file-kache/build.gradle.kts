@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
 
@@ -8,8 +11,10 @@ plugins {
 kotlin {
     explicitApi()
 
-    jvm()
-    jvmToolchain(8)
+    jvm {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions.jvmTarget = JvmTarget.JVM_1_8
+    }
 
     js {
         // JS browser target has no FileSystem implementation in Okio
