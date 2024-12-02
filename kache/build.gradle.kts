@@ -53,6 +53,10 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
+        configureEach {
+            languageSettings.optIn("kotlin.contracts.ExperimentalContracts")
+        }
+
         commonMain {
             dependencies {
                 implementation(libs.kotlinx.coroutines.core)
