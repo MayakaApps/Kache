@@ -24,10 +24,9 @@
     "NOTHING_TO_INLINE"
 )
 
-package androidx.collection
+package com.mayakapps.kache.collection
 
-import androidx.collection.internal.EMPTY_OBJECTS
-import androidx.collection.internal.requirePrecondition
+import com.mayakapps.kache.collection.internal.EMPTY_OBJECTS
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.max
@@ -204,17 +203,17 @@ private val EmptyScatterMap = MutableScatterMap<Any?, Nothing>(0)
 
 /** Returns an empty, read-only [ScatterMap]. */
 @Suppress("UNCHECKED_CAST")
-public fun <K, V> emptyScatterMap(): ScatterMap<K, V> = EmptyScatterMap as ScatterMap<K, V>
+internal fun <K, V> emptyScatterMap(): ScatterMap<K, V> = EmptyScatterMap as ScatterMap<K, V>
 
 /** Returns a new [MutableScatterMap]. */
-public fun <K, V> mutableScatterMapOf(): MutableScatterMap<K, V> = MutableScatterMap()
+internal fun <K, V> mutableScatterMapOf(): MutableScatterMap<K, V> = MutableScatterMap()
 
 /**
  * Returns a new [MutableScatterMap] with the specified contents, given as a list of pairs where the
  * first component is the key and the second is the value. If multiple pairs have the same key, the
  * resulting map will contain the value from the last of those pairs.
  */
-public fun <K, V> mutableScatterMapOf(vararg pairs: Pair<K, V>): MutableScatterMap<K, V> =
+internal fun <K, V> mutableScatterMapOf(vararg pairs: Pair<K, V>): MutableScatterMap<K, V> =
     MutableScatterMap<K, V>(pairs.size).apply { putAll(pairs) }
 
 /**
@@ -249,7 +248,7 @@ public fun <K, V> mutableScatterMapOf(vararg pairs: Pair<K, V>): MutableScatterM
  *
  * @see [MutableScatterMap]
  */
-public sealed class ScatterMap<K, V> {
+internal sealed class ScatterMap<K, V> {
     // NOTE: Our arrays are marked internal to implement inlined forEach{}
     // The backing array for the metadata bytes contains
     // `capacity + 1 + ClonedMetadataCount` entries, including when
@@ -297,7 +296,11 @@ public sealed class ScatterMap<K, V> {
      */
     public operator fun get(key: K): V? {
         val index = findKeyIndex(key)
-        @Suppress("UNCHECKED_CAST") return if (index >= 0) values[index] as V? else null
+        if (index >= 0) {
+            onAccess(index)
+            @Suppress("UNCHECKED_CAST") return values[index] as V?
+        }
+        return null
     }
 
     /**
@@ -307,6 +310,7 @@ public sealed class ScatterMap<K, V> {
     public fun getOrDefault(key: K, defaultValue: V): V {
         val index = findKeyIndex(key)
         if (index >= 0) {
+            onAccess(index)
             @Suppress("UNCHECKED_CAST") return values[index] as V
         }
         return defaultValue
@@ -326,6 +330,11 @@ public sealed class ScatterMap<K, V> {
      */
     @PublishedApi
     internal inline fun forEachIndexed(block: (index: Int) -> Unit) {
+        if (this is MutableChainedScatterMap) {
+            mainChain.forEachIndexed { index -> block(index) }
+            return
+        }
+
         val m = metadata
         val lastIndex = m.size - 2 // We always have 0 or at least 2 entries
 
@@ -592,6 +601,13 @@ public sealed class ScatterMap<K, V> {
      * semantics of [Map] may require the allocation of temporary objects for access and iteration.
      */
     public fun asMap(): Map<K, V> = MapWrapper(this)
+
+    /** A callback that is invoked when an entry is accessed. */
+    protected open fun onAccess(index: Int) {}
+
+    private var _keySet: Keys<K, V>? = null
+    public open val keySet: Set<K>
+        get() = _keySet ?: Keys(this).apply { _keySet = this }
 }
 
 /**
@@ -630,17 +646,17 @@ public sealed class ScatterMap<K, V> {
  * @constructor Creates a new [MutableScatterMap]
  * @see Map
  */
-public class MutableScatterMap<K, V>(initialCapacity: Int = DefaultScatterCapacity) :
+internal open class MutableScatterMap<K, V>(initialCapacity: Int = DefaultScatterCapacity) :
     ScatterMap<K, V>() {
     // Number of entries we can add before we need to grow
     private var growthLimit = 0
 
     init {
-        requirePrecondition(initialCapacity >= 0) { "Capacity must be a positive value." }
+        require(initialCapacity >= 0) { "Capacity must be a positive value." }
         initializeStorage(unloadedCapacity(initialCapacity))
     }
 
-    private fun initializeStorage(initialCapacity: Int) {
+    protected fun initializeStorage(initialCapacity: Int) {
         val newCapacity =
             if (initialCapacity > 0) {
                 // Since we use longs for storage, our capacity is never < 7, enforce
@@ -702,8 +718,10 @@ public class MutableScatterMap<K, V>(initialCapacity: Int = DefaultScatterCapaci
             val insertionIndex = index.inv()
             keys[insertionIndex] = key
             values[insertionIndex] = computedValue
+            onInsertion(insertionIndex)
         } else {
             values[index] = computedValue
+            onReplacement(index)
         }
         return computedValue
     }
@@ -715,9 +733,11 @@ public class MutableScatterMap<K, V>(initialCapacity: Int = DefaultScatterCapaci
      * the underlying storage and cause allocations.
      */
     public operator fun set(key: K, value: V) {
-        val index = findInsertIndex(key).let { index -> if (index < 0) index.inv() else index }
+        val inserting: Boolean
+        val index = findInsertIndex(key).also { inserting = it < 0 }.let { index -> if (index < 0) index.inv() else index }
         keys[index] = key
         values[index] = value
+        if (inserting) onInsertion(index) else onReplacement(index)
     }
 
     /**
@@ -728,10 +748,12 @@ public class MutableScatterMap<K, V>(initialCapacity: Int = DefaultScatterCapaci
      * [key], or `null` if the key was not present in the map.
      */
     public fun put(key: K, value: V): V? {
-        val index = findInsertIndex(key).let { index -> if (index < 0) index.inv() else index }
+        val inserting: Boolean
+        val index = findInsertIndex(key).also { inserting = it < 0 }.let { index -> if (index < 0) index.inv() else index }
         val oldValue = values[index]
         keys[index] = key
         values[index] = value
+        if (inserting) onInsertion(index) else onReplacement(index)
 
         @Suppress("UNCHECKED_CAST") return oldValue as V?
     }
@@ -873,16 +895,6 @@ public class MutableScatterMap<K, V>(initialCapacity: Int = DefaultScatterCapaci
         }
     }
 
-    /** Removes the specified [keys] and their associated value from the map. */
-    public inline operator fun minusAssign(keys: ScatterSet<K>) {
-        keys.forEach { key -> remove(key) }
-    }
-
-    /** Removes the specified [keys] and their associated value from the map. */
-    public inline operator fun minusAssign(keys: ObjectList<K>) {
-        keys.forEach { key -> remove(key) }
-    }
-
     @PublishedApi
     internal fun removeValueAt(index: Int): V? {
         _size -= 1
@@ -893,12 +905,13 @@ public class MutableScatterMap<K, V>(initialCapacity: Int = DefaultScatterCapaci
         keys[index] = null
         val oldValue = values[index]
         values[index] = null
+        onRemoval(index)
 
         @Suppress("UNCHECKED_CAST") return oldValue as V?
     }
 
     /** Removes all mappings from this map. */
-    public fun clear() {
+    public open fun clear() {
         _size = 0
         if (metadata !== EmptyGroup) {
             metadata.fill(AllEmpty)
@@ -961,7 +974,7 @@ public class MutableScatterMap<K, V>(initialCapacity: Int = DefaultScatterCapaci
      * Finds the first empty or deleted slot in the table in which we can store a value without
      * resizing the internal storage.
      */
-    private fun findFirstAvailableSlot(hash1: Int): Int {
+    protected fun findFirstAvailableSlot(hash1: Int): Int {
         val probeMask = _capacity
         var probeOffset = hash1 and probeMask
         var probeIndex = 0
@@ -1099,7 +1112,7 @@ public class MutableScatterMap<K, V>(initialCapacity: Int = DefaultScatterCapaci
     }
 
     // Internal to prevent inlining
-    internal fun resizeStorage(newCapacity: Int) {
+    internal open fun resizeStorage(newCapacity: Int) {
         val previousMetadata = metadata
         val previousKeys = keys
         val previousValues = values
@@ -1138,6 +1151,15 @@ public class MutableScatterMap<K, V>(initialCapacity: Int = DefaultScatterCapaci
      * objects for access and iteration.
      */
     public fun asMutableMap(): MutableMap<K, V> = MutableMapWrapper(this)
+
+    /** A callback that is invoked when an entry is inserted into the map. */
+    protected open fun onInsertion(index: Int) {}
+
+    /** A callback that is invoked when an entry is replaced in the map. */
+    protected open fun onReplacement(index: Int) {}
+
+    /** A callback that is invoked when an entry is removed from the map. */
+    protected open fun onRemoval(index: Int) {}
 }
 
 internal inline fun convertMetadataForCleanup(metadata: LongArray, capacity: Int) {
@@ -1784,3 +1806,8 @@ private class MutableMapWrapper<K, V>(private val parent: MutableScatterMap<K, V
 
     override fun put(key: K, value: V): V? = parent.put(key, value)
 }
+
+/** Dummy annotation to hide the effect of @PublishedApi in copied code. */
+@Target(AnnotationTarget.CLASS, AnnotationTarget.CONSTRUCTOR, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+private annotation class PublishedApi

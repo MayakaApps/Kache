@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package androidx.collection
+package com.mayakapps.kache.collection
 
 import kotlin.js.JsName
 import kotlin.test.Test
@@ -498,34 +498,6 @@ class ScatterMapTest {
         map["Hallo"] = "Welt"
 
         map -= listOf("Hallo", "Bonjour").asSequence()
-
-        assertEquals(1, map.size)
-        assertNull(map["Hallo"])
-        assertNull(map["Bonjour"])
-    }
-
-    @Test
-    fun minusScatterSet() {
-        val map = MutableScatterMap<String, String>()
-        map["Hello"] = "World"
-        map["Bonjour"] = "Monde"
-        map["Hallo"] = "Welt"
-
-        map -= scatterSetOf("Hallo", "Bonjour")
-
-        assertEquals(1, map.size)
-        assertNull(map["Hallo"])
-        assertNull(map["Bonjour"])
-    }
-
-    @Test
-    fun minusObjectList() {
-        val map = MutableScatterMap<String, String>()
-        map["Hello"] = "World"
-        map["Bonjour"] = "Monde"
-        map["Hallo"] = "Welt"
-
-        map -= objectListOf("Hallo", "Bonjour")
 
         assertEquals(1, map.size)
         assertNull(map["Hallo"])
