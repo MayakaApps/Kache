@@ -1173,14 +1173,14 @@ internal open class MutableScatterMap<K, V>(
 //        }
 //    }
 
-    /**
-     * Removes the specified [keys] and their associated value from the map.
-     */
-    public inline operator fun minusAssign(keys: ObjectList<K>) {
-        keys.forEach { key ->
-            remove(key)
-        }
-    }
+//    /**
+//     * Removes the specified [keys] and their associated value from the map.
+//     */
+//    public inline operator fun minusAssign(keys: ObjectList<K>) {
+//        keys.forEach { key ->
+//            remove(key)
+//        }
+//    }
 
     //@PublishedApi
     internal fun removeValueAt(index: Int): V? {
