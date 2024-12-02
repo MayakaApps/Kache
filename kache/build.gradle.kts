@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -12,7 +11,6 @@ kotlin {
     explicitApi()
 
     jvm {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions.jvmTarget = JvmTarget.JVM_1_8
     }
 
@@ -55,11 +53,6 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
-        configureEach {
-            languageSettings.optIn("kotlin.RequiresOptIn")
-            languageSettings.optIn("kotlin.contracts.ExperimentalContracts")
-        }
-
         commonMain {
             dependencies {
                 implementation(libs.kotlinx.coroutines.core)

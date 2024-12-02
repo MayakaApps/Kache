@@ -31,11 +31,9 @@
  */
 
 @file:Suppress("NOTHING_TO_INLINE", "RedundantVisibilityModifier", "UNCHECKED_CAST")
-@file:OptIn(ExperimentalContracts::class)
 
 package com.mayakapps.kache.collection
 
-import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
