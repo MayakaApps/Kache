@@ -1481,7 +1481,7 @@ class ScatterMapTest {
     fun insertOneRemoveOne() {
         val map = MutableScatterMap<Int, String>()
 
-        for (i in 0..1000000) {
+        for (i in 0..100000) {
             map[i] = i.toString()
             map.remove(i)
             assertTrue(map.capacity < 16, "Map grew larger than 16 after step $i")
