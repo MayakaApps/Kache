@@ -15,19 +15,12 @@ kotlin {
     }
 
     js {
-        browser {
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                    useFirefoxHeadless()
-                }
-            }
-        }
+        browser()
 
         nodejs {
             testTask {
                 useMocha {
-                    timeout = "10s"
+                    timeout = "5s"
                 }
             }
         }
