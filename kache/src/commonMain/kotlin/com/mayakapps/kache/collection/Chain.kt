@@ -22,50 +22,40 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 internal sealed class Chain {
+
     @JvmField
     internal var head = -1
 
     @JvmField
-    internal var tail = -1
+    protected var tail = -1
 
     @JvmField
-    internal var next = EMPTY_INTS
+    protected var next = EMPTY_INTS
 
     @JvmField
-    internal var prev = EMPTY_INTS
+    protected var prev = EMPTY_INTS
 
     internal inline fun forEachIndexed(reversed: Boolean = false, action: (index: Int) -> Unit) {
-        if (reversed) {
-            iterateChain(tail, prev, action)
+        val iterationHead: Int
+        val iterationNext: IntArray
+        if (!reversed) {
+            iterationHead = head
+            iterationNext = next
         } else {
-            iterateChain(head, next, action)
-        }
-    }
-
-    internal abstract class AbstractIterator<T>(
-        private val parent: Chain,
-        private val reversed: Boolean,
-    ) : Iterator<T> {
-
-        private var nextIndex = if (reversed) parent.tail else parent.head
-
-        override fun hasNext(): Boolean = nextIndex != -1
-
-        override fun next(): T {
-            if (nextIndex == -1) {
-                throw NoSuchElementException()
-            }
-
-            val index = nextIndex
-            nextIndex = if (reversed) parent.prev[index] else parent.next[index]
-            return getElement(index)
+            iterationHead = tail
+            iterationNext = prev
         }
 
-        protected abstract fun getElement(index: Int): T
+        var index = iterationHead
+        while (index != -1) {
+            val nextIndex = iterationNext[index]
+            action(index)
+            index = nextIndex
+        }
     }
 }
 
-internal open class MutableChain(initialCapacity: Int) : Chain() {
+internal open class MutableChain(initialCapacity: Int = 0) : Chain() {
 
     init {
         require(initialCapacity >= 0) { "Capacity must be a positive value." }
@@ -75,6 +65,8 @@ internal open class MutableChain(initialCapacity: Int) : Chain() {
         }
     }
 
+    protected open val extras: Array<Any?>? = null
+
     internal open fun initializeStorage(capacity: Int) {
         head = -1
         tail = -1
@@ -82,127 +74,109 @@ internal open class MutableChain(initialCapacity: Int) : Chain() {
         prev = IntArray(capacity) { -1 }
     }
 
-    internal fun resizeStorage(newCapacity: Int, newIndices: IntArray) {
+    internal inline fun resizeStorage(newCapacity: Int, calculateNewIndex: (Int) -> Int) {
+        // Capture the current state of the chain.
         val oldHead = head
         val oldNext = next
-        val oldExtras = getExtras()
-        val oldTail = tail
+        val oldExtras = extras
 
+        // Initialize the storage with the new capacity.
         initializeStorage(newCapacity)
-        val newExtras = getExtras()
 
-        if (oldHead == -1) {
-            head = -1
-            tail = -1
-            return
-        }
+        // If the chain was empty, return as there is nothing to migrate.
+        if (oldHead == -1) return
 
-        head = newIndices[oldHead]
-        tail = newIndices[oldTail]
-
+        // Initialize iterators. No previous index for the first item. The first item is the head.
+        // Set the head to the first item.
         var newPrevIndex = -1
-        var newIndex = newIndices[oldHead]
+        var oldIndex = oldHead
+        var newIndex = calculateNewIndex(oldHead)
+        head = newIndex
 
-        iterateChain(oldHead, oldNext) { oldIndex ->
+        while (oldIndex != -1) {
+            // Set the old and new next indices.
             val oldNextIndex = oldNext[oldIndex]
-            val newNextIndex = if (oldNextIndex >= 0) { newIndices[oldNextIndex] } else -1
+            val newNextIndex = if (oldNextIndex >= 0) calculateNewIndex(oldNextIndex) else -1
 
+            // Set the next and previous indices of the current item.
             next[newIndex] = newNextIndex
             prev[newIndex] = newPrevIndex
 
-            newExtras?.set(newIndex, oldExtras?.get(oldIndex))
+            // Migrate the extra data if it exists.
+            extras?.let { it[newIndex] = oldExtras!![oldIndex] }
 
+            // Set the previous item to the current item and the current item to the next item.
             newPrevIndex = newIndex
+            oldIndex = oldNextIndex
             newIndex = newNextIndex
         }
+
+        // Set the tail to the last item.
+        tail = newPrevIndex
     }
-
-    internal inline fun resizeStorage(newCapacity: Int, calculateNewIndex: (Int) -> Int) {
-        val oldHead = head
-        val oldNext = next
-        val oldExtras = getExtras()
-
-        initializeStorage(newCapacity)
-        val newExtras = getExtras()
-
-        iterateChain(oldHead, oldNext) { oldIndex ->
-            val newIndex = calculateNewIndex(oldIndex)
-
-            if (head == -1) {
-                head = newIndex
-                tail = newIndex
-            }else {
-                next[tail] = newIndex
-                prev[newIndex] = tail
-                tail = newIndex
-            }
-
-            newExtras?.set(newIndex, oldExtras?.get(oldIndex))
-        }
-    }
-
-    protected open fun getExtras(): Array<Any?>? = null
 
     internal open fun addToEnd(index: Int) {
+        // If the chain is empty, set the head and tail to the current item.
         if (head == -1) {
             head = index
             tail = index
             return
         }
 
+        // Add the item to the end of the chain.
         next[tail] = index
         prev[index] = tail
+
+        // Set the item as the tail of the chain.
         tail = index
     }
 
     internal open fun moveToEnd(index: Int) {
-        if (index == tail) {
-            return
-        }
+        // If the item is already at the end, return.
+        if (index == tail) return
 
-        val prevIndex = prev[index]
+        // Capture the next and previous indices before modifying the chain.
         val nextIndex = next[index]
+        val prevIndex = prev[index]
 
-        if (index == head) {
-            head = nextIndex
-        }
+        // If the item is the head, move the head to the next item.
+        if (index == head) head = nextIndex
 
-        if (prevIndex != -1) {
-            next[prevIndex] = nextIndex
-        }
+        // Remove the current item from the chain. This involves updating the next and previous indices of the previous
+        // and next items, respectively.
+        if (prevIndex != -1) next[prevIndex] = nextIndex
+        if (nextIndex != -1) prev[nextIndex] = prevIndex
 
-        if (nextIndex != -1) {
-            prev[nextIndex] = prevIndex
-        }
+        // Indicate that there is no next item.
+        next[index] = -1
 
+        // Add the item to the end of the chain.
         next[tail] = index
         prev[index] = tail
-        next[index] = -1
+
+        // Set the item as the tail of the chain.
         tail = index
     }
 
     internal open fun remove(index: Int) {
-        if (index == head) {
-            head = next[index]
-        }
-
-        if (index == tail) {
-            tail = prev[index]
-        }
-
-        val prevIndex = prev[index]
+        // Capture the next and previous indices before modifying the chain.
         val nextIndex = next[index]
+        val prevIndex = prev[index]
 
-        if (prevIndex != -1) {
-            next[prevIndex] = nextIndex
-        }
+        // If the item is the head, move the head to the next item. If the item is the tail, move the tail to the
+        // previous item.
+        if (index == head) head = nextIndex
+        if (index == tail) tail = prevIndex
 
-        if (nextIndex != -1) {
-            prev[nextIndex] = prevIndex
-        }
+        // Remove the current item from the chain. This involves updating the next and previous indices of the previous
+        // and next items, respectively.
+        if (prevIndex != -1) next[prevIndex] = nextIndex
+        if (nextIndex != -1) prev[nextIndex] = prevIndex
 
+        // Clear the info of the current item.
         next[index] = -1
         prev[index] = -1
+        extras?.let { it[index] = null }
     }
 
     internal open fun clear() {
@@ -210,26 +184,27 @@ internal open class MutableChain(initialCapacity: Int) : Chain() {
         tail = -1
         next.fill(-1)
         prev.fill(-1)
+        extras?.fill(null)
     }
 }
 
 internal class MutableTimedChain(
-    initialCapacity: Int,
+    initialCapacity: Int = 0,
     private val timeSource: TimeSource = TimeSource.Monotonic,
 ): MutableChain(initialCapacity) {
 
-    @JvmField
-    internal var timeMarks = Array<TimeMark?>(initialCapacity) { null }
+    private var timeMarks = Array<TimeMark?>(initialCapacity) { null }
+
+    @Suppress("UNCHECKED_CAST")
+    override val extras get() = timeMarks as Array<Any?>
 
     override fun initializeStorage(capacity: Int) {
         super.initializeStorage(capacity)
         timeMarks = Array(capacity) { null }
     }
 
-    internal fun getTimeMark(index: Int): TimeMark? = timeMarks[index]
-
-    @Suppress("UNCHECKED_CAST")
-    override fun getExtras(): Array<Any?> = timeMarks as Array<Any?>
+    internal fun getTimeMark(index: Int): TimeMark = timeMarks[index]
+        ?: throw NoSuchElementException("No time mark for the index $index")
 
     override fun addToEnd(index: Int) {
         super.addToEnd(index)
@@ -239,28 +214,5 @@ internal class MutableTimedChain(
     override fun moveToEnd(index: Int) {
         super.moveToEnd(index)
         timeMarks[index] = timeSource.markNow()
-    }
-
-    override fun remove(index: Int) {
-        super.remove(index)
-        timeMarks[index] = null
-    }
-
-    override fun clear() {
-        super.clear()
-        timeMarks.fill(null)
-    }
-}
-
-private inline fun iterateChain(
-    head: Int,
-    next: IntArray,
-    action: (index: Int) -> Unit,
-) {
-    var index = head
-    while (index != -1) {
-        val nextIndex = next[index]
-        action(index)
-        index = nextIndex
     }
 }
