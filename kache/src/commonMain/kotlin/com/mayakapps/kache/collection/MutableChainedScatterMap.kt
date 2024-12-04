@@ -22,37 +22,41 @@ internal class MutableChainedScatterMap<K, V>(
     initialCapacity: Int = DefaultScatterCapacity,
     @JvmField internal val accessChain: MutableChain? = null,
     @JvmField internal val insertionChain: MutableChain? = null,
-    @JvmField internal val accessOrder: Boolean = true,
+    @JvmField internal val accessOrder: Boolean = accessChain != null,
 ) : MutableScatterMap<K, V>(initialCapacity) {
 
     init {
         require(accessChain != null || insertionChain != null) { "At least, one chain must be not null" }
+
         accessChain?.initializeStorage(_capacity)
         insertionChain?.initializeStorage(_capacity)
     }
 
     @JvmField
-    internal val mainChain: MutableChain = if (accessOrder) {
-        accessChain ?: insertionChain!!
-    } else {
-        insertionChain ?: accessChain!!
-    }
+    internal val mainChain: MutableChain = getChainByOrder(accessOrder)
 
-    override fun afterAccess(index: Int) {
+    private var _keySet: ChainedKeys? = null
+    override val keySet: Set<K> get() = _keySet ?: ChainedKeys(reversed = false).apply { _keySet = this }
+
+    private var _reversedKeySet: ChainedKeys? = null
+    internal val reversedKeySet: Set<K>
+        get() = _reversedKeySet ?: ChainedKeys(reversed = true).apply { _reversedKeySet = this }
+
+    override fun onAccess(index: Int) {
         accessChain?.moveToEnd(index)
     }
 
-    override fun afterInsertion(index: Int) {
+    override fun onInsertion(index: Int) {
         accessChain?.addToEnd(index)
         insertionChain?.addToEnd(index)
     }
 
-    override fun afterReplacement(index: Int) {
+    override fun onReplacement(index: Int) {
         accessChain?.moveToEnd(index)
         insertionChain?.moveToEnd(index)
     }
 
-    override fun afterRemoval(index: Int) {
+    override fun onRemoval(index: Int) {
         accessChain?.remove(index)
         insertionChain?.remove(index)
     }
@@ -71,102 +75,61 @@ internal class MutableChainedScatterMap<K, V>(
 
         initializeStorage(newCapacity)
 
+        val newMetadata = metadata
         val newKeys = keys
         val newValues = values
+        val capacity = _capacity
 
+        // Resize code copied from `MutableScatterMap`
+        @Suppress("DuplicatedCode")
         mainChain.resizeStorage(_capacity) { i ->
             val previousKey = previousKeys[i]
             val hash = hash(previousKey)
             val index = findFirstAvailableSlot(h1(hash))
 
-            writeMetadata(index, h2(hash).toLong())
+            writeMetadata(newMetadata, capacity, index, h2(hash).toLong())
             newKeys[index] = previousKey
             newValues[index] = previousValues[i]
+
             newIndices[i] = index
             index
         }
 
-        accessoryChain?.resizeStorage(newCapacity, newIndices)
-    }
-
-    fun getKeySet(
-        reversed: Boolean = false,
-        accessOrder: Boolean = this.accessOrder,
-    ): Set<K> = object : AbstractSet<K>() {
-        override val size: Int get() = this@MutableChainedScatterMap._size
-
-        override fun isEmpty(): Boolean = this@MutableChainedScatterMap.isEmpty()
-
-        override fun iterator(): Iterator<K> = object : Chain.AbstractIterator<K>(
-            parent = if (accessOrder) {
-                accessChain ?: insertionChain!!
-            } else {
-                insertionChain ?: accessChain!!
-            },
-            reversed = reversed,
-        ) {
-            @Suppress("UNCHECKED_CAST")
-            override fun getElement(index: Int): K = keys[index] as K
-        }
-
-        override fun containsAll(elements: Collection<K>): Boolean =
-            elements.all { this@MutableChainedScatterMap.containsKey(it) }
-
-        override fun contains(element: K): Boolean = this@MutableChainedScatterMap.containsKey(element)
+        accessoryChain?.resizeStorage(newCapacity) { newIndices[it] }
     }
 
     /**
-     * Iterates over every key/value pair stored in this map by invoking the [block] function. The
-     * order of iteration is defined by the [accessOrder] parameter. The order of iteration can be
-     * reversed by setting the [reversed] parameter to `true`.
+     * Iterates over every key/value pair stored in this map by invoking the [block] function. The order of iteration
+     * is defined by the [accessOrder] parameter. The order of iteration can be reversed by setting the [reversed]
+     * parameter to `true`.
      */
-    inline fun forEach(
+    internal inline fun forEachIndexed(
         accessOrder: Boolean = this.accessOrder,
         reversed: Boolean = false,
-        block: (key: K, value: V, indexInChain: Int) -> Unit
+        block: (key: K, value: V, index: Int) -> Unit,
     ) {
-        val chain: MutableChain = if (accessOrder) {
-            accessChain ?: insertionChain!!
-        } else {
-            insertionChain ?: accessChain!!
-        }
-
-        chain.forEachIndexed(reversed = reversed) { index ->
+        getChainByOrder(accessOrder).forEachIndexed(reversed) { index ->
             @Suppress("UNCHECKED_CAST")
             block(keys[index] as K, values[index] as V, index)
         }
     }
 
-    /**
-     * Removes every key/value pair stored in this map, invoking the [callback] function for each
-     * pair. The order of iteration is defined by the [accessOrder] parameter. The order of
-     * iteration can be reversed by setting the [reversed] parameter to `true`. The removal of
-     * key/value pairs can be stopped by returning `true` from the [callback] function.
-     */
-    inline fun  removeAllWithCallback(
-        reversed: Boolean = false,
-        accessOrder: Boolean = this.accessOrder,
-        stopRemoving: (key: K, value: V, indexInChain: Int) -> Boolean = { _, _, _ -> false },
-        callback: (key: K, value: V) -> Unit,
-    ) {
-        val chain: MutableChain = if (accessOrder) {
-            accessChain ?: insertionChain!!
-        } else {
-            insertionChain ?: accessChain!!
+    private fun getChainByOrder(accessOrder: Boolean): MutableChain =
+        (if (accessOrder) accessChain else insertionChain)
+            ?: throw IllegalStateException("The chain associated with the requested order is null")
+
+    private inner class ChainedKeys(private val reversed: Boolean) : Set<K> {
+
+        override val size: Int get() = _size
+
+        override fun isEmpty(): Boolean = this@MutableChainedScatterMap.isEmpty()
+
+        override fun iterator(): Iterator<K> = iterator {
+            mainChain.forEachIndexed(reversed) { index -> @Suppress("UNCHECKED_CAST") yield(keys[index] as K) }
         }
 
-        chain.forEachIndexed(reversed = reversed) { index ->
-            val key = keys[index]
-            val value = values[index]
+        override fun containsAll(elements: Collection<K>): Boolean = elements.all { containsKey(it) }
 
-            @Suppress("UNCHECKED_CAST")
-            if (stopRemoving(key as K, value as V, index)) {
-                return
-            }
-
-            removeValueAt(index)
-            @Suppress("UNCHECKED_CAST")
-            callback(key as K, value as V)
-        }
+        override fun contains(element: K): Boolean = containsKey(element)
     }
 }

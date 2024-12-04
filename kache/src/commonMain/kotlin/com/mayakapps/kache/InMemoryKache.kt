@@ -77,22 +77,14 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     private val creationMutex = Mutex()
 
     private val accessChain = when {
-        expireAfterAccessDuration != Duration.INFINITE -> MutableTimedChain(
-            initialCapacity = 0,
-            timeSource = timeSource,
-        )
-
-        strategy == KacheStrategy.LRU || strategy == KacheStrategy.MRU -> MutableChain(0)
+        expireAfterAccessDuration != Duration.INFINITE -> MutableTimedChain(timeSource = timeSource)
+        strategy == KacheStrategy.LRU || strategy == KacheStrategy.MRU -> MutableChain()
         else -> null
     }
 
     private val insertionChain = when {
-        expireAfterWriteDuration != Duration.INFINITE -> MutableTimedChain(
-            initialCapacity = 0,
-            timeSource = timeSource,
-        )
-
-        strategy == KacheStrategy.FIFO || strategy == KacheStrategy.FILO -> MutableChain(0)
+        expireAfterWriteDuration != Duration.INFINITE -> MutableTimedChain(timeSource = timeSource)
+        strategy == KacheStrategy.FIFO || strategy == KacheStrategy.FILO -> MutableChain()
         else -> null
     }
 
@@ -121,7 +113,7 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
 
     private val reversed = strategy == KacheStrategy.MRU || strategy == KacheStrategy.FILO
 
-    private val keySet = map.getKeySet(reversed = reversed)
+    private val keySet = if (!reversed) map.keySet else map.reversedKeySet
 
     override suspend fun getKeys(): Set<K> = mapMutex.withLock {
         nonLockedEvictExpired()
@@ -155,15 +147,15 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
         val index = map.findKeyIndex(key)
         if (index < 0) return null
 
-        if (expireAfterAccessDuration != Duration.INFINITE) {
-            val timeMark = (accessChain as MutableTimedChain).getTimeMark(index)
-            if (timeMark == null || timeMark.elapsedNow() >= expireAfterAccessDuration) return null
-        }
+        if (
+            expireAfterAccessDuration != Duration.INFINITE &&
+            (accessChain as MutableTimedChain).getTimeMark(index).elapsedNow() >= expireAfterAccessDuration
+        ) return null
 
-        if (expireAfterWriteDuration != Duration.INFINITE) {
-            val timeMark = (insertionChain as MutableTimedChain).getTimeMark(index)
-            if (timeMark == null || timeMark.elapsedNow() >= expireAfterWriteDuration) return null
-        }
+        if (
+            expireAfterWriteDuration != Duration.INFINITE &&
+            (insertionChain as MutableTimedChain).getTimeMark(index).elapsedNow() >= expireAfterWriteDuration
+        ) return null
 
         return map[key]
     }
@@ -289,14 +281,13 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
         }
 
         mapMutex.withLock {
-            map.removeAllWithCallback(reversed = reversed) { key, value ->
+            map.forEachIndexed(reversed = reversed) { key, value, index ->
+                map.removeValueAt(index)
                 size -= safeSizeOf(key, value)
                 onEntryRemoved(false, key, value, null)
             }
 
-            check(size == 0L) {
-                "sizeCalculator is reporting inconsistent results!"
-            }
+            check(size == 0L) { "sizeCalculator is reporting inconsistent results!" }
         }
     }
 
@@ -306,14 +297,13 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
         }
 
         mapMutex.withLock {
-            map.removeAllWithCallback(reversed = reversed) { key, value ->
+            map.forEachIndexed(reversed = reversed) { key, value, index ->
+                map.removeValueAt(index)
                 size -= safeSizeOf(key, value)
                 onEntryRemoved(true, key, value, null)
             }
 
-            check(size == 0L) {
-                "sizeCalculator is reporting inconsistent results!"
-            }
+            check(size == 0L) { "sizeCalculator is reporting inconsistent results!" }
         }
     }
 
@@ -341,15 +331,17 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     private fun nonLockedTrimToSize(size: Long) {
         if (this@InMemoryKache.size <= size) return
 
-        map.removeAllWithCallback(
-            reversed = reversed,
-            stopRemoving = { _, _, _ -> this@InMemoryKache.size <= size },
-        ) { key, value ->
-            this@InMemoryKache.size -= safeSizeOf(key, value)
-            onEntryRemoved(true, key, value, null)
+        run removalIteration@{
+            map.forEachIndexed(reversed = reversed) { key, value, index ->
+                if (this@InMemoryKache.size <= size) return@removalIteration
+
+                map.removeValueAt(index)
+                this@InMemoryKache.size -= safeSizeOf(key, value)
+                onEntryRemoved(true, key, value, null)
+            }
         }
 
-        check(this.size >= 0 || (map.isEmpty() && this.size != 0L)) {
+        check(this.size >= 0 || (map.isEmpty() && this.size == 0L)) {
             "sizeCalculator is reporting inconsistent results!"
         }
     }
@@ -361,29 +353,27 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     }
 
     private fun nonLockedEvictExpired() {
-        (accessChain as? MutableTimedChain)?.let { chain ->
-            map.removeAllWithCallback(accessOrder = true,
-                stopRemoving = { _, _, index ->
-                    chain.getTimeMark(index)!!.elapsedNow() < expireAfterAccessDuration
-                }
-            ) { key, value ->
+        (accessChain as? MutableTimedChain)?.let accessTimeEviction@{ chain ->
+            map.forEachIndexed(accessOrder = true) { key, value, index ->
+                if (chain.getTimeMark(index).elapsedNow() < expireAfterAccessDuration) return@accessTimeEviction
+
+                map.removeValueAt(index)
                 size -= safeSizeOf(key, value)
                 onEntryRemoved(true, key, value, null)
             }
         }
 
-        (insertionChain as? MutableTimedChain)?.let { chain ->
-            map.removeAllWithCallback(accessOrder = false,
-                stopRemoving = { _, _, index ->
-                    chain.getTimeMark(index)!!.elapsedNow() < expireAfterWriteDuration
-                }
-            ) { key, value ->
+        (insertionChain as? MutableTimedChain)?.let insertionTimeEviction@{ chain ->
+            map.forEachIndexed(accessOrder = false) { key, value, index ->
+                if (chain.getTimeMark(index).elapsedNow() < expireAfterWriteDuration) return@insertionTimeEviction
+
+                map.removeValueAt(index)
                 size -= safeSizeOf(key, value)
                 onEntryRemoved(true, key, value, null)
             }
         }
 
-        check(this.size >= 0 || (map.isEmpty() && this.size != 0L)) {
+        check(this.size >= 0 || (map.isEmpty() && this.size == 0L)) {
             "sizeCalculator is reporting inconsistent results!"
         }
     }

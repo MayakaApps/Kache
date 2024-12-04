@@ -26,7 +26,7 @@ class ChainedScatterMapTest {
         val map = MutableChainedScatterMap<String, Int>(
             // The least possible capacity is 7
             initialCapacity = 7,
-            accessChain = MutableChain(initialCapacity = 0),
+            accessChain = MutableChain(),
         )
 
         repeat(8) {

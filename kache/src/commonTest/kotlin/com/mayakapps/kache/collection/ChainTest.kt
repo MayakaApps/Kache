@@ -42,25 +42,6 @@ class ChainTest {
     }
 
     @Test
-    fun iterator() {
-        // Empty chain
-        val chain = mutableChainOf()
-        assertContentEquals(emptyList(), chain.toIndexListByIterator())
-        assertContentEquals(emptyList(), chain.toIndexListByIterator(reversed = true))
-
-        // One element
-        chain.addToEnd(4)
-        assertContentEquals(listOf(4), chain.toIndexListByIterator())
-        assertContentEquals(listOf(4), chain.toIndexListByIterator(reversed = true))
-
-        // Several elements
-        chain.addToEnd(2)
-        chain.addToEnd(8)
-        assertContentEquals(listOf(4, 2, 8), chain.toIndexListByIterator())
-        assertContentEquals(listOf(8, 2, 4), chain.toIndexListByIterator(reversed = true))
-    }
-
-    @Test
     fun initializeStorage() {
         val chain = mutableChainOf(2, 4, 8)
         chain.initializeStorage(20)
@@ -186,23 +167,23 @@ class ChainTest {
 
         timeSource += 1000L
 
-        assertEquals(1000L, chain.getTimeMark(4)!!.elapsedNow().inWholeMilliseconds)
-        assertEquals(1000L, chain.getTimeMark(2)!!.elapsedNow().inWholeMilliseconds)
-        assertEquals(1000L, chain.getTimeMark(8)!!.elapsedNow().inWholeMilliseconds)
+        assertEquals(1000L, chain.getTimeMark(4).elapsedNow().inWholeMilliseconds)
+        assertEquals(1000L, chain.getTimeMark(2).elapsedNow().inWholeMilliseconds)
+        assertEquals(1000L, chain.getTimeMark(8).elapsedNow().inWholeMilliseconds)
 
         chain.moveToEnd(2)
         chain.addToEnd(6)
 
         timeSource += 1000L
 
-        assertEquals(1000L, chain.getTimeMark(2)!!.elapsedNow().inWholeMilliseconds)
-        assertEquals(1000L, chain.getTimeMark(6)!!.elapsedNow().inWholeMilliseconds)
+        assertEquals(1000L, chain.getTimeMark(2).elapsedNow().inWholeMilliseconds)
+        assertEquals(1000L, chain.getTimeMark(6).elapsedNow().inWholeMilliseconds)
 
         chain.remove(2)
-        assertNull(chain.getTimeMark(2))
+        assertFailsWith<NoSuchElementException> { chain.getTimeMark(2) }
 
         chain.clear()
-        assertNull(chain.getTimeMark(6))
+        assertFailsWith<NoSuchElementException> { chain.getTimeMark(6) }
     }
 
     private fun mutableChainOf(vararg indices: Int, initialCapacity: Int = 10): MutableChain {
@@ -231,20 +212,6 @@ class ChainTest {
     private fun Chain.toIndexListByForEachIndexed(reversed: Boolean = false): List<Int> {
         val list = mutableListOf<Int>()
         forEachIndexed(reversed) { list += it }
-        return list
-    }
-
-    private fun Chain.toIndexListByIterator(reversed: Boolean = false): List<Int> {
-        val list = mutableListOf<Int>()
-
-        val iterator = object : Chain.AbstractIterator<Int>(this, reversed) {
-            override fun getElement(index: Int): Int = index
-        }
-
-        while (iterator.hasNext()) {
-            list += iterator.next()
-        }
-
         return list
     }
 }
