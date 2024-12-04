@@ -16,19 +16,12 @@ kotlin {
 
     js {
         // JS browser target has no FileSystem implementation in Okio
-        // browser {
-        //     testTask {
-        //         useKarma {
-        //             useChromeHeadless()
-        //             useFirefoxHeadless()
-        //         }
-        //     }
-        // }
+        // browser()
 
         nodejs {
             testTask {
                 useMocha {
-                    timeout = "10s"
+                    timeout = "5s"
                 }
             }
         }
