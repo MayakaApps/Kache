@@ -43,7 +43,7 @@ jobs:
           python-version: 3.13.2
 
       - name: Generate the API documentation
-        run: ./gradlew --no-configuration-cache dokkaHtmlMultiModule
+        run: ./gradlew :dokkaGenerate
 
       - name: Build mkdocs
         run: |
