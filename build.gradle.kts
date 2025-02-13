@@ -21,39 +21,22 @@ allprojects {
     }
 
     afterEvaluate {
-        tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
-            dokkaSourceSets.configureEach {
-                includes.from("module.md")
+        dokka {
+            pluginsConfiguration.html {
+                customStyleSheets.from(rootProject.layout.projectDirectory.file("docs/styles/kache-dokka.css"))
+                customAssets.from(rootProject.layout.projectDirectory.file("docs/images/kache-logo.png"))
+
+                // When changing footerMessage, also update it in MkDocs config
+                footerMessage.set("Copyright &copy; 2023-2024 MayakaApps.")
             }
-        }
-
-        tasks.withType<org.jetbrains.dokka.gradle.AbstractDokkaTask>().configureEach {
-            // Workaround for Dokka configuration cache failure (issue: https://github.com/Kotlin/dokka/issues/2231)
-            notCompatibleWithConfigurationCache("https://github.com/Kotlin/dokka/issues/2231")
-
-            // When changing footerMessage, also update it in MkDocs config
-            pluginsMapConfiguration.set(
-                mapOf(
-                    "org.jetbrains.dokka.base.DokkaBase" to """
-                    {
-                      "customStyleSheets": [
-                        "${rootDir.toString().replace('\\', '/')}/docs/styles/kache-dokka.css"
-                      ],
-                      "customAssets" : [
-                        "${rootDir.toString().replace('\\', '/')}/docs/images/kache-logo.png"
-                      ],
-                      "footerMessage": "Copyright &copy; 2023-2024 MayakaApps."
-                    }
-                    """.trimIndent()
-                )
-            )
         }
     }
 
     // Workaround for yarn concurrency (issue: https://youtrack.jetbrains.com/issue/KT-43320)
-    tasks.withType<org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask>().configureEach {
-        args.addAll(listOf("--mutex", "file:${file("build/.yarn-mutex")}"))
-    }
+    tasks.withType<org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask>()
+        .configureEach {
+            args.addAll(listOf("--mutex", "file:${file("build/.yarn-mutex")}"))
+        }
 
     // Workaround for Gradle implicit dependency error on publishing (issue: https://youtrack.jetbrains.com/issue/KT-46466)
     tasks.withType<AbstractPublishToMaven>().configureEach {
@@ -61,7 +44,10 @@ allprojects {
     }
 }
 
-tasks.withType<org.jetbrains.dokka.gradle.DokkaMultiModuleTask>().configureEach {
+dokka {
     moduleName.set("Kache")
-    outputDirectory.set(file("$rootDir/docs/api"))
+
+    dokkaPublications.html {
+        outputDirectory.set(layout.projectDirectory.dir("docs/api"))
+    }
 }

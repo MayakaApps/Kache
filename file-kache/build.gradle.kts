@@ -88,3 +88,9 @@ kotlin {
         }
     }
 }
+
+dokka {
+    dokkaSourceSets.commonMain {
+        includes.from("module.md")
+    }
+}
