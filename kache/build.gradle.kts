@@ -1,3 +1,6 @@
+@file:OptIn(ExperimentalWasmDsl::class)
+
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -26,9 +29,14 @@ kotlin {
         }
     }
 
-    // Still experimental - blocked by coroutines
-    // wasmJs()
-    // wasmWasi()
+    wasmJs {
+        browser()
+        nodejs()
+    }
+
+    wasmWasi {
+        nodejs()
+    }
 
     macosX64()
     macosArm64()
