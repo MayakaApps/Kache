@@ -41,7 +41,7 @@ jobs:
           java-version: 17
 
       - name: Setup gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Run check & tests for JVM, JS, and Linux tier 1 & 2 K/N targets
         if: startsWith(matrix.os, 'ubuntu')
