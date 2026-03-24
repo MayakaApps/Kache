@@ -4,7 +4,7 @@ kotlin = "2.1.21"
 dokka = "2.1.0"
 mavenPublish = "0.30.0"
 
-kotlinx-binaryCompatibilityValidator = "0.17.0"
+kotlinx-binaryCompatibilityValidator = "0.18.1"
 
 kotlinx-coroutines = "1.10.2"
 
