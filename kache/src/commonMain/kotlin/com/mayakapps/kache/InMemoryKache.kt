@@ -164,14 +164,15 @@ public class InMemoryKache<K : Any, V : Any> internal constructor(
     override suspend fun getOrPut(key: K, creationFunction: suspend (key: K) -> V?): V? {
         get(key)?.let { return it }
 
-        creationMutex.withLock {
+        val deferred = creationMutex.withLock {
             if (creationMap[key] == null && map[key] == null) {
-                @Suppress("DeferredResultUnused")
                 internalPutAsync(key, creationFunction)
+            } else {
+                creationMap[key]
             }
         }
 
-        return get(key)
+        return deferred?.let { getFromCreation(key, it) } ?: get(key)
     }
 
     override suspend fun put(key: K, creationFunction: suspend (key: K) -> V?): V? =

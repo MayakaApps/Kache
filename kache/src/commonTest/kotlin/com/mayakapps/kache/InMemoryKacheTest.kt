@@ -686,4 +686,20 @@ class InMemoryKacheTest {
 
         assertEquals(0, kache.size)
     }
+
+    @Test
+    fun getOrPutHighConcurrency() = runTest {
+        // Regression test for https://github.com/MayakaApps/Kache/issues/239
+        // With more keys than maxSize, LRU eviction kicks in. In old code, a creation deferred
+        // could complete (on Dispatchers.Default) and get evicted between the creationMutex.withLock
+        // exit and the trailing get(key) call, returning null.
+        // Uses the real default creationScope (Dispatchers.Default) — testInMemoryKache overrides
+        // it to the single-threaded test dispatcher, which hides the race.
+        val kache = InMemoryKache<String, String>(maxSize = 100)
+
+        (0..20_000).forEach {
+            launch { assertNotNull(kache.getOrPut(it.toString()) { it.toString() }) }
+        }
+    }
+
 }
