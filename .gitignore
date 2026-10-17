@@ -1,7 +1,7 @@
 #
 # Gradle
 #
-
+local.properties
 .gradle/
 **/build/
 !**/src/**/build/
